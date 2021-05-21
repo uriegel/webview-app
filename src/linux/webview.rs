@@ -1,6 +1,6 @@
 use gio::{ActionMapExt};
 use gtk::{Application, ContainerExt, GtkApplicationExt};
-use webkit2gtk::{Settings, WebContext, WebInspectorExt, WebView, WebViewExt};
+use webkit2gtk::{Settings, SettingsBuilder, WebContext, WebInspectorExt, WebView, WebViewExt};
 use webkit2gtk_sys::WebKitSettings;
 
 use super::mainwindow::MainWindow;
@@ -18,10 +18,11 @@ impl MainWebView {
         let webview = WebView::with_context(&context);
         mainwindow.window.add(&webview);        
         webview.connect_context_menu(|_, _, _, _| true );
-        
-        webview.set_settings(WebKitSettings {
 
-        })
+        let settings = SettingsBuilder::new();
+        let settings = settings.enable_developer_extras(true);
+        let settings = settings.build();
+        webview.set_settings(&settings);
 
         let weak_webview = webview.clone();
         let action = gio::SimpleAction::new("devtools", None);
