@@ -2,7 +2,7 @@ use std::cell::RefCell;
 
 use gtk::{Application, Builder, GtkApplicationExt, GtkWindowExt, WidgetExt, Window, prelude::BuilderExtManual};
 
-use crate::settings::{initialize_size, save_size};
+use crate::{appsettings::AppSettings, settings::{initialize_size, save_size}};
 
 #[derive(Debug, Clone)]
 pub struct MainWindow {
@@ -11,8 +11,12 @@ pub struct MainWindow {
 }
 
 impl MainWindow {
-    pub fn new(application: &Application) -> Self {
-        let initial_size = initialize_size();
+    pub fn new(application: &Application, settings: &AppSettings) -> Self {
+        let initial_size = if settings.save_window_pos {
+            initialize_size(settings.width, settings.height)
+        } else {
+            (settings.width, settings.height)
+        };
 
         let builder = Builder::new();
         builder.add_from_file("main.glade").unwrap();

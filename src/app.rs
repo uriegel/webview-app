@@ -18,7 +18,7 @@ impl App {
     #[cfg(target_os = "linux")]
     pub fn new(settings: AppSettings) -> Self {
         App { 
-            app: GtkApp::new(application_id) 
+            app: GtkApp::new(settings) 
         }
     }
     #[cfg(target_os = "windows")]

@@ -9,13 +9,13 @@ pub struct SizeSettings {
     pub height: i32,
 }
 
-pub fn initialize_size() -> (i32, i32) {
+pub fn initialize_size(width: i32, height: i32) -> (i32, i32) {
     match initialize(SIZE_NAME) {
         Some(contents) => {
             let settings: SizeSettings = serde_json::from_str(&contents).unwrap();
             (settings.width, settings.height)
         }            
-        None => (500, 800)
+        None => (width, height)
     }
 }
             

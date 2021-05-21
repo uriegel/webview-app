@@ -2,8 +2,8 @@ pub struct AppSettings {
     #[cfg(target_os = "linux")]
     pub application_id: String,
     pub title: String,
-    pub width: i16,
-    pub height: i16,
+    pub width: i32,
+    pub height: i32,
     pub save_window_pos: bool,
     pub url: String,
 }
@@ -12,6 +12,7 @@ pub struct AppSettings {
 impl Default for AppSettings {
     fn default()->Self { 
         Self {
+            application_id: "de.uriegel.webapp".to_string(),
             width: 800,
             height: 600,
             save_window_pos: true,

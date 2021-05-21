@@ -3,16 +3,16 @@ use std::env;
 use gio::{ActionMapExt, ApplicationExt, ApplicationFlags, SimpleAction, prelude::ApplicationExtManual};
 use gtk::{Application, GtkApplicationExt};
 
-use crate::linux::mainwindow::MainWindow;
+use crate::{appsettings::AppSettings, linux::mainwindow::MainWindow};
 
 pub struct App {
     application: Application
 }
 
 impl App {
-    pub fn new(application_id: &str) -> Self {
+    pub fn new(settings: AppSettings) -> Self {
 
-        let application = Application::new(Some(application_id), 
+        let application = Application::new(Some(&settings.application_id), 
         ApplicationFlags::empty())
             .expect("Application::new() failed");
 
@@ -23,7 +23,7 @@ impl App {
         application.set_accels_for_action("app.destroy", &["<Ctrl>Q"]);
 
         application.connect_startup(move |application| {
-            MainWindow::new(application);
+            MainWindow::new(application, &settings);
             ()
         });
     
