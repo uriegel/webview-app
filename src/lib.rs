@@ -1,3 +1,7 @@
+pub mod app;
+mod mainwindow;
+mod settings;
+
 pub fn test() {
     if cfg!(target_os = "linux") {
         println!("Yes. It's definitely linux!");
@@ -8,7 +12,8 @@ pub fn test() {
     println!("Very early hello example test");
 }
 
-// TODO GTK window app
+// TODO GTK: Extending Settings 
+// TODO GTK: Properties like window title
 // TODO Linux windows dependant sources
 // TODO Windoes Window app
 // TODO add webviews
