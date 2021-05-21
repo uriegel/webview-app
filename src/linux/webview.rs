@@ -1,7 +1,6 @@
 use gio::{ActionMapExt};
 use gtk::{Application, ContainerExt, GtkApplicationExt};
-use webkit2gtk::{Settings, SettingsBuilder, WebContext, WebInspectorExt, WebView, WebViewExt};
-use webkit2gtk_sys::WebKitSettings;
+use webkit2gtk::{SettingsBuilder, WebContext, WebInspectorExt, WebView, WebViewExt};
 
 use super::mainwindow::MainWindow;
 
