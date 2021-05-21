@@ -10,12 +10,11 @@ use winapi::{shared::{minwindef::HINSTANCE, windef::{
         USER_DEFAULT_SCREEN_DPI, UpdateWindow, WNDCLASSW, WS_OVERLAPPEDWINDOW
     }
 }};
-use crate::{windows::webview::WebView, windows::app::App};
+use crate::{appsettings::AppSettings, windows::app::App, windows::webview::WebView};
 
 use super::{app::utf_16_null_terminiated};
 
 const CLASS_NAME: &str = "Commander";
-const TITLE: &str = "Commander";
 
 pub struct MainWindow {
     //hwnd: HWND,
@@ -23,7 +22,7 @@ pub struct MainWindow {
 }
 
 impl MainWindow {
-    pub fn new() -> Self {
+    pub fn new(settings: &AppSettings) -> Self {
         MainWindow { webview: WebView::new() }
     }
 
@@ -97,18 +96,18 @@ impl MainWindow {
         }
     }
 
-    pub fn create(&self, instance: HINSTANCE, dpi: i32, width: i32, height: i32) {
+    pub fn create(&self, instance: HINSTANCE, dpi: i32, settings: &AppSettings) {
         let class_name = utf_16_null_terminiated(CLASS_NAME);
         let hwnd = unsafe {
             CreateWindowExW(
                 0,
                 class_name.as_ptr(),
-                utf_16_null_terminiated(TITLE).as_ptr(),
+                utf_16_null_terminiated(&settings.title).as_ptr(),
                 WS_OVERLAPPEDWINDOW,
                 CW_USEDEFAULT,
                 CW_USEDEFAULT,
-                MulDiv(width, dpi, USER_DEFAULT_SCREEN_DPI),
-                MulDiv(height, dpi, USER_DEFAULT_SCREEN_DPI),
+                MulDiv(settings.width as i32, dpi, USER_DEFAULT_SCREEN_DPI),
+                MulDiv(settings.height as i32, dpi, USER_DEFAULT_SCREEN_DPI),
                 ptr::null_mut(),
                 ptr::null_mut(),
                 instance,
@@ -123,7 +122,8 @@ impl MainWindow {
             ShowWindow(hwnd, SW_SHOW);
             UpdateWindow(hwnd);
         }        
-        self.webview.initialize(hwnd);
+        self.webview.initialize(hwnd, settings.url.clone()
+    );
     }
 
     fn on_size(&self, hwnd: HWND) {

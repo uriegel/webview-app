@@ -14,10 +14,9 @@ use winapi::{shared::{minwindef::HINSTANCE, windef::{
     }
 };
 
-use super::{mainwindow::MainWindow, messagebox::error_message_box};
+use crate::appsettings::AppSettings;
 
-const WIDTH: i32 = 600;
-const HEIGHT: i32 = 800;
+use super::{mainwindow::MainWindow, messagebox::error_message_box};
 
 pub fn utf_16_null_terminiated(x: &str) -> Vec<u16> {
     x.encode_utf16().chain(std::iter::once(0)).collect()
@@ -30,14 +29,14 @@ pub struct App {
 }
 
 impl App {
-    pub fn new() -> Self {
+    pub fn new(settings: AppSettings) -> Self {
         let instance = unsafe { GetModuleHandleW(ptr::null()) };
         App::set_dpi_aware();
         let hdc = unsafe { GetDC(ptr::null_mut()) };
         let dpi = unsafe { GetDeviceCaps(hdc, LOGPIXELSX) };
         unsafe { ReleaseDC(ptr::null_mut(), hdc) };
         
-        let main_window = MainWindow::new();
+        let main_window = MainWindow::new(&settings);
         let main_window_cell = Rc::new(OnceCell::new());
         match main_window_cell.set(main_window) {
             Ok(()) => (),
@@ -46,7 +45,7 @@ impl App {
 
         let main_window = main_window_cell.get().expect("Main window not initialized");
         main_window.register(instance, &main_window_cell);
-        main_window.create(instance, dpi, WIDTH, HEIGHT);        
+        main_window.create(instance, dpi, &settings);        
 
         App { instance, dpi, main_window: main_window_cell }
     }
@@ -90,3 +89,6 @@ impl App {
         }
     }
 }
+
+
+// TODO: Save windows settings

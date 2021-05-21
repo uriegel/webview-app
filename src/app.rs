@@ -2,6 +2,7 @@
 use crate::linux::app::App as GtkApp;
 #[cfg(target_os = "windows")]
 use crate::windows::app::App as WinApp;
+use crate::appsettings::AppSettings;
 
 #[cfg(target_os = "linux")]
 pub struct App {
@@ -15,15 +16,15 @@ pub struct App {
 
 impl App {
     #[cfg(target_os = "linux")]
-    pub fn new(application_id: &str) -> Self {
+    pub fn new(settings: AppSettings) -> Self {
         App { 
             app: GtkApp::new(application_id) 
         }
     }
     #[cfg(target_os = "windows")]
-    pub fn new() -> Self {
+    pub fn new(settings: AppSettings) -> Self {
         App { 
-            app: WinApp::new() 
+            app: WinApp::new(settings) 
         }
     }
 

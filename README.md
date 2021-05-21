@@ -11,3 +11,7 @@ This is just an early start!
 
 ## To run example
 ```cargo run --example hello```
+
+## Icon in Windows
+Use ```winres``` and build-script ```build.rs``` with ```res.set_icon()```. This Icon will be the web viw windows icon.
+

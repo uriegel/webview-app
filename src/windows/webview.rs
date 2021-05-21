@@ -15,7 +15,7 @@ impl WebView {
             controller: Rc::new(OnceCell::<Controller>::new())
         }
     }
-    pub fn initialize(&self, hwnd: HWND) {
+    pub fn initialize(&self, hwnd: HWND, url: String) {
         let controller_cell = self.controller.clone();
         Environment::builder().build(move | env| {
             match env {
@@ -36,7 +36,7 @@ impl WebView {
                     let script = format!("initialTheme = '{}'", initial_theme);
                     web_view.add_script_to_execute_on_document_created(&script, |_|Ok(())).unwrap();
 
-                    web_view.navigate("http://localhost:9865").unwrap();
+                    web_view.navigate(&url).unwrap();
                     let controller_to_borrow = controller.clone();
                     web_view.add_navigation_completed(move |_,_|{
                         controller_to_borrow.move_focus(webview2::MoveFocusReason::Next).unwrap();
