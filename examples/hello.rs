@@ -6,6 +6,8 @@ use webview_app::test;
 fn main() {
     test();
 
-    let app = App::new("test.uriegel.de");
-    app.run();
+    if cfg!(target_os = "linux") {
+        let app = App::new("test.uriegel.de");
+        app.run();
+    }
 }

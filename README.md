@@ -8,3 +8,6 @@ This is just an early start!
 * ```sudo dnf install libsoup-devel```
 * ```sudo dnf install webkit2gtk3-devel.x86_64```
 * ```sudo dnf install libudev-devel```
+
+## To run example
+```cargo run --example hello```
