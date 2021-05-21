@@ -1,21 +1,10 @@
 #[cfg(target_os = "linux")]
 mod linux;
-
-pub mod app;
-mod settings;
-
 #[cfg(target_os = "windows")]
 mod windows;
 
-pub fn test() {
-    if cfg!(target_os = "linux") {
-        println!("Yes. It's definitely linux!");
-    } else {
-        println!("Yes. It's definitely *not* linux!");
-    }
-
-    println!("Very early hello example test");
-}
+pub mod app;
+mod settings;
 
 // TODO GTK: When there is no Glade.main => building window with webview
 // TODO GTK: Settings: default widths and height
