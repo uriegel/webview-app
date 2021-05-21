@@ -1,8 +1,10 @@
 [package]
-name = "webview-app"
+name = "webview_app"
 version = "0.1.0"
+description = "Simple integration of a web view in an application window like Electron"
 authors = ["uriegel <uriegel@hotmail.de>"]
 edition = "2018"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
