@@ -5,6 +5,9 @@ mod mainwindow;
 #[cfg(target_os = "linux")]
 mod settings;
 
+#[cfg(target_os = "windows")]
+mod windows;
+
 pub fn test() {
     if cfg!(target_os = "linux") {
         println!("Yes. It's definitely linux!");
