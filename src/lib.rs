@@ -1,5 +1,8 @@
+#[cfg(target_os = "linux")]
 pub mod app;
+#[cfg(target_os = "linux")]
 mod mainwindow;
+#[cfg(target_os = "linux")]
 mod settings;
 
 pub fn test() {
