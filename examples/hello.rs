@@ -5,6 +5,7 @@ fn run_app() {
     let app = App::new(
         AppSettings{
             title: "Rust Web View".to_string(),
+            url: "https://google.de".to_string(), 
             ..Default::default()
         });
     app.run();

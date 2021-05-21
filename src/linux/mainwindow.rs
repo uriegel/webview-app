@@ -4,9 +4,11 @@ use gtk::{Application, Builder, GtkApplicationExt, GtkWindowExt, WidgetExt, Wind
 
 use crate::{appsettings::AppSettings, settings::{initialize_size, save_size}};
 
+use super::webview::MainWebView;
+
 #[derive(Debug, Clone)]
 pub struct MainWindow {
-    //window: Window,
+    pub window: Window,
 //    header_bar: HeaderBar
 }
 
@@ -23,8 +25,11 @@ impl MainWindow {
         let window: Window = builder.get_object("mainwindow").unwrap();
 
         let mainwindow = MainWindow { 
+            window: window.clone()
         };
-        
+
+        let webview = MainWebView::new(application, mainwindow.clone());
+        webview.load(&settings.url);
         window.set_default_size(initial_size.0, initial_size.1);
 
         let wh = RefCell::new((0, 0));
