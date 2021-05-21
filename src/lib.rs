@@ -1,8 +1,7 @@
 #[cfg(target_os = "linux")]
+mod linux;
+
 pub mod app;
-#[cfg(target_os = "linux")]
-mod mainwindow;
-#[cfg(target_os = "linux")]
 mod settings;
 
 #[cfg(target_os = "windows")]

@@ -1,38 +1,19 @@
-use std::env;
+#[cfg(target_os = "linux")]
+use crate::linux::app::App as GtkApp;
 
-use gio::{ActionMapExt, ApplicationExt, ApplicationFlags, SimpleAction, prelude::ApplicationExtManual};
-use gtk::{Application, GtkApplicationExt};
-
-use crate::mainwindow::MainWindow;
-
+#[cfg(target_os = "linux")]
 pub struct App {
-    application: Application
+    app: GtkApp
 }
 
 impl App {
     pub fn new(application_id: &str) -> Self {
-
-        let application = Application::new(Some(application_id), 
-        ApplicationFlags::empty())
-            .expect("Application::new() failed");
-
-        let action = SimpleAction::new("destroy", None);
-        let weak_application = application.clone();
-        action.connect_activate(move |_,_| weak_application.quit());
-        application.add_action(&action);
-        application.set_accels_for_action("app.destroy", &["<Ctrl>Q"]);
-
-        application.connect_startup(move |application| {
-            MainWindow::new(application);
-            ()
-        });
-    
-        application.connect_activate(|_| {});
-            
-        App { application }
+        App { 
+            app: GtkApp::new(application_id) 
+        }
     }
 
     pub fn run(&self) {
-        self.application.run(&env::args().collect::<Vec<_>>());
+        self.app.run();
     }
 }
