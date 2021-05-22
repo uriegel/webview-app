@@ -31,7 +31,7 @@ mod windows;
 pub mod app;
 mod settings;
 
-// TODO index.js
+// TODO index.js when no url, settings warp_port is set: use http://localhost:{warp_port}
 // TODO Integrate warp
 // TODO GTK: glade: connect headerbar
 // TODO GTK: Mainwindow (HeaderBar -> hello_header example, Subclass MainWindow with new)
