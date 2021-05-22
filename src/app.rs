@@ -37,7 +37,8 @@ pub struct AppSettings {
     /// When set to true, you can configure the main window with a glade xml file. This feature is only
     /// available on windows. It is primarily useful for integrating a header bar to the main window.
     /// The glade file has to be named "main.glade", and it has to be placed in the root directory.
-    /// It has to contain a WebKitWebView with the id "webview". The main window uses the id "window". You can add a WebKitSettings object
+    /// It has to contain a WebKitWebView with the id "webview". The main window has to be 
+    /// a "GtkApplicationWindow" and uses the id "window". You can add a WebKitSettings object
     /// to configure for example "enable-developer-extras"
     /// Example:
     ///
@@ -80,7 +81,7 @@ pub struct AppSettings {
     ///        <property name="user-agent">Mozilla/5.0 (X11; Fedora; Linux x86_64) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15</property>
     ///        <property name="hardware-acceleration-policy">always</property>
     ///      </object>
-    ///      <object class="GtkWindow" id="window">
+    ///      <object class="GtkApplicationWindow" id="window">
     ///        <property name="can-focus">False</property>
     ///        <child>
     ///          <object class="WebKitWebView" type-func="webkit_web_view_get_type" id="webview">

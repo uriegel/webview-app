@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 
-use gtk::{Application, Builder, GtkApplicationExt, GtkWindowExt, WidgetExt, Window, prelude::BuilderExtManual};
+use gtk::{Application, ApplicationWindow, Builder, GtkApplicationExt, GtkWindowExt, WidgetExt, prelude::BuilderExtManual};
 
 use crate::{app::AppSettings, settings::{initialize_size, save_size}};
 
@@ -8,7 +8,7 @@ use super::webview::MainWebView;
 
 #[derive(Debug, Clone)]
 pub struct MainWindow {
-    pub window: Window,
+    pub window: ApplicationWindow,
 //    header_bar: HeaderBar
 }
 
@@ -20,14 +20,19 @@ impl MainWindow {
             (settings.width, settings.height)
         };
 
-        let builder = Builder::new();
-        builder.add_from_file("main.glade").unwrap();
-        let window: Window = builder.get_object("mainwindow").unwrap();
+        let window: ApplicationWindow = if settings.use_glade {
+            let builder = Builder::new();
+            builder.add_from_file("main.glade").unwrap();
+            builder.get_object("window").unwrap()
+        } else {
+            ApplicationWindow::new(application) 
+        };
 
         let mainwindow = MainWindow { 
             window: window.clone()
         };
 
+        // TODO: use glade
         let webview = MainWebView::new(application, mainwindow.clone());
         webview.load(&settings.url);
         window.set_default_size(initial_size.0, initial_size.1);
