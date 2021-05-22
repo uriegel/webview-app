@@ -15,7 +15,7 @@ fn run_app() {
 fn run_app() {
     let app = App::new(
         AppSettings { 
-            title: "Rust Web View".to_string(),
+            title: "Rust Web View 👍".to_string(),
             url: "https://crates.io".to_string(), 
             ..Default::default()
         }
