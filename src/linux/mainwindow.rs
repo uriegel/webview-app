@@ -47,7 +47,7 @@ impl MainWindow {
         
         let webview = MainWebView::new(application, mainwindow.clone(), 
             &builder, settings.enable_dev_tools);
-        webview.load(&settings.url);
+        webview.load(&settings.get_url());
         window.set_default_size(initial_size.0, initial_size.1);
 
 

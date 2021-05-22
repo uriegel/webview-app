@@ -1,5 +1,6 @@
 //! This module contains all the important structs and implementations to create, configure
 //! and run an application containing only a webview.
+use std::{env, path::PathBuf};
 
 #[cfg(target_os = "linux")]
 use crate::linux::app::App as AppImpl;
@@ -28,6 +29,11 @@ pub struct AppSettings {
     /// The url the application's webview will use to display its content. If not set, index.html in the root directory will be used,
     /// or http://localhost:{port}, when using integrated warp web server
     pub url: String,
+    /// If webroot is set, then the local web files are searched not in the rust project root but in this relative path "webroot". "webroot"
+    /// is relative to the root project directory
+    pub webroot: String,
+    /// If "warp_port" is set, then the internal warp server is activated and serves locally the web files.
+    pub warp_port: i16,
     /// Window width in pixel, if "window_pos_storage_path" is not set, otherwise initial window width
     pub width: i32,
     /// Window height in pixel, if "window_pos_storage_path" is not set, otherwise initial window height
@@ -143,7 +149,9 @@ impl Default for AppSettings {
             title: "".to_string(),
             url: "".to_string(),
             use_glade: false,
-            enable_dev_tools: false
+            enable_dev_tools: false,
+            warp_port: 0,
+            webroot: "".to_string()
         }   
     }
 }
@@ -157,8 +165,28 @@ impl Default for AppSettings {
             window_pos_storage_path: None,
             title: "".to_string(),
             url: "".to_string(),
-            enable_dev_tools: false
+            enable_dev_tools: false,
+            warp_port: 0,
+            webroot: "".to_string()
         }   
+    }
+}
+
+impl AppSettings {
+    /// Get the url which is used internally for displaying in webview
+    pub fn get_url(&self)->String {
+        if self.url.len() > 0  {
+            self.url.clone()
+        } else if self.warp_port != 0 { 
+            format!("http://localhost:{}", self.warp_port).to_string() 
+        } else { 
+            let dir: PathBuf = [ 
+                env::current_dir().unwrap().to_str().unwrap(), 
+                &self.webroot,
+                "index.html"
+            ].iter().collect();
+            format!("file://{}", dir.to_str().unwrap()).to_string() 
+        }
     }
 }
 

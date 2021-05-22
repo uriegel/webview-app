@@ -132,7 +132,7 @@ impl MainWindow {
             ShowWindow(hwnd, SW_SHOW);
             UpdateWindow(hwnd);
         }        
-        self.webview.initialize(hwnd, settings.url.clone(), settings.enable_dev_tools);
+        self.webview.initialize(hwnd, settings.get_url().clone(), settings.enable_dev_tools);
     }
 
     fn on_size(&self, hwnd: HWND) {
