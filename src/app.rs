@@ -227,7 +227,6 @@ impl App {
     /// With this method the application is started and running, until the window is closed.
     pub fn run(&self) {
         let rt = if self.app.settings.warp_port > 0 {
-            println!("STARTING TOKIO");
             Some(Runtime::new().unwrap())
         } else {
             None

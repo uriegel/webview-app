@@ -32,7 +32,6 @@ pub mod app;
 mod settings;
 mod warp_server;
 
-// TODO Integrate warp
 // TODO GTK: glade: connect headerbar
 // TODO GTK: Mainwindow (HeaderBar -> hello_header example, Subclass MainWindow with new)
 // TODO Inject global.js, Messages to and from the webview
