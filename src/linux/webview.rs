@@ -12,14 +12,16 @@ pub struct MainWebView {
 }
 
 impl MainWebView {
-    pub fn new(application: &Application, mainwindow: MainWindow, builder: &Option<Builder>) -> Self {
+    pub fn new(application: &Application, mainwindow: MainWindow, builder: &Option<Builder>, enable_devtools: bool) -> Self {
         let context = WebContext::get_default().unwrap();
         let webview = match builder {
             Some(builder) =>  builder.get_object("webview").unwrap(),
             None => {
                 let webview = WebView::with_context(&context);
                 let settings = SettingsBuilder::new();
-                let settings = settings.enable_developer_extras(true);
+                let settings = if enable_devtools {
+                    settings.enable_developer_extras(true)
+                } else { settings };
                 let settings = settings.build();
                 webview.set_settings(&settings);
                 webview
@@ -37,7 +39,7 @@ impl MainWebView {
             None => println!("Could not show web inspector")
         });
         application.add_action(&action);
-        application.set_accels_for_action("app.devtools", &["F12"]);
+        application.set_accels_for_action("app.devtools", &["<CTRL><SHIFT>I"]);
 
         MainWebView{ 
             webview, 

@@ -31,7 +31,7 @@ mod windows;
 pub mod app;
 mod settings;
 
-// TODO GTK: glade: connect headerbar and show dev tools
+// TODO GTK: glade: connect headerbar
 // TODO GTK: Extending Settings 
 // TODO GTK: Mainwindow (HeaderBar -> hello_header example, Subclass MainWindow with new)
 // TODO Inject global.js, Messages to and from the webview

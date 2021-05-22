@@ -16,6 +16,7 @@
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
+            <property name="action-name">app.devtools</property>
             <property name="text" translatable="yes">_Show dev tools</property>
           </object>
           <packing>

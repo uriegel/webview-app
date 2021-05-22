@@ -32,6 +32,11 @@ pub struct AppSettings {
     pub width: i32,
     /// Window height in pixel, if save_window_pos is set to false, otherwise initial window height
     pub height: i32,
+    /// If set to "true", the web view develeoper tools can be activated by shortcut "Ctrl+Shift+I".
+    /// There is a default action on Linux to show the developer tools: "app.devtools". It can be connected with a
+    /// GtkModelButton in a menu or in the HeaderBar. When using the option "use_glade" and you have
+    /// inserted a WebKitSettings object, then you have to enable "developer tools" there.
+    pub enable_dev_tools: bool,
     /// If set to true, window size is automatically saved
     pub save_window_pos: bool,
     /// When set to true, you can configure the main window with a glade xml file. This feature is only
@@ -61,6 +66,7 @@ pub struct AppSettings {
     ///            <property name="visible">True</property>
     ///            <property name="can-focus">True</property>
     ///            <property name="receives-default">True</property>
+    ///            <property name="action-name">app.devtools</property>
     ///            <property name="text" translatable="yes">_Show dev tools</property>
     ///          </object>
     ///          <packing>
@@ -136,7 +142,8 @@ impl Default for AppSettings {
             save_window_pos: true,
             title: "".to_string(),
             url: "".to_string(),
-            use_glade: false
+            use_glade: false,
+            enable_dev_tools: false
         }   
     }
 }
