@@ -103,7 +103,7 @@ pub struct AppSettings {
     ///      <object class="GtkHeaderBar" id="headerbar">
     ///        <property name="visible">True</property>
     ///        <property name="can-focus">False</property>
-    ///        <property name="title" translatable="yes">Commander</property>
+    ///        <property name="title" translatable="yes">Rust Web View</property>
     ///        <property name="show-close-button">True</property>
     ///        <child>
     ///          <object class="GtkMenuButton">
