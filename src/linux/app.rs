@@ -5,7 +5,9 @@ use gtk::{Application, GtkApplicationExt};
 
 use crate::{app::AppSettings, linux::mainwindow::MainWindow};
 
+#[derive(Clone)]
 pub struct App {
+    pub settings: AppSettings,
     application: Application
 }
 
@@ -22,14 +24,16 @@ impl App {
         application.add_action(&action);
         application.set_accels_for_action("app.destroy", &["<Ctrl>Q"]);
 
+        let settings_clone = settings.clone();
         application.connect_startup(move |application| {
-            MainWindow::new(application, &settings);
+            MainWindow::new(application, &settings_clone);
             ()
         });
     
         application.connect_activate(|_| {});
-            
-        App { application }
+
+        let settings = settings.clone();
+        App { application, settings: settings.clone() }
     }
 
     pub fn run(&self) {

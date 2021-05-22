@@ -30,6 +30,7 @@ mod windows;
 
 pub mod app;
 mod settings;
+mod warp_server;
 
 // TODO Integrate warp
 // TODO GTK: glade: connect headerbar

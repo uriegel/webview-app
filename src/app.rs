@@ -2,8 +2,11 @@
 //! and run an application containing only a webview.
 use std::{env, path::PathBuf};
 
+use tokio::runtime::Runtime;
+
 #[cfg(target_os = "linux")]
 use crate::linux::app::App as AppImpl;
+use crate::warp_server::start;
 #[cfg(target_os = "windows")]
 use crate::windows::app::App as AppImpl;
 
@@ -33,7 +36,7 @@ pub struct AppSettings {
     /// is relative to the root project directory
     pub webroot: String,
     /// If "warp_port" is set, then the internal warp server is activated and serves locally the web files.
-    pub warp_port: i16,
+    pub warp_port: u16,
     /// Window width in pixel, if "window_pos_storage_path" is not set, otherwise initial window width
     pub width: i32,
     /// Window height in pixel, if "window_pos_storage_path" is not set, otherwise initial window height
@@ -139,6 +142,24 @@ pub struct AppSettings {
 }
 
 #[cfg(target_os = "linux")]
+impl Clone for AppSettings {
+    fn clone(&self) -> AppSettings {
+        AppSettings { 
+            application_id: self.application_id.clone(),
+            enable_dev_tools: self.enable_dev_tools,
+            height: self.height,
+            width: self.width,
+            title: self.title.clone(),
+            url: self.url.clone(),
+            use_glade: self.use_glade,
+            warp_port: self.warp_port,
+            webroot: self.webroot.clone(),
+            window_pos_storage_path: self.window_pos_storage_path.clone()
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
 impl Default for AppSettings {
     fn default()->Self { 
         Self {
@@ -173,7 +194,7 @@ impl Default for AppSettings {
 }
 
 impl AppSettings {
-    /// Get the url which is used internally for displaying in webview
+    /// Gets the url which is used internally for displaying in webview
     pub fn get_url(&self)->String {
         if self.url.len() > 0  {
             self.url.clone()
@@ -205,6 +226,16 @@ impl App {
 
     /// With this method the application is started and running, until the window is closed.
     pub fn run(&self) {
+        let rt = if self.app.settings.warp_port > 0 {
+            println!("STARTING TOKIO");
+            Some(Runtime::new().unwrap())
+        } else {
+            None
+        };
+        if let Some(ref rt) = rt {
+            start(rt, self.app.settings.warp_port)
+        }
+
         self.app.run();
     }
 }

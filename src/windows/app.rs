@@ -23,6 +23,7 @@ pub fn utf_16_null_terminiated(x: &str) -> Vec<u16> {
 }
 
 pub struct App {
+    pub settings: AppSettings
 //    main_window: Rc<OnceCell<MainWindow>>
 }
 
@@ -46,6 +47,7 @@ impl App {
         main_window.create(instance, dpi, &settings);        
 
         App { 
+            settings 
             // main_window: main_window_cell 
         }
     }
