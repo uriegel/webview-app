@@ -39,7 +39,8 @@ impl MainWindow {
         let mainwindow = MainWindow { 
             window: window.clone()
         };
-
+        window.set_title(&settings.title);
+        
         let webview = MainWebView::new(application, mainwindow.clone(), 
             &builder, settings.enable_dev_tools);
         webview.load(&settings.url);
