@@ -28,17 +28,17 @@ pub struct AppSettings {
     /// The url the application's webview will use to display its content. If not set, index.html in the root directory will be used,
     /// or http://localhost:{port}, when using integrated warp web server
     pub url: String,
-    /// Window width in pixel, if save_window_pos is set to false, otherwise initial window width
+    /// Window width in pixel, if "window_pos_storage_path" is not set, otherwise initial window width
     pub width: i32,
-    /// Window height in pixel, if save_window_pos is set to false, otherwise initial window height
+    /// Window height in pixel, if "window_pos_storage_path" is not set, otherwise initial window height
     pub height: i32,
     /// If set to "true", the web view develeoper tools can be activated by shortcut "Ctrl+Shift+I".
     /// There is a default action on Linux to show the developer tools: "app.devtools". It can be connected with a
     /// GtkModelButton in a menu or in the HeaderBar. When using the option "use_glade" and you have
     /// inserted a WebKitSettings object, then you have to enable "developer tools" there.
     pub enable_dev_tools: bool,
-    /// If set to true, window size is automatically saved
-    pub save_window_pos: bool,
+    /// If set, then window size is automatically saved to a folder with relative path set to "window_pos_storage_path"
+    pub window_pos_storage_path: Option<String>,
     /// When set to true, you can configure the main window with a glade xml file. This feature is only
     /// available on windows. It is primarily useful for integrating a header bar to the main window.
     /// The glade file has to be named "main.glade", and it has to be placed in the root directory.
@@ -139,7 +139,7 @@ impl Default for AppSettings {
             application_id: "de.uriegel.webapp".to_string(),
             width: 800,
             height: 600,
-            save_window_pos: true,
+            window_pos_storage_path: None,
             title: "".to_string(),
             url: "".to_string(),
             use_glade: false,
@@ -154,7 +154,7 @@ impl Default for AppSettings {
         Self {
             width: 800,
             height: 600,
-            save_window_pos: true,
+            window_pos_storage_path: None,
             title: "".to_string(),
             url: "".to_string(),
             enable_dev_tools: false

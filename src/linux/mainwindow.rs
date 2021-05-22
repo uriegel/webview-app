@@ -5,7 +5,7 @@ use gtk::{
     WidgetExt, prelude::BuilderExtManual
 };
 
-use crate::{app::AppSettings, settings::{initialize_size, save_size}};
+use crate::{app::AppSettings, settings::WindowPosStorage};
 
 use super::webview::MainWebView;
 
@@ -17,8 +17,12 @@ pub struct MainWindow {
 
 impl MainWindow {
     pub fn new(application: &Application, settings: &AppSettings) -> Self {
-        let initial_size = if settings.save_window_pos {
-            initialize_size(settings.width, settings.height)
+        let window_pos_storage = match &settings.window_pos_storage_path {
+            Some(store) => Some(WindowPosStorage::new(&store)),
+            None => None
+        };
+        let initial_size = if let Some(ref store) = window_pos_storage {
+            store.initialize_size(settings.width, settings.height)
         } else {
             (settings.width, settings.height)
         };
@@ -46,16 +50,19 @@ impl MainWindow {
         webview.load(&settings.url);
         window.set_default_size(initial_size.0, initial_size.1);
 
-        let wh = RefCell::new((0, 0));
-        let weak_window = window.clone();
-        window.connect_configure_event(move |_,_| {
-            let size = weak_window.get_size();
-            let old_wh = wh.replace(size);
-            if size.0 != old_wh.0 || size.1 != old_wh.1 {
-                save_size((size.0,  size.1));
-            }
-            false
-        });        
+
+        if let Some(store) = window_pos_storage {        
+            let wh = RefCell::new((0, 0));
+            let weak_window = window.clone();
+                window.connect_configure_event(move |_,_| {
+                let size = weak_window.get_size();
+                let old_wh = wh.replace(size);
+                if size.0 != old_wh.0 || size.1 != old_wh.1 {
+                    store.save_size((size.0,  size.1));
+                }
+                false
+            });        
+        }
 
         application.add_window(&window);
         window.show_all();

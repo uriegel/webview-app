@@ -31,7 +31,6 @@ mod windows;
 pub mod app;
 mod settings;
 
-// TODO GTK: configure settings
 // TODO GTK: glade: connect headerbar
 // TODO GTK: Extending Settings 
 // TODO GTK: Mainwindow (HeaderBar -> hello_header example, Subclass MainWindow with new)
