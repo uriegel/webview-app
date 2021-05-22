@@ -3,7 +3,7 @@ use std::{mem, rc::Rc};
 use once_cell::unsync::OnceCell;
 use webview2::{Controller, Environment};
 use winapi::{shared::windef::{HWND, RECT}, um::winuser::GetClientRect};
-use crate::{app::AppSettings, windows::app::App};
+use crate::{windows::app::App};
 
 pub struct WebView {
     controller: Rc<OnceCell<Controller>>

@@ -1,6 +1,6 @@
 use std::{mem, ptr, rc::Rc};
 use once_cell::sync::OnceCell;
-use winapi::{shared::{minwindef::HINSTANCE, windef::{
+use winapi::{shared::{windef::{
             DPI_AWARENESS_CONTEXT, 
             DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
         }
@@ -90,5 +90,3 @@ impl App {
     }
 }
 
-
-// TODO: Save windows settings

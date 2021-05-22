@@ -69,10 +69,15 @@ impl WindowPosStorage {
     }
 
     fn get_settings_path(&self, name: &str) -> PathBuf {
+        #[cfg(target_os = "linux")]
+        fn get_user_data_path()->String { ".config".to_string() }
+        #[cfg(target_os = "windows")]
+        fn get_user_data_path()->String { r"AppData\Local".to_string() }
+
         let home_dir = dirs::home_dir().unwrap();
         [ 
             home_dir.to_str().unwrap(), 
-            ".config", 
+            &get_user_data_path(), 
             &self.path,
             name].iter().collect()
     }

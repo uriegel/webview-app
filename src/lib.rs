@@ -31,8 +31,9 @@ mod windows;
 pub mod app;
 mod settings;
 
+// TODO index.js
+// TODO Integrate warp
 // TODO GTK: glade: connect headerbar
-// TODO GTK: Extending Settings 
 // TODO GTK: Mainwindow (HeaderBar -> hello_header example, Subclass MainWindow with new)
 // TODO Inject global.js, Messages to and from the webview
-// TODO Integrate warp
+// TODO save Window Pos

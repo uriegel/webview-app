@@ -10,7 +10,7 @@ use winapi::{shared::{minwindef::HINSTANCE, windef::{
         USER_DEFAULT_SCREEN_DPI, UpdateWindow, WNDCLASSW, WS_OVERLAPPEDWINDOW
     }
 }};
-use crate::{app::AppSettings, windows::app::App, windows::webview::WebView};
+use crate::{app::AppSettings, settings::WindowPosStorage, windows::app::App, windows::webview::WebView};
 
 use super::{app::utf_16_null_terminiated};
 
@@ -18,12 +18,17 @@ const CLASS_NAME: &str = "Commander";
 
 pub struct MainWindow {
     //hwnd: HWND,
-    webview: WebView
+    webview: WebView,
+    window_pos_storage: Option<WindowPosStorage>
 }
 
 impl MainWindow {
     pub fn new(settings: &AppSettings) -> Self {
-        MainWindow { webview: WebView::new() }
+        let window_pos_storage = match &settings.window_pos_storage_path {
+            Some(store) => Some(WindowPosStorage::new(&store)),
+            None => None
+        };
+        MainWindow { webview: WebView::new(), window_pos_storage }
     }
 
     pub fn register(&self, instance: HINSTANCE, main_window_cell: &Rc<OnceCell<MainWindow>>) {
@@ -98,6 +103,11 @@ impl MainWindow {
 
     pub fn create(&self, instance: HINSTANCE, dpi: i32, settings: &AppSettings) {
         let class_name = utf_16_null_terminiated(CLASS_NAME);
+        let initial_size = if let Some(ref store) = self.window_pos_storage {
+            store.initialize_size(settings.width, settings.height)
+        } else {
+            (settings.width, settings.height)
+        };
         let hwnd = unsafe {
             CreateWindowExW(
                 0,
@@ -106,8 +116,8 @@ impl MainWindow {
                 WS_OVERLAPPEDWINDOW,
                 CW_USEDEFAULT,
                 CW_USEDEFAULT,
-                MulDiv(settings.width, dpi, USER_DEFAULT_SCREEN_DPI),
-                MulDiv(settings.height, dpi, USER_DEFAULT_SCREEN_DPI),
+                MulDiv(initial_size.0, dpi, USER_DEFAULT_SCREEN_DPI),
+                MulDiv(initial_size.1, dpi, USER_DEFAULT_SCREEN_DPI),
                 ptr::null_mut(),
                 ptr::null_mut(),
                 instance,
@@ -131,6 +141,9 @@ impl MainWindow {
             GetClientRect(hwnd, &mut rect);
         }
         self.webview.on_size(rect);
+        if let Some(store) = &self.window_pos_storage {
+            store.save_size((rect.right, rect.bottom));
+        }
     }
 
     fn on_move(&self) {
