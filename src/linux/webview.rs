@@ -1,5 +1,5 @@
 use gio::{ActionMapExt};
-use gtk::{Application, ContainerExt, GtkApplicationExt};
+use gtk::{Application, Builder, ContainerExt, GtkApplicationExt, prelude::BuilderExtManual};
 use webkit2gtk::{SettingsBuilder, WebContext, WebInspectorExt, WebView, WebViewExt};
 
 use super::mainwindow::MainWindow;
@@ -12,16 +12,23 @@ pub struct MainWebView {
 }
 
 impl MainWebView {
-    pub fn new(application: &Application, mainwindow: MainWindow) -> Self {
+    pub fn new(application: &Application, mainwindow: MainWindow, builder: &Option<Builder>) -> Self {
         let context = WebContext::get_default().unwrap();
-        let webview = WebView::with_context(&context);
+        let webview = match builder {
+            Some(builder) =>  builder.get_object("webview").unwrap(),
+            None => {
+                let webview = WebView::with_context(&context);
+                let settings = SettingsBuilder::new();
+                let settings = settings.enable_developer_extras(true);
+                let settings = settings.build();
+                webview.set_settings(&settings);
+                webview
+            }
+        };
+        
         mainwindow.window.add(&webview);        
         webview.connect_context_menu(|_, _, _, _| true );
 
-        let settings = SettingsBuilder::new();
-        let settings = settings.enable_developer_extras(true);
-        let settings = settings.build();
-        webview.set_settings(&settings);
 
         let weak_webview = webview.clone();
         let action = gio::SimpleAction::new("devtools", None);

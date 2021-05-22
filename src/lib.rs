@@ -31,9 +31,7 @@ mod windows;
 pub mod app;
 mod settings;
 
-// TODO GTK: When there is no Glade.main => building window with webview
-// TODO GTK: Settings: default widths and height
-// TODO GTK: When there is a Glade.main => building window with webview and main.glade, hello_glade example
+// TODO GTK: glade: connect headerbar and show dev tools
 // TODO GTK: Extending Settings 
 // TODO GTK: Mainwindow (HeaderBar -> hello_header example, Subclass MainWindow with new)
 // TODO Inject global.js, Messages to and from the webview
