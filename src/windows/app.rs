@@ -14,7 +14,7 @@ use winapi::{shared::{minwindef::HINSTANCE, windef::{
     }
 };
 
-use crate::appsettings::AppSettings;
+use crate::app::AppSettings;
 
 use super::{mainwindow::MainWindow, messagebox::error_message_box};
 
@@ -23,9 +23,7 @@ pub fn utf_16_null_terminiated(x: &str) -> Vec<u16> {
 }
 
 pub struct App {
-    instance: HINSTANCE,
-    dpi: i32,    
-    main_window: Rc<OnceCell<MainWindow>>
+//    main_window: Rc<OnceCell<MainWindow>>
 }
 
 impl App {
@@ -47,7 +45,9 @@ impl App {
         main_window.register(instance, &main_window_cell);
         main_window.create(instance, dpi, &settings);        
 
-        App { instance, dpi, main_window: main_window_cell }
+        App { 
+            // main_window: main_window_cell 
+        }
     }
 
     pub fn run(&self) {

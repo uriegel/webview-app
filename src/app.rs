@@ -156,7 +156,8 @@ impl Default for AppSettings {
             height: 600,
             save_window_pos: true,
             title: "".to_string(),
-            url: "".to_string()
+            url: "".to_string(),
+            enable_dev_tools: false
         }   
     }
 }

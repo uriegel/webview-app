@@ -10,7 +10,7 @@ use winapi::{shared::{minwindef::HINSTANCE, windef::{
         USER_DEFAULT_SCREEN_DPI, UpdateWindow, WNDCLASSW, WS_OVERLAPPEDWINDOW
     }
 }};
-use crate::{appsettings::AppSettings, windows::app::App, windows::webview::WebView};
+use crate::{app::AppSettings, windows::app::App, windows::webview::WebView};
 
 use super::{app::utf_16_null_terminiated};
 
@@ -122,8 +122,7 @@ impl MainWindow {
             ShowWindow(hwnd, SW_SHOW);
             UpdateWindow(hwnd);
         }        
-        self.webview.initialize(hwnd, settings.url.clone()
-    );
+        self.webview.initialize(hwnd, settings.url.clone(), settings.enable_dev_tools);
     }
 
     fn on_size(&self, hwnd: HWND) {

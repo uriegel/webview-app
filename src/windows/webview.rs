@@ -3,7 +3,7 @@ use std::{mem, rc::Rc};
 use once_cell::unsync::OnceCell;
 use webview2::{Controller, Environment};
 use winapi::{shared::windef::{HWND, RECT}, um::winuser::GetClientRect};
-use crate::windows::app::App;
+use crate::{app::AppSettings, windows::app::App};
 
 pub struct WebView {
     controller: Rc<OnceCell<Controller>>
@@ -15,7 +15,7 @@ impl WebView {
             controller: Rc::new(OnceCell::<Controller>::new())
         }
     }
-    pub fn initialize(&self, hwnd: HWND, url: String) {
+    pub fn initialize(&self, hwnd: HWND, url: String, enable_devtools: bool) {
         let controller_cell = self.controller.clone();
         Environment::builder().build(move | env| {
             match env {
@@ -29,7 +29,7 @@ impl WebView {
                     let settings = web_view.get_settings().unwrap();
                     settings.put_is_script_enabled(true).unwrap();
                     settings.put_are_default_script_dialogs_enabled(true).unwrap();
-                    settings.put_are_dev_tools_enabled(true).unwrap();
+                    settings.put_are_dev_tools_enabled(enable_devtools).unwrap();
                     settings.put_are_default_context_menus_enabled(false).unwrap();
 
                     let initial_theme = "themeWindows";
