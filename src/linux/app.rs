@@ -3,7 +3,7 @@ use std::env;
 use gio::{ActionMapExt, ApplicationExt, ApplicationFlags, SimpleAction, prelude::ApplicationExtManual};
 use gtk::{Application, GtkApplicationExt};
 
-use crate::{appsettings::AppSettings, linux::mainwindow::MainWindow};
+use crate::{app::AppSettings, linux::mainwindow::MainWindow};
 
 pub struct App {
     application: Application

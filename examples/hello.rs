@@ -1,4 +1,4 @@
-use webview_app::{app::App, appsettings::AppSettings};
+use webview_app::{app::App, app::AppSettings};
 
 #[cfg(target_os = "linux")]
 fn run_app() {

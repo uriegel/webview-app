@@ -2,7 +2,7 @@ use std::cell::RefCell;
 
 use gtk::{Application, Builder, GtkApplicationExt, GtkWindowExt, WidgetExt, Window, prelude::BuilderExtManual};
 
-use crate::{appsettings::AppSettings, settings::{initialize_size, save_size}};
+use crate::{app::AppSettings, settings::{initialize_size, save_size}};
 
 use super::webview::MainWebView;
 
