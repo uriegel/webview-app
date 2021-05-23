@@ -1,8 +1,10 @@
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+
 use chrono::Utc;
 use tokio::runtime::Runtime;
-use warp::{Filter, Reply, fs::File, http::HeaderValue, hyper::{Body, HeaderMap, Response}};
+use warp::{Filter, Reply, fs::{File, dir}, http::HeaderValue, hyper::{Body, HeaderMap, Response}};
 
-use crate::app::AppSettings;
+use crate::app::WarpSettings;
 
 fn create_headers() -> HeaderMap {
     let mut header_map = HeaderMap::new();
@@ -13,31 +15,26 @@ fn create_headers() -> HeaderMap {
     header_map
 }
 
-pub fn start(rt: &Runtime, settings: AppSettings)-> () {
-    rt.spawn(async move {
+pub fn add_headers(reply: File)->Response<Body> {
+    let mut res = reply.into_response();
+    let headers = res.headers_mut();
+    let header_map = create_headers();
+    headers.extend(header_map);
+    res
+}
 
-        fn add_headers(reply: File)->Response<Body> {
-            let mut res = reply.into_response();
-            let headers = res.headers_mut();
-            let header_map = create_headers();
-            headers.extend(header_map);
-            res
-        }
-
-        let route_static = warp::fs::dir(".")
-            .map(add_headers);
-
-
-        match settings.warp_json_filters {
-            Some(filters) => {
-                let routes = filters().or(route_static);
-                warp::serve(routes)
-                    .run(([127, 0, 0, 1], settings.warp_port))
-                    .await;        
-                },
-                None => warp::serve(route_static)
-                    .run(([127, 0, 0, 1], settings.warp_port))
-                    .await
-        };
-    });
+pub fn start(rt: &Runtime, settings: WarpSettings)-> () {
+    let socket_addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), settings.port);
+    let static_dir = ".";
+    if let Some(init_fn) = settings.init_fn {
+        init_fn(rt, socket_addr, static_dir.to_string());
+    } else {
+        rt.spawn(async move {
+            let route_static = dir(static_dir)
+                .map(add_headers);
+            warp::serve(route_static)
+                .run(socket_addr)
+                .await;        
+        });
+    };
 }

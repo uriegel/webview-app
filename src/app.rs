@@ -1,15 +1,40 @@
 //! This module contains all the important structs and implementations to create, configure
 //! and run an application containing only a webview.
-use std::{env, path::PathBuf};
+use std::{env, net::SocketAddr, path::PathBuf};
 
 use tokio::runtime::Runtime;
-use warp::{filters::BoxedFilter, reply::Json};
 
 #[cfg(target_os = "linux")]
 use crate::linux::app::App as AppImpl;
 use crate::warp_server::start;
 #[cfg(target_os = "windows")]
 use crate::windows::app::App as AppImpl;
+
+/// Configuration Settings for the internal warp server.
+///
+/// Here you have to define the port the warp server is using. You also have the possibility to add filter routes
+/// by implementing the "warp_fn".  
+pub struct WarpSettings {
+    /// port that the internal warp server is using for serving the web files locally.
+    pub port: u16, 
+    /// If set, then the internal warp server calls this function, and you can manually add routes to warp.
+    /// You have to add the static route, which comes by argument, and you also have to start the warp server in this function!
+    /// 
+    /// Example:
+    ///
+    /// ```
+    /// ```
+    pub init_fn: Option<fn(rt: &Runtime, socket_addr: SocketAddr, static_dir: String)>,
+}
+
+impl Clone for WarpSettings {
+    fn clone(&self) -> WarpSettings {
+        WarpSettings { 
+            port: self.port,
+            init_fn: self.init_fn            
+        }
+    }
+}
 
 /// Configuration settings for the app. 
 ///
@@ -36,8 +61,8 @@ pub struct AppSettings {
     /// If webroot is set, then the local web files are searched not in the rust project root but in this relative path "webroot". "webroot"
     /// is relative to the root project directory
     pub webroot: String,
-    /// If "warp_port" is set, then the internal warp server is activated and serves locally the web files.
-    pub warp_port: u16,
+    /// If "warp_settings" is set, then the internal warp server is activated and serves locally the web files.
+    pub warp_settings: Option<WarpSettings>,
     /// Window width in pixel, if "window_pos_storage_path" is not set, otherwise initial window width
     pub width: i32,
     /// Window height in pixel, if "window_pos_storage_path" is not set, otherwise initial window height
@@ -47,9 +72,6 @@ pub struct AppSettings {
     /// GtkModelButton in a menu or in the HeaderBar. When using the option "use_glade" and you have
     /// inserted a WebKitSettings object, then you have to enable "developer tools" there.
     pub enable_dev_tools: bool,
-    /// When warp server ist enabled ("warp_port" ist set), then you can add custom filters. 
-    //  "warp_json_filters" are BoxedFilters returning json results
-    pub warp_json_filters: Option<fn()->BoxedFilter<(Json,)>>,
     /// If set, then window size is automatically saved to a folder with relative path set to "window_pos_storage_path"
     pub window_pos_storage_path: Option<String>,
     /// When set to true, you can configure the main window with a glade xml file. This feature is only
@@ -57,7 +79,8 @@ pub struct AppSettings {
     /// The glade file has to be named "main.glade", and it has to be placed in the root directory.
     /// It has to contain a WebKitWebView with the id "webview". The main window has to be 
     /// a "GtkApplicationWindow" and uses the id "window". You can add a WebKitSettings object
-    /// to configure for example "enable-developer-extras"
+    /// to configure for example "enable-developer-extras".
+    ///
     /// Example:
     ///
     /// ```
@@ -155,9 +178,8 @@ impl Clone for AppSettings {
             width: self.width,
             title: self.title.clone(),
             url: self.url.clone(),
+            warp_settings: self.warp_settings.clone(),
             use_glade: self.use_glade,
-            warp_port: self.warp_port,
-            warp_json_filters: self.warp_json_filters,
             webroot: self.webroot.clone(),
             window_pos_storage_path: self.window_pos_storage_path.clone()
         }
@@ -175,9 +197,8 @@ impl Default for AppSettings {
             title: "".to_string(),
             url: "".to_string(),
             use_glade: false,
+            warp_settings: None,
             enable_dev_tools: false,
-            warp_port: 0,
-            warp_json_filters: None,
             webroot: "".to_string()
         }   
     }
@@ -193,7 +214,7 @@ impl Default for AppSettings {
             title: "".to_string(),
             url: "".to_string(),
             enable_dev_tools: false,
-            warp_port: 0,
+            warp_settings: None,
             webroot: "".to_string()
         }   
     }
@@ -204,8 +225,8 @@ impl AppSettings {
     pub fn get_url(&self)->String {
         if self.url.len() > 0  {
             self.url.clone()
-        } else if self.warp_port != 0 { 
-            format!("http://localhost:{}", self.warp_port).to_string() 
+        } else if let Some(ws) = &self.warp_settings { 
+            format!("http://localhost:{}", ws.port).to_string() 
         } else { 
             let dir: PathBuf = [ 
                 env::current_dir().unwrap().to_str().unwrap(), 
@@ -232,13 +253,13 @@ impl App {
 
     /// With this method the application is started and running, until the window is closed.
     pub fn run(&self) {
-        let rt = if self.app.settings.warp_port > 0 {
-            Some(Runtime::new().unwrap())
+        let warp = if let Some(warp_settings) = &self.app.settings.warp_settings {
+            Some((Runtime::new().unwrap(), warp_settings))
         } else {
             None
         };
-        if let Some(ref rt) = rt {
-            start(rt, self.app.settings.clone())
+        if let Some((ref rt, warp_settings)) = warp {
+            start(rt, warp_settings.clone())
         }
 
         self.app.run();
