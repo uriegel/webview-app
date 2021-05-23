@@ -62,8 +62,8 @@ fn server(rt: &Runtime, socket_addr: SocketAddr, static_dir: String) {
 
         let routes = 
             get_json
-            .or(route_static)
-            .or(post_json);
+            .or(post_json)
+            .or(route_static);
 
         warp::serve(routes)
             .run(socket_addr)
