@@ -13,5 +13,5 @@ This is just an early start!
 ```cargo run --example hello```
 
 ## Icon in Windows
-Use ```winres``` and build-script ```build.rs``` with ```res.set_icon()```. This Icon will be the web viw windows icon.
+Use ```winres``` and build-script ```build.rs``` with ```res.set_icon()```. This Icon will be the web view windows icon.
 

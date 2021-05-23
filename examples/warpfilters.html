@@ -1,0 +1,25 @@
+<html>
+    <head>
+        <title>Rust Web View</title>
+        <meta charset="utf-8"/>
+    </head>
+
+    <body>
+        <h1>Rust Web View with warp filters</h1>
+        <p>
+            This is a sample page for displaying in <em>Rust Web View</em>
+        </p>
+        <p>
+            <button onclick="getJson()">get JSON</button>
+        </p>
+
+        <script>
+            console.log("Alete 2")
+            getJson = async () => {
+                const responseStr = await fetch('/requests/getitems')
+                const response = await responseStr.json()
+                console.log("response", response)
+            }
+        </script>
+    </body> 
+</html>

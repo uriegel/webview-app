@@ -1,15 +1,59 @@
 //! This module contains all the important structs and implementations to create, configure
 //! and run an application containing only a webview.
-use std::{env, path::PathBuf};
+use std::{env, io::Error, path::PathBuf, pin::Pin};
 
 use tokio::runtime::Runtime;
-use warp::{filters::BoxedFilter, reply::Json};
+use futures::{Future, future};
 
 #[cfg(target_os = "linux")]
 use crate::linux::app::App as AppImpl;
 use crate::warp_server::start;
 #[cfg(target_os = "windows")]
 use crate::windows::app::App as AppImpl;
+
+// fn test() -> Pin<Box<dyn Future<Output = Result<bool, ()>, Item = bool, Error = Error>>> {
+//     Box::pin(future::ok(true))
+// }
+
+// async fn async_fn() -> bool {
+//     test().await.unwrap()
+// }
+
+// fn main(){
+//     async_fn();
+//     println!("Hello!");
+// }
+
+//trait FilterGetFn { async fn call(&self, args: String) -> warp::Reply; }
+//type GetFilterCallback = async fn(param: GetItems)->Result<impl warp::Reply, warp::Rejection>; 
+//type GetFilterCallback = async fn(param: GetItems)->Result<impl warp::Reply, warp::Rejection>; 
+
+// trait FilterGetFn { fn call(&self, args: String) -> BoxFuture<'static, warp::Reply, warp::Rejection>; }
+// trait FilterGetFn { fn call(&self, args: String) -> BoxFuture<'static, warp::Reply, warp::Rejection>; }
+
+
+// impl<T, F> FilterGetFn for T
+// where 
+//     T: Fn(String)->F,
+//     F: Future<Output = Result<impl warp::Reply, warp::Rejection>> + 'static,
+// {
+//     fn call (&self, args: String)->BoxFuture<'static, Result<impl warp::Reply, warp::Rejection>> {
+//         Box::pin(self(args))
+//     }
+// }
+// struct WarpGetFilter<GetCb, F>
+// where
+//     GetCb: Fn(String)->F,
+//     F: Future,
+// {
+//     path: String,
+//     callback: GetCb
+// }
+
+// type filters = Vec<WarpGetFilter<GetCb, F>
+// where
+//     GetCb: Fn(String)->F,
+//     F: Future>;
 
 /// Configuration settings for the app. 
 ///
@@ -47,10 +91,8 @@ pub struct AppSettings {
     /// GtkModelButton in a menu or in the HeaderBar. When using the option "use_glade" and you have
     /// inserted a WebKitSettings object, then you have to enable "developer tools" there.
     pub enable_dev_tools: bool,
-    /// When warp server ist enabled ("warp_port" ist set), then you can add custom filters. 
-    //  "warp_json_filters" are BoxedFilters returning json results
-    pub warp_json_filters: Option<fn()->BoxedFilter<(Json,)>>,
     /// If set, then window size is automatically saved to a folder with relative path set to "window_pos_storage_path"
+    //pub warp_get_filters: WarpGetFilter<>
     pub window_pos_storage_path: Option<String>,
     /// When set to true, you can configure the main window with a glade xml file. This feature is only
     /// available on windows. It is primarily useful for integrating a header bar to the main window.
@@ -157,7 +199,6 @@ impl Clone for AppSettings {
             url: self.url.clone(),
             use_glade: self.use_glade,
             warp_port: self.warp_port,
-            warp_json_filters: self.warp_json_filters,
             webroot: self.webroot.clone(),
             window_pos_storage_path: self.window_pos_storage_path.clone()
         }
@@ -177,7 +218,6 @@ impl Default for AppSettings {
             use_glade: false,
             enable_dev_tools: false,
             warp_port: 0,
-            warp_json_filters: None,
             webroot: "".to_string()
         }   
     }
@@ -238,7 +278,7 @@ impl App {
             None
         };
         if let Some(ref rt) = rt {
-            start(rt, self.app.settings.clone())
+            start(rt, self.app.settings.warp_port)
         }
 
         self.app.run();
