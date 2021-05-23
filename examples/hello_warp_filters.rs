@@ -3,7 +3,7 @@ use std::net::SocketAddr;
 use serde::{Serialize, Deserialize};
 use tokio::runtime::Runtime;
 use warp::fs::dir;
-use webview_app::{app::App, app::{AppSettings, WarpSettings}, warp_server::add_headers};
+use webview_app::{app::App, app::{AppSettings, WarpSettings}, headers::add_headers};
 use warp::{Filter, reply::{Json, json}};
 
 #[derive(Serialize)]

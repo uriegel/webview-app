@@ -29,8 +29,9 @@ mod linux;
 mod windows;
 
 pub mod app;
-pub mod warp_server;
+pub mod headers;
 mod settings;
+mod warp_server;
 
 // TODO Warp filters, add to AppSettings,alternative: add in initialization callback
 // TODO Warp methods like sendFile, sendJson...
