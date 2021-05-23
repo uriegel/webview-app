@@ -1,6 +1,6 @@
 [package]
 name = "webview_app"
-version = "0.2.0"
+version = "0.3.0"
 description = "Simple integration of a web view in an application window like Electron"
 authors = ["Uwe Riegel <uriegel@hotmail.de>"]
 edition = "2018"
