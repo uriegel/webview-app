@@ -33,8 +33,6 @@ pub mod headers;
 mod settings;
 mod warp_server;
 
-// TODO Warp filters, add to AppSettings,alternative: add in initialization callback
-// TODO Warp methods like sendFile, sendJson...
 // TODO on_msg_from_javascript
 // TODO inject javascript on load
 
