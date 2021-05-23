@@ -1,6 +1,10 @@
-use warp::{Filter, filters::BoxedFilter, reply::{Json, json}};
-use webview_app::{app::App, app::AppSettings};
-use serde::{Serialize};
+use std::net::SocketAddr;
+
+use serde::{Serialize, Deserialize};
+use tokio::runtime::Runtime;
+use warp::fs::dir;
+use webview_app::{app::App, app::{AppSettings, WarpSettings}, warp_server::add_headers};
+use warp::{Filter, reply::{Json, json}};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -10,32 +14,72 @@ pub struct WarpItem {
     pub capacity: u64,
 }
 
-async fn get_items()->Result<Json, warp::Rejection> {
-    println!("Request called");
+#[derive(Deserialize)]
+struct PostItem {
+    path: String,
+}
+
+async fn get_item()->Result<Json, warp::Rejection> {
     let item = WarpItem { 
         capacity:123, 
-        display: "Warp returning jon data".to_string(), 
+        display: "Warp returning json data".to_string(), 
         name: "warp filter".to_string()
     };
     Ok(json(&item))
     //Err(warp::reject())
 }
 
-fn get_filters()->BoxedFilter<(Json,)>  {
-    warp::get()
-    .and(warp::path("requests"))
-    .and(warp::path("getitems"))
-    .and(warp::path::end())
-    .and_then(get_items).boxed()
+async fn post_item(param: PostItem)->Result<Json, warp::Rejection> {
+    let item = WarpItem { 
+        capacity:123, 
+        display: "Warp returning json data".to_string(), 
+        name: param.path.clone()
+    };
+    Ok(json(&item))
+    //Err(warp::reject())
+}
+
+fn server(rt: &Runtime, socket_addr: SocketAddr, static_dir: String) {
+    rt.spawn(async move {
+
+        let get_json = 
+            warp::get()
+            .and(warp::path("requests"))
+            .and(warp::path("getitem"))
+            .and(warp::path::end())
+            .and_then(get_item);
+
+        let post_json = 
+            warp::post()
+            .and(warp::path("requests"))
+            .and(warp::path("postitem"))
+            .and(warp::path::end())
+            .and(warp::body::json())
+            .and_then(post_item);
+
+        let route_static = dir(static_dir)
+            .map(add_headers);
+
+        let routes = 
+            get_json
+            .or(route_static)
+            .or(post_json);
+
+        warp::serve(routes)
+            .run(socket_addr)
+            .await;        
+    });
 }
 
 fn run_app() {
     let app = App::new(
         AppSettings { 
             title: "Rust Web View 👍".to_string(),
-            warp_port: 9999,
-            warp_json_filters: Some(get_filters),
             url: "http://localhost:9999/examples/warpfilters.html".to_string(),
+            warp_settings: Some(WarpSettings { 
+                port: 9999,
+                init_fn: Some(server),
+            }),
             enable_dev_tools: true,
             ..Default::default()
         }
