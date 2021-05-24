@@ -33,7 +33,5 @@ pub mod headers;
 mod settings;
 mod warp_server;
 
-// TODO Sample change theme (background color red or yellow)
-// TODO message to javascript
 // TODO Windows: msg to windows
 // TODO save Window Pos

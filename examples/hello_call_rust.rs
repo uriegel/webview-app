@@ -1,14 +1,35 @@
+use gio::{ActionMapExt, SimpleAction, prelude::ToVariant};
 use gtk::{Application, ApplicationWindow, Builder, HeaderBar, HeaderBarExt, prelude::BuilderExtManual};
-use webkit2gtk::WebView;
+use webkit2gtk::{WebView, WebViewExt};
 use webview_app::{app::App, app::{AppSettings, WarpSettings, connect_msg_callback}};
 
-fn on_init(_: &Application, _: &ApplicationWindow, builder: &Option<Builder>, webview: & WebView) {
+fn on_init(application: &Application, _: &ApplicationWindow, builder: &Option<Builder>, webview: &WebView) {
+    let initial_state = "".to_variant();
+    let weak_webview = webview.clone();
+    let action = SimpleAction::new_stateful("themes", Some(&initial_state.type_()), &initial_state);
+        action.connect_change_state(move |a, s| {
+            match s {
+            Some(val) => {
+                a.set_state(val);
+                match val.get_str(){
+                    Some(theme) => 
+                        weak_webview.run_javascript(&format!("setTheme('{}')", theme), Some(&gio::Cancellable::new()), |_|{}),
+                    None => println!("Could not set theme, could not extract from variant")
+                }
+            },
+            None => println!("Could not set theme")
+        }
+        });
+        application.add_action(&action);
+
     if let Some(builder) = builder {
         let headerbar: HeaderBar = builder.get_object("headerbar").unwrap();
         headerbar.set_subtitle(Some("The subtitle initially set by on_init method"));
         connect_msg_callback(webview, move|cmd: &str, payload: &str|{ 
-            if cmd == "subtitle" {
-                headerbar.set_subtitle(Some(payload));
+            match cmd {
+                "subtitle" => headerbar.set_subtitle(Some(payload)),
+                "theme" => action.set_state(&payload.to_variant()),
+                _ => {}
             }
         });
     }
