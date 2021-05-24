@@ -2,9 +2,11 @@
 //! and run an application containing only a webview.
 use std::{env, net::SocketAddr, path::PathBuf};
 
+#[cfg(target_os = "linux")]
 use gtk::{Application, ApplicationWindow, Builder};
-use tokio::runtime::Runtime;
+#[cfg(target_os = "linux")]
 use webkit2gtk::{WebView, WebViewExt};
+use tokio::runtime::Runtime;
 
 #[cfg(target_os = "linux")]
 use crate::linux::app::App as AppImpl;
@@ -12,6 +14,7 @@ use crate::warp_server::start;
 #[cfg(target_os = "windows")]
 use crate::windows::app::App as AppImpl;
 
+#[cfg(target_os = "linux")]
 const WEBMSG: &str = "!!webmesg!!";
 
 /// Configuration Settings for the internal warp server.
