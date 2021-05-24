@@ -33,10 +33,7 @@ pub mod headers;
 mod settings;
 mod warp_server;
 
-// TODO on_msg_from_javascript
-// TODO inject javascript on load
-
-// TODO GTK: glade: connect headerbar
-// TODO GTK: Mainwindow (HeaderBar -> hello_header example, Subclass MainWindow with new)
-// TODO Inject global.js, Messages to and from the webview
+// TODO Sample change theme (background color red or yellow)
+// TODO message to javascript
+// TODO Windows: msg to windows
 // TODO save Window Pos
