@@ -10,11 +10,11 @@
             This is a sample page for displaying in <em>Rust Web View</em>
         </p>
         <p>
-            <button onclick="sendmsg()">send msg</button>
+            <button onclick="changeSubTitle()">change subtitle</button>
         </p>
 
         <script>
-            const sendmsg = () => sendMessageToWebView("msgToRust", "paramToRust")
+            const changeSubTitle = () => sendMessageToWebView("subtitle", "The subtitle is changed from javascript")
         </script>
     </body> 
 </html>

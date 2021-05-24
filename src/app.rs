@@ -2,15 +2,17 @@
 //! and run an application containing only a webview.
 use std::{env, net::SocketAddr, path::PathBuf};
 
-use gtk::{Application, ApplicationWindow};
+use gtk::{Application, ApplicationWindow, Builder};
 use tokio::runtime::Runtime;
-use webkit2gtk::WebView;
+use webkit2gtk::{WebView, WebViewExt};
 
 #[cfg(target_os = "linux")]
 use crate::linux::app::App as AppImpl;
 use crate::warp_server::start;
 #[cfg(target_os = "windows")]
 use crate::windows::app::App as AppImpl;
+
+const WEBMSG: &str = "!!webmesg!!";
 
 /// Configuration Settings for the internal warp server.
 ///
@@ -145,11 +147,14 @@ pub struct AppSettings {
     /// If set, then window size is automatically saved to a folder with relative path set to "window_pos_storage_path"
     pub window_pos_storage_path: Option<String>,
 
-    // TODO: WindowsB
+    // TODO: Windows
 
+    /// If you want to initialize your application or main window, set this callback. It is lso needed to inject a
+    /// callback if you want to receive msgs from javascript.
+    ///
+    /// This option is only available on linux
     #[cfg(target_os = "linux")]
-    pub on_app_init: Option<fn(application: &Application, window: & ApplicationWindow, webview: & WebView)
-            ->Option<fn(cmd: &str, payload: &str)>>,
+    pub on_app_init: Option<fn(application: &Application, window: & ApplicationWindow, builder: &Option<Builder>, webview: & WebView)>,
 
     //pub on_msg: Option<fn(application: &Application, window: &)
 
@@ -347,3 +352,22 @@ impl App {
     }
 }
 
+/// If you want callback from javascript, you can call this method in the "on_app_init" callback.
+/// You can then call ```sendMessageToWebView("cmd", "payload")``` 
+///
+/// This option is only available on linux
+#[cfg(target_os = "linux")]
+pub fn connect_msg_callback<F: Fn(&str, &str)->() + 'static>(webview: &WebView, on_msg: F) {
+    webview.connect_script_dialog(move|_, dialog | {
+        let str = dialog.get_message();
+        if str.starts_with(WEBMSG) {
+            let msg = &str[WEBMSG.len()..];
+            if let Some(pos) = msg.find("!!") {
+                let cmd = &msg[0..pos];
+                let payload = &msg[pos+2..];
+                on_msg(cmd, payload);
+            }
+        }
+        true
+    });
+}
