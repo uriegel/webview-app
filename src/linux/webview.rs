@@ -1,25 +1,27 @@
 use gio::{ActionMapExt};
 use gtk::{Application, Builder, ContainerExt, GtkApplicationExt, prelude::BuilderExtManual};
-use webkit2gtk::{SettingsBuilder, WebContext, WebInspectorExt, WebView, WebViewExt};
+use webkit2gtk::{LoadEvent, SettingsBuilder, WebContext, WebInspectorExt, WebView, WebViewExt};
+
+use crate::app::AppSettings;
 
 use super::mainwindow::MainWindow;
 
 // const WEBMSG_TITLE: &str = "!!webmesg-title!!";
 
 pub struct MainWebView {
-    webview: WebView,
-    //mainwindow: MainWindow
+    pub webview: WebView,
+    on_msg: Option<fn(cmd: &str, payload: &str)>
 }
 
 impl MainWebView {
-    pub fn new(application: &Application, mainwindow: MainWindow, builder: &Option<Builder>, enable_devtools: bool) -> Self {
+    pub fn new(application: &Application, mainwindow: MainWindow, builder: &Option<Builder>, app_settings: &AppSettings) -> Self {
         let context = WebContext::get_default().unwrap();
         let webview = match builder {
             Some(builder) =>  builder.get_object("webview").unwrap(),
             None => {
                 let webview = WebView::with_context(&context);
                 let settings = SettingsBuilder::new();
-                let settings = if enable_devtools {
+                let settings = if app_settings.enable_dev_tools {
                     settings.enable_developer_extras(true)
                 } else { settings };
                 let settings = settings.build();
@@ -28,9 +30,34 @@ impl MainWebView {
             }
         };
         
+        let on_msg = if let Some(on_init) = app_settings.on_app_init {
+            on_init(application, &mainwindow.window, &webview)
+        } else {
+            None
+        };
+
         mainwindow.window.add(&webview);        
         webview.connect_context_menu(|_, _, _, _| true );
+        
+        let weak_webview = webview.clone();
+        webview.connect_load_changed(move |_,load_event| 
+            if load_event == LoadEvent::Committed {
+                let script = 
+r"function sendMessageToWebView(command, param) {
+    alert(`!!webmesg!!${command}!!${param}`)
+}";
+                weak_webview.run_javascript(&script, Some(&gio::Cancellable::new()), |_|{});
+            }
+        );
 
+        webview.connect_script_dialog(move|_, dialog | {
+            let str = dialog.get_message();
+            
+            if let Some(on_msg) = on_msg {
+                on_msg("CMD", "Payload");
+            }
+            true
+        });
 
         let weak_webview = webview.clone();
         let action = gio::SimpleAction::new("devtools", None);
@@ -43,7 +70,7 @@ impl MainWebView {
 
         MainWebView{ 
             webview, 
-            // mainwindow 
+            on_msg
         }
     }
 

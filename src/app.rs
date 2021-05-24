@@ -2,7 +2,9 @@
 //! and run an application containing only a webview.
 use std::{env, net::SocketAddr, path::PathBuf};
 
+use gtk::{Application, ApplicationWindow};
 use tokio::runtime::Runtime;
+use webkit2gtk::WebView;
 
 #[cfg(target_os = "linux")]
 use crate::linux::app::App as AppImpl;
@@ -142,6 +144,15 @@ pub struct AppSettings {
     pub enable_dev_tools: bool,
     /// If set, then window size is automatically saved to a folder with relative path set to "window_pos_storage_path"
     pub window_pos_storage_path: Option<String>,
+
+    // TODO: WindowsB
+
+    #[cfg(target_os = "linux")]
+    pub on_app_init: Option<fn(application: &Application, window: & ApplicationWindow, webview: & WebView)
+            ->Option<fn(cmd: &str, payload: &str)>>,
+
+    //pub on_msg: Option<fn(application: &Application, window: &)
+
     /// When set to true, you can configure the main window with a glade xml file. This feature is only
     /// available on windows. It is primarily useful for integrating a header bar to the main window.
     /// The glade file has to be named "main.glade", and it has to be placed in the root directory.
@@ -249,7 +260,8 @@ impl Clone for AppSettings {
             warp_settings: self.warp_settings.clone(),
             use_glade: self.use_glade,
             webroot: self.webroot.clone(),
-            window_pos_storage_path: self.window_pos_storage_path.clone()
+            window_pos_storage_path: self.window_pos_storage_path.clone(),
+            on_app_init: self.on_app_init
         }
     }
 }
@@ -267,7 +279,8 @@ impl Default for AppSettings {
             use_glade: false,
             warp_settings: None,
             enable_dev_tools: false,
-            webroot: "".to_string()
+            webroot: "".to_string(),
+            on_app_init: None
         }   
     }
 }

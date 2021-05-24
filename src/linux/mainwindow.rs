@@ -9,10 +9,9 @@ use crate::{app::AppSettings, settings::WindowPosStorage};
 
 use super::webview::MainWebView;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct MainWindow {
-    pub window: ApplicationWindow,
-//    header_bar: HeaderBar
+    pub window: ApplicationWindow
 }
 
 impl MainWindow {
@@ -41,12 +40,12 @@ impl MainWindow {
         };
 
         let mainwindow = MainWindow { 
-            window: window.clone()
+            window: window.clone(),
         };
         window.set_title(&settings.title);
         
         let webview = MainWebView::new(application, mainwindow.clone(), 
-            &builder, settings.enable_dev_tools);
+            &builder, settings);
         webview.load(&settings.get_url());
         window.set_default_size(initial_size.0, initial_size.1);
 
