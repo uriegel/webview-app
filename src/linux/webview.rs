@@ -23,6 +23,7 @@ impl MainWebView {
                 } else { settings };
                 let settings = settings.build();
                 webview.set_settings(&settings);
+                mainwindow.window.add(&webview);        
                 webview
             }
         };
@@ -31,7 +32,6 @@ impl MainWebView {
             on_init(application, &mainwindow.window, &builder, &webview)
         };
 
-        mainwindow.window.add(&webview);        
         webview.connect_context_menu(|_, _, _, _| true );
         
         let weak_webview = webview.clone();
