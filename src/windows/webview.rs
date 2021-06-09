@@ -74,7 +74,7 @@ impl WebView {
 
     pub fn on_focus(&self) {
         if let Some(controller) = self.controller.get() {
-            controller.move_focus(webview2::MoveFocusReason::Next).unwrap();
+            let _ = controller.move_focus(webview2::MoveFocusReason::Next);
         }
     }
 }

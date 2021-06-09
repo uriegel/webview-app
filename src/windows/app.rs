@@ -10,7 +10,7 @@ use winapi::{shared::{windef::{
             GetModuleHandleW, GetProcAddress, LoadLibraryA
         }, wingdi::{
             GetDeviceCaps, LOGPIXELSX
-        }, winuser::{DispatchMessageW, GetDC, GetMessageW, MSG, ReleaseDC, SetProcessDPIAware, TranslateMessage}
+        }, winuser::{DispatchMessageW, GetDC, GetMessageW, MSG, ReleaseDC, TranslateMessage}
     }
 };
 
@@ -72,7 +72,6 @@ impl App {
     
     fn set_dpi_aware() {
         unsafe {
-            // Windows 10.
             let user32 = LoadLibraryA(b"user32.dll\0".as_ptr() as *const i8);
             let set_thread_dpi_awareness_context = GetProcAddress(
                 user32,
@@ -86,8 +85,6 @@ impl App {
                 set_thread_dpi_awareness_context(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
                 return;
             }
-            // Windows 7.
-            SetProcessDPIAware();
         }
     }
 }

@@ -27,7 +27,7 @@ pub struct WarpSettings {
     /// If set, then the internal warp server calls this function, and you can manually add routes to warp.
     /// You have to add the static route, which comes by argument, and you also have to start the warp server in this function!
     /// 
-    /// Example:
+    /// # Example:
     ///
     /// ```
     /// use std::net::SocketAddr;
@@ -168,7 +168,7 @@ pub struct AppSettings {
     /// a "GtkApplicationWindow" and uses the id "window". You can add a WebKitSettings object
     /// to configure for example "enable-developer-extras".
     ///
-    /// Example:
+    /// # Example:
     ///
     /// ```
     ///<?xml version="1.0" encoding="UTF-8"?>
