@@ -1,9 +1,6 @@
 use std::cell::RefCell;
 
-use gtk::{
-    Application, ApplicationWindow, Builder, GtkApplicationExt, GtkWindowExt, 
-    WidgetExt, prelude::BuilderExtManual
-};
+use gtk::{Application, ApplicationWindow, Builder, prelude::{BuilderExtManual, GtkApplicationExt, GtkWindowExt, WidgetExt}};
 
 use crate::{app::AppSettings, settings::WindowPosStorage};
 
@@ -35,7 +32,7 @@ impl MainWindow {
         };
 
         let window: ApplicationWindow = match builder {
-            Some(ref builder) => builder.get_object("window").unwrap(),
+            Some(ref builder) => builder.object("window").unwrap(),
             None => ApplicationWindow::new(application) 
         };
 
@@ -54,7 +51,7 @@ impl MainWindow {
             let wh = RefCell::new((0, 0));
             let weak_window = window.clone();
                 window.connect_configure_event(move |_,_| {
-                let size = weak_window.get_size();
+                let size = weak_window.size();
                 let old_wh = wh.replace(size);
                 if size.0 != old_wh.0 || size.1 != old_wh.1 {
                     store.save_size((size.0,  size.1));

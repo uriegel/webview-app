@@ -5,7 +5,7 @@ use std::{env, net::SocketAddr, path::PathBuf};
 #[cfg(target_os = "linux")]
 use gtk::{Application, ApplicationWindow, Builder};
 #[cfg(target_os = "linux")]
-use webkit2gtk::{WebView, WebViewExt};
+use webkit2gtk::WebView;
 use tokio::runtime::Runtime;
 
 #[cfg(target_os = "linux")]
@@ -361,6 +361,8 @@ impl App {
 /// This option is only available on linux
 #[cfg(target_os = "linux")]
 pub fn connect_msg_callback<F: Fn(&str, &str)->() + 'static>(webview: &WebView, on_msg: F) {
+    use webkit2gtk::traits::WebViewExt;
+
     webview.connect_script_dialog(move|_, dialog | {
         let str = dialog.get_message();
         if str.starts_with(WEBMSG) {

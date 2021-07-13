@@ -1,6 +1,6 @@
-use gio::{ActionMapExt};
-use gtk::{Application, Builder, ContainerExt, GtkApplicationExt, prelude::BuilderExtManual};
-use webkit2gtk::{LoadEvent, SettingsBuilder, WebContext, WebInspectorExt, WebView, WebViewExt};
+use gio::traits::ActionMapExt;
+use gtk::{Application, Builder, prelude::{BuilderExtManual, ContainerExt, GtkApplicationExt}};
+use webkit2gtk::{LoadEvent, SettingsBuilder, WebContext, WebView, traits::{WebInspectorExt, WebViewExt}};
 
 use crate::app::AppSettings;
 
@@ -12,9 +12,9 @@ pub struct MainWebView {
 
 impl MainWebView {
     pub fn new(application: &Application, mainwindow: MainWindow, builder: &Option<Builder>, app_settings: &AppSettings) -> Self {
-        let context = WebContext::get_default().unwrap();
+        let context = WebContext::default().unwrap();
         let webview = match builder {
-            Some(builder) =>  builder.get_object("webview").unwrap(),
+            Some(builder) =>  builder.object("webview").unwrap(),
             None => {
                 let webview = WebView::with_context(&context);
                 let settings = SettingsBuilder::new();
@@ -48,7 +48,7 @@ r"function sendMessageToWebView(command, param) {
 
         let weak_webview = webview.clone();
         let action = gio::SimpleAction::new("devtools", None);
-        action.connect_activate(move |_,_| match weak_webview.get_inspector() {
+        action.connect_activate(move |_,_| match weak_webview.inspector() {
             Some(inspector) => inspector.show(),
             None => println!("Could not show web inspector")
         });

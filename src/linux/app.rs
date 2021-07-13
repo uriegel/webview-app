@@ -1,8 +1,9 @@
-use std::env;
-
-use gio::{ActionMapExt, ApplicationExt, ApplicationFlags, SimpleAction, prelude::ApplicationExtManual};
-use gtk::{Application, GtkApplicationExt};
-
+use gio::{
+    ApplicationFlags, SimpleAction, prelude::ApplicationExtManual, traits::{
+        ActionMapExt, ApplicationExt
+    }
+};
+use gtk::{Application, prelude::GtkApplicationExt};
 use crate::{app::AppSettings, linux::mainwindow::MainWindow};
 
 #[derive(Clone)]
@@ -14,10 +15,7 @@ pub struct App {
 impl App {
     pub fn new(settings: AppSettings) -> Self {
 
-        let application = Application::new(Some(&settings.application_id), 
-        ApplicationFlags::empty())
-            .expect("Application::new() failed");
-
+        let application = Application::new(Some(&settings.application_id), ApplicationFlags::empty());
         let action = SimpleAction::new("destroy", None);
         let weak_application = application.clone();
         action.connect_activate(move |_,_| weak_application.quit());
@@ -37,6 +35,6 @@ impl App {
     }
 
     pub fn run(&self) {
-        self.application.run(&env::args().collect::<Vec<_>>());
+        self.application.run();
     }
 }
