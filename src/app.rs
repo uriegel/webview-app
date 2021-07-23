@@ -1,6 +1,6 @@
 //! This module contains all the important structs and implementations to create, configure
 //! and run an application containing only a webview.
-use std::{env, net::SocketAddr, path::PathBuf};
+use std::{any::Any, env, net::SocketAddr, path::PathBuf, sync::{Arc, Mutex}};
 
 #[cfg(target_os = "linux")]
 use gtk::{Application, ApplicationWindow, Builder};
@@ -99,7 +99,7 @@ pub struct WarpSettings {
     ///     run_app();
     /// }    
     /// ```
-    pub init_fn: Option<fn(rt: &Runtime, socket_addr: SocketAddr, static_dir: String)>,
+    pub init_fn: Option<fn(rt: &Runtime, socket_addr: SocketAddr, static_dir: String, state: Arc<Mutex<Box<dyn Any + Send>>>)>,
 }
 
 impl Clone for WarpSettings {
@@ -157,7 +157,7 @@ pub struct AppSettings {
     ///
     /// This option is only available on linux
     #[cfg(target_os = "linux")]
-    pub on_app_init: Option<fn(application: &Application, window: & ApplicationWindow, builder: &Option<Builder>, webview: & WebView)>,
+    pub on_app_init: Option<fn(application: &Application, window: &ApplicationWindow, builder: &Option<Builder>, webview: & WebView, state: Arc<Mutex<Box<dyn Any + Send>>>)>,
 
     //pub on_msg: Option<fn(application: &Application, window: &)
 
@@ -329,14 +329,17 @@ impl AppSettings {
 
 /// This is the app running a window containig only a webview.
 pub struct App {
-    app: AppImpl
+    app: AppImpl,
+    state: Arc<Mutex<Box<dyn Any + Send>>>
 }
 
 impl App {
     /// Constructor to create and configure the app. 
     pub fn new(settings: AppSettings) -> Self {
+        let state: Arc<Mutex<Box<dyn Any + Send>>> = Arc::new(Mutex::new(Box::new(0)));
         App { 
-            app: AppImpl::new(settings) 
+            app: AppImpl::new(settings, state.clone()),
+            state
         }
     }
 
@@ -348,7 +351,7 @@ impl App {
             None
         };
         if let Some((ref rt, warp_settings)) = warp {
-            start(rt, warp_settings.clone())
+            start(rt, warp_settings.clone(), self.state.clone())
         }
 
         self.app.run();

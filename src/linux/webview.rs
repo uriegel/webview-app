@@ -1,3 +1,5 @@
+use std::{any::Any, sync::{Arc, Mutex}};
+
 use gio::traits::ActionMapExt;
 use gtk::{Application, Builder, prelude::{BuilderExtManual, ContainerExt, GtkApplicationExt}};
 use webkit2gtk::{LoadEvent, SettingsBuilder, WebContext, WebView, traits::{WebInspectorExt, WebViewExt}};
@@ -7,11 +9,11 @@ use crate::app::AppSettings;
 use super::mainwindow::MainWindow;
 
 pub struct MainWebView {
-    pub webview: WebView,
+    pub webview: WebView
 }
 
 impl MainWebView {
-    pub fn new(application: &Application, mainwindow: MainWindow, builder: &Option<Builder>, app_settings: &AppSettings) -> Self {
+    pub fn new(application: &Application, mainwindow: MainWindow, builder: &Option<Builder>, app_settings: &AppSettings, state: Arc<Mutex<Box<dyn Any + Send>>>) -> Self {
         let context = WebContext::default().unwrap();
         let webview = match builder {
             Some(builder) =>  builder.object("webview").unwrap(),
@@ -29,7 +31,7 @@ impl MainWebView {
         };
         
         if let Some(on_init) = app_settings.on_app_init {
-            on_init(application, &mainwindow.window, &builder, &webview)
+            on_init(application, &mainwindow.window, &builder, &webview, state)
         };
 
         webview.connect_context_menu(|_, _, _, _| true );

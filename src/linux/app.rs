@@ -1,3 +1,5 @@
+use std::{any::Any, sync::{Arc, Mutex}};
+
 use gio::{
     ApplicationFlags, SimpleAction, prelude::ApplicationExtManual, traits::{
         ActionMapExt, ApplicationExt
@@ -13,7 +15,7 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(settings: AppSettings) -> Self {
+    pub fn new(settings: AppSettings, state: Arc<Mutex<Box<dyn Any + Send>>>) -> Self {
 
         let application = Application::new(Some(&settings.application_id), ApplicationFlags::empty());
         let action = SimpleAction::new("destroy", None);
@@ -24,7 +26,7 @@ impl App {
 
         let settings_clone = settings.clone();
         application.connect_startup(move |application| {
-            MainWindow::new(application, &settings_clone);
+            MainWindow::new(application, &settings_clone, state.clone());
             ()
         });
     
