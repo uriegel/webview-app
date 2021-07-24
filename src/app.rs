@@ -99,7 +99,7 @@ pub struct WarpSettings {
     ///     run_app();
     /// }    
     /// ```
-    pub init_fn: Option<fn(rt: &Runtime, socket_addr: SocketAddr, static_dir: String, state: Arc<Mutex<Box<dyn Any + Send>>>)>,
+    pub init_fn: Option<fn(rt: &Runtime, data: WarpInitData)>,
 }
 
 impl Clone for WarpSettings {
@@ -152,12 +152,12 @@ pub struct AppSettings {
 
     // TODO: Windows
 
-    /// If you want to initialize your application or main window, set this callback. It is lso needed to inject a
+    /// If you want to initialize your application or main window, set this callback. It is also needed to inject a
     /// callback if you want to receive msgs from javascript.
     ///
     /// This option is only available on linux
     #[cfg(target_os = "linux")]
-    pub on_app_init: Option<fn(application: &Application, window: &ApplicationWindow, builder: &Option<Builder>, webview: & WebView, state: Arc<Mutex<Box<dyn Any + Send>>>)>,
+    pub on_app_init: Option<fn(data: InitData)>,
 
     //pub on_msg: Option<fn(application: &Application, window: &)
 
@@ -325,6 +325,36 @@ impl AppSettings {
             format!("file://{}", dir.to_str().unwrap()).to_string() 
         }
     }
+}
+
+/// Data which is provided in the "on_app_init" method of "AppSettings"
+pub struct InitData<'a> {
+    /// The GTK Application. This is only available on Linux
+    #[cfg(target_os = "linux")]
+    pub application: &'a Application,
+    /// The GTK Application Window. This is only available on Linux
+    #[cfg(target_os = "linux")]
+    pub window: &'a ApplicationWindow,
+    /// The  GTK Builder, if chosen with flag "use_glade". This is only available on Linux
+    #[cfg(target_os = "linux")]
+    pub builder: &'a Option<Builder>,
+    /// The GTK WebView. This is only available on Linux
+    #[cfg(target_os = "linux")]
+    pub webview: &'a WebView,
+    /// Possibility to store arbitrary state. This is only available on Linux
+    #[cfg(target_os = "linux")]
+    pub state: Arc<Mutex<Box<dyn Any + Send>>>
+}
+
+/// Data which is provided in the "init_fn" method of "WarpSettings"
+pub struct WarpInitData {
+    /// The socket address the warp server is using
+    pub socket_addr: SocketAddr, 
+    /// The static directory warp server is using for serving the web app
+    pub static_dir: String, 
+    /// Possibility to store arbitrary state. This is only available on Linux
+    #[cfg(target_os = "linux")]
+    pub state: Arc<Mutex<Box<dyn Any + Send>>>
 }
 
 /// This is the app running a window containig only a webview.

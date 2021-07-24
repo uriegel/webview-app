@@ -1,11 +1,11 @@
 use gio::{SimpleAction, prelude::ToVariant, traits::ActionMapExt};
-use gtk::{Application, ApplicationWindow, Builder, HeaderBar, prelude::{BuilderExtManual, HeaderBarExt}};
-use webkit2gtk::{WebView, traits::WebViewExt};
-use webview_app::{app::App, app::{AppSettings, WarpSettings, connect_msg_callback}};
+use gtk::{HeaderBar, prelude::{BuilderExtManual, HeaderBarExt}};
+use webkit2gtk::{traits::WebViewExt};
+use webview_app::{app::App, app::{AppSettings, InitData, WarpSettings, connect_msg_callback}};
 
-fn on_init(application: &Application, _: &ApplicationWindow, builder: &Option<Builder>, webview: &WebView) {
+fn on_init(data: InitData) {
     let initial_state = "".to_variant();
-    let weak_webview = webview.clone();
+    let webview_clone = data.webview.clone();
     let action = SimpleAction::new_stateful("themes", Some(&initial_state.type_()), &initial_state);
         action.connect_change_state(move |a, s| {
             match s {
@@ -13,19 +13,19 @@ fn on_init(application: &Application, _: &ApplicationWindow, builder: &Option<Bu
                 a.set_state(val);
                 match val.str() {
                     Some(theme) => 
-                        weak_webview.run_javascript(&format!("setTheme('{}')", theme), Some(&gio::Cancellable::new()), |_|{}),
+                        webview_clone.run_javascript(&format!("setTheme('{}')", theme), Some(&gio::Cancellable::new()), |_|{}),
                     None => println!("Could not set theme, could not extract from variant")
                 }
             },
             None => println!("Could not set theme")
         }
         });
-        application.add_action(&action);
+        data.application.add_action(&action);
 
-    if let Some(builder) = builder {
+    if let Some(builder) = data.builder {
         let headerbar: HeaderBar = builder.object("headerbar").unwrap();
         headerbar.set_subtitle(Some("The subtitle initially set by on_init method"));
-        connect_msg_callback(webview, move|cmd: &str, payload: &str|{ 
+        connect_msg_callback(data.webview, move|cmd: &str, payload: &str|{ 
             match cmd {
                 "subtitle" => headerbar.set_subtitle(Some(payload)),
                 "theme" => action.set_state(&payload.to_variant()),

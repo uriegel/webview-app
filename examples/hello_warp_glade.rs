@@ -1,12 +1,11 @@
-use std::{any::Any, net::SocketAddr, sync::{Arc, Mutex}, thread};
+use std::{any::Any, sync::{Arc, Mutex}, thread};
 
 use gio::{glib::{MainContext, PRIORITY_DEFAULT, Receiver, Sender}, prelude::Continue};
-use gtk::{Application, ApplicationWindow, Builder, prelude::GtkWindowExt};
+use gtk::prelude::GtkWindowExt;
 use serde::{Serialize, Deserialize};
 use tokio::runtime::Runtime;
 use warp::fs::dir;
-use webkit2gtk::WebView;
-use webview_app::{app::App, app::AppSettings, app::WarpSettings, headers::add_headers};
+use webview_app::{app::App, app::AppSettings, app::{InitData, WarpInitData, WarpSettings}, headers::add_headers};
 use warp::{Filter, reply::{Json, json}};
 
 #[derive(Serialize)]
@@ -59,32 +58,23 @@ struct SuperData {
     pub sender: Sender<bool>,
 }
 
-fn on_init(application: &Application, win: &ApplicationWindow, builder: &Option<Builder>, webview: &WebView, state: Arc<Mutex<Box<dyn Any + Send>>>) {
+fn on_init(data: InitData) {
     println!("Thread ID in app init {:?}", thread::current().id());
     let (sender, receiver): (Sender<bool>, Receiver<bool>) = MainContext::channel::<bool>(PRIORITY_DEFAULT);
-    let mut val = state.lock().unwrap();
+    let mut val = data.state.lock().unwrap();
     *val = Box::new(SuperData{ sender });
 
-    let weak_win = win.clone();
+    let win_clone = data.window.clone();
 
     receiver.attach( None, move |val | {
-        println!("Thread ID in receiver {:?}", thread::current().id());
-
-        weak_win.maximize();
-
+        println!("Thread ID in receiver {:?}, val: {}", thread::current().id(), val);
+        win_clone.maximize();
         Continue(true)
     });        
 }
 
-fn server(rt: &Runtime, socket_addr: SocketAddr, static_dir: String, state: Arc<Mutex<Box<dyn Any + Send>>>) {
-
-    // let val = state.lock().unwrap();
-    // let sender = match val.as_ref().downcast_ref::<SuperData>() {
-
-    // };
-
-    let (sender, receiver): (Sender<bool>, Receiver<bool>) = MainContext::channel::<bool>(PRIORITY_DEFAULT);
-
+fn server(rt: &Runtime, data: WarpInitData) {
+    let state = data.state.clone();
     rt.spawn(async move {
 
         let get_json = 
@@ -102,7 +92,7 @@ fn server(rt: &Runtime, socket_addr: SocketAddr, static_dir: String, state: Arc<
             .and(warp::body::json())
             .and_then(move |p|{post_item(p, state.clone())});
 
-        let route_static = dir(static_dir)
+        let route_static = dir(data.static_dir)
             .map(add_headers);
 
         let routes = 
@@ -111,7 +101,7 @@ fn server(rt: &Runtime, socket_addr: SocketAddr, static_dir: String, state: Arc<
             .or(route_static);
 
         warp::serve(routes)
-            .run(socket_addr)
+            .run(data.socket_addr)
             .await;        
     });
 }

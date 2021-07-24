@@ -4,7 +4,7 @@ use gio::traits::ActionMapExt;
 use gtk::{Application, Builder, prelude::{BuilderExtManual, ContainerExt, GtkApplicationExt}};
 use webkit2gtk::{LoadEvent, SettingsBuilder, WebContext, WebView, traits::{WebInspectorExt, WebViewExt}};
 
-use crate::app::AppSettings;
+use crate::app::{AppSettings, InitData};
 
 use super::mainwindow::MainWindow;
 
@@ -31,7 +31,14 @@ impl MainWebView {
         };
         
         if let Some(on_init) = app_settings.on_app_init {
-            on_init(application, &mainwindow.window, &builder, &webview, state)
+            let init_data = InitData { 
+                application, 
+                window: &mainwindow.window, 
+                builder, 
+                webview: &webview, 
+                state 
+            };
+            on_init(init_data)
         };
 
         webview.connect_context_menu(|_, _, _, _| true );

@@ -1,9 +1,7 @@
-use std::net::SocketAddr;
-
 use serde::{Serialize, Deserialize};
 use tokio::runtime::Runtime;
 use warp::fs::dir;
-use webview_app::{app::App, app::{AppSettings, WarpSettings}, headers::add_headers};
+use webview_app::{app::App, app::{AppSettings, WarpInitData, WarpSettings}, headers::add_headers};
 use warp::{Filter, reply::{Json, json}};
 
 #[derive(Serialize)]
@@ -39,7 +37,7 @@ async fn post_item(param: PostItem)->Result<Json, warp::Rejection> {
     //Err(warp::reject())
 }
 
-fn server(rt: &Runtime, socket_addr: SocketAddr, static_dir: String) {
+fn server(rt: &Runtime, data: WarpInitData) {
     rt.spawn(async move {
 
         let get_json = 
@@ -57,7 +55,7 @@ fn server(rt: &Runtime, socket_addr: SocketAddr, static_dir: String) {
             .and(warp::body::json())
             .and_then(post_item);
 
-        let route_static = dir(static_dir)
+        let route_static = dir(data.static_dir)
             .map(add_headers);
 
         let routes = 
@@ -66,7 +64,7 @@ fn server(rt: &Runtime, socket_addr: SocketAddr, static_dir: String) {
             .or(route_static);
 
         warp::serve(routes)
-            .run(socket_addr)
+            .run(data.socket_addr)
             .await;        
     });
 }

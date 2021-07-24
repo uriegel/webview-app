@@ -5,7 +5,7 @@ fn run_app() {
         AppSettings { 
             title: "Rust Web View 👍".to_string(),
             enable_dev_tools: true,
-            url: "http://localhost:9860".to_string(), 
+            url: "https://crates.io".to_string(), 
             window_pos_storage_path: Some("hello".to_string()),
             ..Default::default()
         }
