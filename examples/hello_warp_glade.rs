@@ -1,11 +1,11 @@
-use std::{any::Any, sync::{Arc, Mutex}, thread};
+use std::{any::Any, thread};
 
 use gio::{glib::{MainContext, PRIORITY_DEFAULT, Receiver, Sender}, prelude::Continue};
 use gtk::prelude::GtkWindowExt;
 use serde::{Serialize, Deserialize};
 use tokio::runtime::Runtime;
 use warp::fs::dir;
-use webview_app::{app::App, app::AppSettings, app::{InitData, WarpInitData, WarpSettings}, headers::add_headers};
+use webview_app::{app::App, app::AppSettings, app::{AppState, InitData, WarpInitData, WarpSettings}, headers::add_headers};
 use warp::{Filter, reply::{Json, json}};
 
 #[derive(Serialize)]
@@ -31,7 +31,7 @@ async fn get_item()->Result<Json, warp::Rejection> {
     //Err(warp::reject())
 }
 
-async fn post_item(param: PostItem, state: Arc<Mutex<Box<dyn Any + Send>>>)->Result<Json, warp::Rejection> {
+async fn post_item(param: PostItem, state: AppState)->Result<Json, warp::Rejection> {
     let item = WarpItem { 
         capacity:123, 
         display: "Warp returning json data".to_string(), 

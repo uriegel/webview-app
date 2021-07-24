@@ -344,7 +344,7 @@ pub struct InitData<'a> {
     pub webview: &'a WebView,
     /// Possibility to store arbitrary state. This is only available on Linux
     #[cfg(target_os = "linux")]
-    pub state: Arc<Mutex<Box<dyn Any + Send>>>,
+    pub state: AppState,
     #[cfg(target_os = "windows")]
     phantom: PhantomData<&'a i32>,
 }
@@ -356,19 +356,21 @@ pub struct WarpInitData {
     /// The static directory warp server is using for serving the web app
     pub static_dir: String, 
     /// Possibility to store arbitrary state. This is only available on Linux
-    pub state: Arc<Mutex<Box<dyn Any + Send>>>
+    pub state: AppState
 }
+
+pub type AppState = Arc<Mutex<Box<dyn Any + Send>>>;
 
 /// This is the app running a window containig only a webview.
 pub struct App {
     app: AppImpl,
-    state: Arc<Mutex<Box<dyn Any + Send>>>
+    state: AppState
 }
 
 impl App {
     /// Constructor to create and configure the app. 
     pub fn new(settings: AppSettings) -> Self {
-        let state: Arc<Mutex<Box<dyn Any + Send>>> = Arc::new(Mutex::new(Box::new(0)));
+        let state: AppState = Arc::new(Mutex::new(Box::new(0)));
         App { 
             app: AppImpl::new(settings, state.clone()),
             state

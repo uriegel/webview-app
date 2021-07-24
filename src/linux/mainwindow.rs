@@ -1,8 +1,8 @@
-use std::{any::Any, cell::RefCell, sync::{Arc, Mutex}};
+use std::cell::RefCell;
 
 use gtk::{Application, ApplicationWindow, Builder, prelude::{BuilderExtManual, GtkApplicationExt, GtkWindowExt, WidgetExt}};
 
-use crate::{app::AppSettings, settings::WindowPosStorage};
+use crate::{app::{AppSettings, AppState}, settings::WindowPosStorage};
 
 use super::webview::MainWebView;
 
@@ -12,7 +12,7 @@ pub struct MainWindow {
 }
 
 impl MainWindow {
-    pub fn new(application: &Application, settings: &AppSettings, state: Arc<Mutex<Box<dyn Any + Send>>>) -> Self {
+    pub fn new(application: &Application, settings: &AppSettings, state: AppState) -> Self {
         let window_pos_storage = match &settings.window_pos_storage_path {
             Some(store) => Some(WindowPosStorage::new(&store)),
             None => None

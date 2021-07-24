@@ -1,10 +1,8 @@
-use std::{any::Any, sync::{Arc, Mutex}};
-
 use gio::traits::ActionMapExt;
 use gtk::{Application, Builder, prelude::{BuilderExtManual, ContainerExt, GtkApplicationExt}};
 use webkit2gtk::{LoadEvent, SettingsBuilder, WebContext, WebView, traits::{WebInspectorExt, WebViewExt}};
 
-use crate::app::{AppSettings, InitData};
+use crate::app::{AppSettings, AppState, InitData};
 
 use super::mainwindow::MainWindow;
 
@@ -13,7 +11,7 @@ pub struct MainWebView {
 }
 
 impl MainWebView {
-    pub fn new(application: &Application, mainwindow: MainWindow, builder: &Option<Builder>, app_settings: &AppSettings, state: Arc<Mutex<Box<dyn Any + Send>>>) -> Self {
+    pub fn new(application: &Application, mainwindow: MainWindow, builder: &Option<Builder>, app_settings: &AppSettings, state: AppState) -> Self {
         let context = WebContext::default().unwrap();
         let webview = match builder {
             Some(builder) =>  builder.object("webview").unwrap(),

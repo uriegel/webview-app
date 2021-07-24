@@ -1,12 +1,10 @@
-use std::{any::Any, sync::{Arc, Mutex}};
-
 use gio::{
     ApplicationFlags, SimpleAction, prelude::ApplicationExtManual, traits::{
         ActionMapExt, ApplicationExt
     }
 };
 use gtk::{Application, prelude::GtkApplicationExt};
-use crate::{app::AppSettings, linux::mainwindow::MainWindow};
+use crate::{app::{AppSettings, AppState}, linux::mainwindow::MainWindow};
 
 #[derive(Clone)]
 pub struct App {
@@ -15,7 +13,7 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(settings: AppSettings, state: Arc<Mutex<Box<dyn Any + Send>>>) -> Self {
+    pub fn new(settings: AppSettings, state: AppState) -> Self {
 
         let application = Application::new(Some(&settings.application_id), ApplicationFlags::empty());
         let action = SimpleAction::new("destroy", None);

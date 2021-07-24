@@ -31,7 +31,7 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(settings: AppSettings, _: Arc<Mutex<Box<dyn Any + Send>>>) -> Self {
+    pub fn new(settings: AppSettings, _: AppState) -> Self {
         let instance = unsafe { GetModuleHandleW(ptr::null()) };
         App::set_dpi_aware();
         let hdc = unsafe { GetDC(ptr::null_mut()) };
