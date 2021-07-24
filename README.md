@@ -1,14 +1,6 @@
 # webview-app
 Simple integration of a web view in an application window like Electron, but using rust as programming language
 
-
-
-TODO Windows: Test
-TODO All Examples Test
-TODO Documantation
-
-
-
 ## Prerequisites on Linux (Fedora)
 * ```sudo dnf install gtk3-devel```
 * ```sudo dnf install libsoup-devel```

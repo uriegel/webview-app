@@ -6,6 +6,9 @@ use std::{any::Any, env, net::SocketAddr, path::PathBuf, sync::{Arc, Mutex}};
 use gtk::{Application, ApplicationWindow, Builder};
 #[cfg(target_os = "linux")]
 use webkit2gtk::WebView;
+#[cfg(target_os = "windows")]
+use core::marker::PhantomData;
+
 use tokio::runtime::Runtime;
 
 #[cfg(target_os = "linux")]
@@ -343,7 +346,9 @@ pub struct InitData<'a> {
     pub webview: &'a WebView,
     /// Possibility to store arbitrary state. This is only available on Linux
     #[cfg(target_os = "linux")]
-    pub state: Arc<Mutex<Box<dyn Any + Send>>>
+    pub state: Arc<Mutex<Box<dyn Any + Send>>>,
+    #[cfg(target_os = "windows")]
+    phantom: PhantomData<&'a i32>,
 }
 
 /// Data which is provided in the "init_fn" method of "WarpSettings"
@@ -353,7 +358,6 @@ pub struct WarpInitData {
     /// The static directory warp server is using for serving the web app
     pub static_dir: String, 
     /// Possibility to store arbitrary state. This is only available on Linux
-    #[cfg(target_os = "linux")]
     pub state: Arc<Mutex<Box<dyn Any + Send>>>
 }
 

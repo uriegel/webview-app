@@ -35,6 +35,7 @@ fn on_init(data: InitData) {
     }
 }
 
+#[cfg(target_os = "linux")]
 fn run_app() {
     let app = App::new(
         AppSettings { 
@@ -53,6 +54,7 @@ fn run_app() {
     app.run();
 }
 
+#[cfg(target_os = "linux")]
 fn main() {
     run_app();
 }

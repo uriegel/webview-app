@@ -1,3 +1,6 @@
+use core::any::Any;
+use std::sync::Arc;
+use std::sync::Mutex;
 use std::{mem, ptr, rc::Rc};
 use once_cell::sync::OnceCell;
 use winapi::{shared::{windef::{
@@ -28,7 +31,7 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(settings: AppSettings) -> Self {
+    pub fn new(settings: AppSettings, _: Arc<Mutex<Box<dyn Any + Send>>>) -> Self {
         let instance = unsafe { GetModuleHandleW(ptr::null()) };
         App::set_dpi_aware();
         let hdc = unsafe { GetDC(ptr::null_mut()) };
