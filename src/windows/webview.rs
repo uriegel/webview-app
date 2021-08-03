@@ -1,7 +1,7 @@
 use std::{mem, rc::Rc};
 
 use once_cell::unsync::OnceCell;
-use webview2::{Controller, Environment};
+use webview2::{Controller, Environment, WebResourceContext};
 use winapi::{shared::windef::{HWND, RECT}, um::winuser::GetClientRect};
 use crate::{windows::app::App};
 
@@ -35,6 +35,13 @@ impl WebView {
                     let initial_theme = "themeWindows";
                     let script = format!("initialTheme = '{}'", initial_theme);
                     web_view.add_script_to_execute_on_document_created(&script, |_|Ok(())).unwrap();
+
+                    web_view.add_web_resource_requested_filter("https://test/*", WebResourceContext::All).unwrap();
+                    println!("Test");
+                    web_view.add_web_resource_requested(|a, b | {
+                        println!("Test in callback {:?} {:?}", a, b);
+                        Ok(())
+                    }).unwrap();
 
                     web_view.navigate(&url).unwrap();
                     let controller_to_borrow = controller.clone();
@@ -78,3 +85,34 @@ impl WebView {
         }
     }
 }
+
+// TODO
+// m_webView->AddWebResourceRequestedFilter(
+//     L"*", COREWEBVIEW2_WEB_RESOURCE_CONTEXT_IMAGE);
+// CHECK_FAILURE(m_webView->add_WebResourceRequested(
+//     Callback<ICoreWebView2WebResourceRequestedEventHandler>(
+//         [this](
+//             ICoreWebView2* sender,
+//             ICoreWebView2WebResourceRequestedEventArgs* args) {
+//                 COREWEBVIEW2_WEB_RESOURCE_CONTEXT resourceContext;
+//                 CHECK_FAILURE(args->get_ResourceContext(&resourceContext));
+//                 // Ensure that the type is image
+//                 if (resourceContext != COREWEBVIEW2_WEB_RESOURCE_CONTEXT_IMAGE)
+//                 {
+//                     return E_INVALIDARG;
+//                 }
+//                 // Override the response with an empty one to block the image.
+//                 // If put_Response is not called, the request will continue as normal.
+//                 wil::com_ptr<ICoreWebView2WebResourceResponse> response;
+//                 wil::com_ptr<ICoreWebView2Environment> environment;
+//                 wil::com_ptr<ICoreWebView2_2> webview2;
+//                 CHECK_FAILURE(m_webView->QueryInterface(IID_PPV_ARGS(&webview2)));
+//                 CHECK_FAILURE(webview2->get_Environment(&environment));
+//                 CHECK_FAILURE(environment->CreateWebResourceResponse(
+//                     nullptr, 403 /*NoContent*/, L"Blocked", L"Content-Type: image/jpeg",
+//                     &response));
+//                 CHECK_FAILURE(args->put_Response(response.get()));
+//                 return S_OK;
+//         })
+//     .Get(),
+//             &m_webResourceRequestedTokenForImageBlocking));
