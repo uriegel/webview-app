@@ -1,3 +1,5 @@
 LIBRARY
 EXPORTS
 	Test1
+	Strlen
+	Free
