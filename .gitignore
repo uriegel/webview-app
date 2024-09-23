@@ -1,5 +1,3 @@
 /target
 Cargo.lock
-main.glade~
-.vscode/launch.json
-examples/from_resource/target
+
