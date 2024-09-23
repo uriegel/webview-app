@@ -34,9 +34,8 @@ fn main() {
             lib.get(b"Strlen").expect("Failed to load function");
         let bytes = slice::from_raw_parts(text_ptr, strlen(text_ptr));
         let bytes: Vec<u16> = Vec::from(bytes);
-        let schwein = String::from_utf16_lossy(&bytes);
-        //println!("{}", schwein);
-        let wc = utf_16_null_terminiated(&schwein);
+        let text = String::from_utf16_lossy(&bytes);
+        let wc = utf_16_null_terminiated(&text);
         func(wc.as_ptr());
         let free: Symbol<unsafe extern fn(*const u16) -> ()> =
             lib.get(b"Free").expect("Failed to load function");
