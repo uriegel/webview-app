@@ -9,3 +9,6 @@ repository = "https://github.com/uriegel/webview-app"
 readme = "README.md"
 
 [dependencies]
+
+[target.'cfg(target_os="windows")'.dependencies]
+libloading = "0.7"  
