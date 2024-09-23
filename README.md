@@ -1,5 +1,8 @@
 # webview-app
 
+## Prerequisites on Linux (Fedora)
+* ```sudo dnf install gtk4-devel```
+
 # O L D 
 ## Prerequisites on Linux (Fedora)
 * ```sudo dnf install gtk3-devel```
