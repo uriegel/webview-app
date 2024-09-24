@@ -27,7 +27,8 @@ impl WebView {
 /// Builder to construct a WebView
 pub struct WebViewBuilder {
     title: Option<String>,
-    appid: Option<String>
+    appid: Option<String>,
+    without_native_titlebar: bool
 }
 
 impl WebView {
@@ -37,7 +38,8 @@ impl WebView {
     pub fn builder()->WebViewBuilder {
         WebViewBuilder { 
             title: None,
-            appid: None
+            appid: None,
+            without_native_titlebar: false
         }
     }
 }
@@ -49,7 +51,7 @@ impl WebViewBuilder {
     pub fn build(&self)->WebView {
         let title = self.title.clone().unwrap_or_else(||{String::from("Webview App")});
         let appid = self.appid.clone().unwrap_or_else(||{String::from("de.uriegel.webviewapp")});
-        WebView { webview: WebViewImpl::new(&title, &appid) }
+        WebView { webview: WebViewImpl::new(&title, &appid, self.without_native_titlebar) }
     }
 
     /// Sets the title of the window containing the web view.
@@ -69,6 +71,15 @@ impl WebViewBuilder {
     // TODO docu
     pub fn appid(mut self, val: String)->WebViewBuilder {
         self.appid = Some(val);
+        self
+    }
+
+    /// Hides the native window titlebar
+    /// 
+    /// Only working on Windows
+    /// 
+    pub fn without_native_titlebar(mut self)->WebViewBuilder {
+        self.without_native_titlebar = true;
         self
     }
 }

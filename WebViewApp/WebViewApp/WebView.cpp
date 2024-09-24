@@ -14,10 +14,12 @@ wil::com_ptr<ICoreWebView2Controller> webviewController;
 struct WebViewAppSettings {
     const wchar_t* title;
     const wchar_t* userDataPath;
+    bool withoutNativeTitlebar;
 };
 
 wchar_t* title { nullptr };
 wchar_t* userDataPath { nullptr };
+auto withoutNativeTitlebar = false;
 
 wchar_t* SetString(const wchar_t* str) {
     auto len = wcslen(str) + 1;
@@ -31,11 +33,13 @@ void Init(const WebViewAppSettings* settings) {
     auto hr = CoInitialize(nullptr);
     title = SetString(settings->title);
     userDataPath = SetString(settings->userDataPath);
+    withoutNativeTitlebar = settings->withoutNativeTitlebar;
 }
 
 void CreateWebView(HWND hWnd) {
     auto options = Microsoft::WRL::Make<CoreWebView2EnvironmentOptions>();
-    options->put_AdditionalBrowserArguments(L"--enable-features=msWebView2EnableDraggableRegions");
+    if (withoutNativeTitlebar)
+        options->put_AdditionalBrowserArguments(L"--enable-features=msWebView2EnableDraggableRegions");
     CreateCoreWebView2EnvironmentWithOptions(nullptr, userDataPath, options.Get(),
         Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
             [hWnd](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
@@ -71,6 +75,36 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         case WM_CREATE:
             CreateWebView(hWnd);
             break;
+        case WM_NCCALCSIZE:
+            if (withoutNativeTitlebar) {
+                if (wParam == TRUE) {
+                    auto params = (NCCALCSIZE_PARAMS*)lParam;
+                    params->rgrc[0].top += 1;
+                    params->rgrc[0].bottom -= 5;
+                    params->rgrc[0].left += 5;
+                    params->rgrc[0].right -= 5;
+                }
+                else {
+                    auto params = (RECT*)lParam;
+                    params->top += 1;
+                    params->bottom -= 5;
+                    params->left += 5;
+                    params->right -= 5;
+                }
+                return 0;
+            }
+            else
+                return DefWindowProc(hWnd, message, wParam, lParam);
+            break;
+        case WM_SIZE:
+            // TODO if is maximized (and withoutnativetitlebar) size with padding
+            if (webviewController) {
+                RECT bounds;
+                GetClientRect(hWnd, &bounds);
+                webviewController->put_Bounds(bounds);
+            }
+        break;
+
         case WM_DESTROY:
             PostQuitMessage(0);
             break;
