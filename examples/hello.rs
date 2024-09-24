@@ -6,7 +6,7 @@ use webview_app::webview::WebView;
 fn main() {
     let webview = 
         WebView::builder()
-            .title("Rust Web View 👍")
+            .title(String::from("Rust Web View 👍"))
             .build();
     webview.run();
 }

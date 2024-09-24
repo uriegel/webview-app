@@ -17,22 +17,22 @@ impl WebView {
 }
 
 // TODO Trait
-pub struct WebViewBuilder<'a> {
-    title: Option<&'a str>
+pub struct WebViewBuilder {
+    title: Option<String>
 }
 
-impl <'a> WebView {
-    pub fn builder()->WebViewBuilder<'a> {
+impl WebView {
+    pub fn builder()->WebViewBuilder {
         WebViewBuilder { title: None }
     }
 }
 
-impl <'a> WebViewBuilder<'a> {
+impl WebViewBuilder {
     pub fn build(&self)->WebView {
-        WebView { webview: WebViewImpl::new() }
+        WebView { webview: WebViewImpl::new(self.title.clone()) }
     }
 
-    pub fn title(&'a mut self, val: &'a str)->&'a mut WebViewBuilder {
+    pub fn title(mut self, val: String)->WebViewBuilder {
         self.title = Some(val);
         self
     }

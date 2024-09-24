@@ -9,6 +9,7 @@ pub fn utf_16_null_terminiated(x: &str) -> Vec<u16> {
 }
 
 pub struct WebView {
+    lib: Library
 }
 
 impl WebView {
@@ -16,11 +17,7 @@ impl WebView {
     // TODO Include a webview with dragzone
     // TODO https://github.com/melak47/BorderlessWindow/blob/main/src/main.cpp
 
-    pub fn new()->WebView {
-        WebView { }
-    }
-
-    pub fn run(&self)->u32 {
+    pub fn new(title: Option<String>)->WebView {
         // TODO path for release dll
         let bytes = include_bytes!("../../WebViewApp/x64/Debug/WebViewApp.dll");
         let path = "C:/Projekte/webview-app/test.dll";
@@ -28,33 +25,41 @@ impl WebView {
         fs::write(path, bytes).expect("Unable to write dll");
         unsafe {
             let lib = Library::new(path).expect("Failed to load DLL");
+            // TODO NONE -> nullptr
+            let title = utf_16_null_terminiated(&title.unwrap_or(String::new()));
+            let settings = WebViewAppSettings { title: title.as_ptr()};            
             let init: Symbol<unsafe extern fn(settings: *const WebViewAppSettings) -> ()> = lib.get(b"Init").expect("Failed to load function 'Init'");
-            
+            init(&settings as *const WebViewAppSettings);
+            WebView { lib }
+        }
+    }
 
-            let run: Symbol<unsafe extern fn() -> u32> = lib.get(b"Run").expect("Failed to load function 'Run'");
+    pub fn run(&self)->u32 {
+        unsafe {
+            let run: Symbol<unsafe extern fn() -> u32> = self.lib.get(b"Run").expect("Failed to load function 'Run'");
             run();
 
             let func: Symbol<unsafe extern fn(*const u16) -> *const u16> =
-                lib.get(b"Test1").expect("Failed to load function");
+                self.lib.get(b"Test1").expect("Failed to load function");
             
             let wc = utf_16_null_terminiated("Das ist ein sehr schöner Messagebox-Text");
             let text_ptr = func(wc.as_ptr());
             let strlen: Symbol<unsafe extern fn(*const u16) -> usize> =
-                lib.get(b"Strlen").expect("Failed to load function");
+                self.lib.get(b"Strlen").expect("Failed to load function");
             let bytes = slice::from_raw_parts(text_ptr, strlen(text_ptr));
             let bytes: Vec<u16> = Vec::from(bytes);
             let text = String::from_utf16_lossy(&bytes);
             let wc = utf_16_null_terminiated(&text);
             func(wc.as_ptr());
             let free: Symbol<unsafe extern fn(*const u16) -> ()> =
-                lib.get(b"Free").expect("Failed to load function");
+                self.lib.get(b"Free").expect("Failed to load function");
             free(text_ptr);
         }
         0
     }
 }
 
-#[repr(align(8))]
+#[repr(C)]
 struct WebViewAppSettings {
     title: *const u16
 }
