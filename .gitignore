@@ -5,5 +5,7 @@ WebViewApp/Tester/x64
 WebViewApp/WebViewApp/x64
 WebViewApp/x64
 WebViewApp/Tester/Tester.aps
+WebViewApp/packages
 
-test.dll
+WebView2Loader.dll
+WebViewApp.dll

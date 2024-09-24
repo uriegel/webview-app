@@ -26,7 +26,8 @@ impl WebView {
 // TODO Trait
 /// Builder to construct a WebView
 pub struct WebViewBuilder {
-    title: Option<String>
+    title: Option<String>,
+    appid: Option<String>
 }
 
 impl WebView {
@@ -34,7 +35,10 @@ impl WebView {
     /// 
     /// Call several WebViewBuilder functions and create the WebView with ```build()```
     pub fn builder()->WebViewBuilder {
-        WebViewBuilder { title: None }
+        WebViewBuilder { 
+            title: None,
+            appid: None
+        }
     }
 }
 
@@ -44,12 +48,27 @@ impl WebViewBuilder {
     /// Call this function when all settings are set.
     pub fn build(&self)->WebView {
         let title = self.title.clone().unwrap_or_else(||{String::from("Webview App")});
-        WebView { webview: WebViewImpl::new(&title) }
+        let appid = self.appid.clone().unwrap_or_else(||{String::from("de.uriegel.webviewapp")});
+        WebView { webview: WebViewImpl::new(&title, &appid) }
     }
 
     /// Sets the title of the window containing the web view.
     pub fn title(mut self, val: String)->WebViewBuilder {
         self.title = Some(val);
+        self
+    }
+
+    /// Sets the appid. 
+    /// 
+    /// On Linux, this is the GTK Application ID.
+    /// 
+    /// It is also used as path part to a directory to share window settings
+    /// 
+    /// * Windows: 
+    /// * Linux:  ~/
+    // TODO docu
+    pub fn appid(mut self, val: String)->WebViewBuilder {
+        self.appid = Some(val);
         self
     }
 }

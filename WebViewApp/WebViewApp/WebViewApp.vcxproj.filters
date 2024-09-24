@@ -29,7 +29,7 @@
     <ClCompile Include="pch.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="Test.cpp">
+    <ClCompile Include="WebView.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
@@ -37,5 +37,6 @@
     <None Include="Source.def">
       <Filter>Quelldateien</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>
