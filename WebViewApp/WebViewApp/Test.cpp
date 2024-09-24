@@ -2,6 +2,14 @@
 
 auto WINDOW_CLASS = L"$$WebView_APP$$";
 
+struct WebViewAppSettings {
+    const wchar_t* title;
+};
+
+void Init(const WebViewAppSettings* settings) {
+    MessageBoxW(NULL, settings->title ? settings->title : L"Kein Title", L"Init", MB_OK);
+}
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
         case WM_DESTROY:

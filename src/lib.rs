@@ -4,3 +4,6 @@ mod linux;
 mod windows;
 
 pub mod webview;
+
+// TODO Macro std::include_str!
+// TODO https://stackoverflow.com/questions/46373028/how-to-release-a-beta-version-of-a-crate-for-limited-public-testing
