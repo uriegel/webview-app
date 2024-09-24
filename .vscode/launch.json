@@ -7,16 +7,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'webview_app'",
+            "name": "Debug example 'hello'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=webview_app",
+                    "--example=hello",
                     "--package=webview_app"
                 ],
                 "filter": {
-                    "name": "webview_app",
-                    "kind": "bin"
+                    "name": "hello",
+                    "kind": "example"
                 }
             },
             "args": [],
@@ -25,17 +25,36 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'webview_app'",
+            "name": "Debug unit tests in library 'webview_app'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=webview_app",
+                    "--lib",
                     "--package=webview_app"
                 ],
                 "filter": {
                     "name": "webview_app",
-                    "kind": "bin"
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'hello'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=hello",
+                    "--package=webview_app"
+                ],
+                "filter": {
+                    "name": "hello",
+                    "kind": "example"
                 }
             },
             "args": [],
