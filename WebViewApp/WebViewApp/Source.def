@@ -1,5 +1,6 @@
 LIBRARY
 EXPORTS
-	Test1
+	Run
 	Strlen
 	Free
+	Test1

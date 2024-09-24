@@ -12,19 +12,22 @@ pub fn utf_16_null_terminiated(x: &str) -> Vec<u16> {
 }
 
 fn main() {
-    unsafe {
-        // TODO path for release dll
-        // TODO Macro std::include_str!
-        // TODO file to user user store
-        // TODO https://stackoverflow.com/questions/46373028/how-to-release-a-beta-version-of-a-crate-for-limited-public-testing
-        // TODO Borderless Windows then covert to rust
-        // TODO Include a webview with dragzone
-        // TODO https://github.com/melak47/BorderlessWindow/blob/main/src/main.cpp
+    let bytes = include_bytes!("../WebViewApp/x64/Debug/WebViewApp.dll");
+    let path = "C:/Projekte/webview-app/test.dll";
+    fs::write(path, bytes).expect("Unable to write dll");
 
-        let bytes = include_bytes!("../WebViewApp/x64/Debug/WebViewApp.dll");
-        let path = "C:/Projekte/webview-app/test.dll";
-        fs::write(path, bytes).expect("Unable to write dll");
+    // TODO path for release dll
+    // TODO Macro std::include_str!
+    // TODO file to user user store
+    // TODO https://stackoverflow.com/questions/46373028/how-to-release-a-beta-version-of-a-crate-for-limited-public-testing
+    // TODO Borderless Windows then covert to rust
+    // TODO Include a webview with dragzone
+    // TODO https://github.com/melak47/BorderlessWindow/blob/main/src/main.cpp
+    unsafe {
         let lib = Library::new(path).expect("Failed to load DLL");
+        let run: Symbol<unsafe extern fn() -> u32> = lib.get(b"Run").expect("Failed to load function 'Run'");
+        run();
+
         let func: Symbol<unsafe extern fn(*const u16) -> *const u16> =
             lib.get(b"Test1").expect("Failed to load function");
         
