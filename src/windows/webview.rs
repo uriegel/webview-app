@@ -17,7 +17,7 @@ impl WebView {
     // TODO Include a webview with dragzone
     // TODO https://github.com/melak47/BorderlessWindow/blob/main/src/main.cpp
 
-    pub fn new(title: &str, appid: &str, without_native_titlebar: bool)->WebView {
+    pub fn new(title: &str, appid: &str, url: &str, without_native_titlebar: bool)->WebView {
         // TODO path for release dll
         let bytes = include_bytes!("../../WebViewApp/x64/Debug/WebViewApp.dll");
         let path_app = "C:/Projekte/webview-app/WebViewApp.dll";
@@ -38,10 +38,12 @@ impl WebView {
         unsafe {
             let lib = Library::new(path_app).expect("Failed to load DLL");
             let title = utf_16_null_terminiated(title);
+            let url = utf_16_null_terminiated(url);
             let local_path = utf_16_null_terminiated(local_path.as_os_str().to_str().expect("user data path invalid"));
             let settings = WebViewAppSettings { 
                 title: title.as_ptr(),
                 user_data_path: local_path.as_ptr(),
+                url: url.as_ptr(),
                 without_native_titlebar 
             };            
             let init: Symbol<unsafe extern fn(settings: *const WebViewAppSettings) -> ()> = lib.get(b"Init").expect("Failed to load function 'Init'");
@@ -79,6 +81,7 @@ impl WebView {
 struct WebViewAppSettings {
     title: *const u16,
     user_data_path: *const u16,
+    url: *const u16,
     without_native_titlebar: bool
 }
 

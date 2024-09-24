@@ -9,6 +9,7 @@ fn main() {
             // TODO builder pattern enhancement
             .appid(String::from("de.uriegel.hello"))
             .title(String::from("Rust Web View 👍"))
+            .url(String::from("https://crates.io/crates/webview_app"))
             .build();
     webview.run();
 }

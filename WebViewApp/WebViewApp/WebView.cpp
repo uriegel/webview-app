@@ -14,11 +14,13 @@ wil::com_ptr<ICoreWebView2Controller> webviewController;
 struct WebViewAppSettings {
     const wchar_t* title;
     const wchar_t* userDataPath;
+    const wchar_t* url;
     bool withoutNativeTitlebar;
 };
 
 wchar_t* title { nullptr };
 wchar_t* userDataPath { nullptr };
+wchar_t* url { nullptr };
 auto withoutNativeTitlebar = false;
 
 wchar_t* SetString(const wchar_t* str) {
@@ -32,6 +34,7 @@ wchar_t* SetString(const wchar_t* str) {
 void Init(const WebViewAppSettings* settings) {
     auto hr = CoInitialize(nullptr);
     title = SetString(settings->title);
+    url = SetString(settings->url);
     userDataPath = SetString(settings->userDataPath);
     withoutNativeTitlebar = settings->withoutNativeTitlebar;
 }
@@ -63,7 +66,9 @@ void CreateWebView(HWND hWnd) {
                         ShowWindow(hWnd, SW_SHOW);
                         auto webviewWnd = GetWindow(hWnd, GW_CHILD);
                         ShowWindow(webviewWnd, SW_SHOW);
-                        webview->Navigate(L"file://C:/Users/urieg/source/repos/WebWindowNetCore/TestAppNative/webroot/index.html");
+                        webview->Navigate(url);
+                        delete[] url;
+                        url = nullptr;
                         return S_OK;
                     }).Get());
                 return S_OK;

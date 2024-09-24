@@ -23,11 +23,11 @@ impl WebView {
     }
 }
 
-// TODO Trait
 /// Builder to construct a WebView
 pub struct WebViewBuilder {
     title: Option<String>,
     appid: Option<String>,
+    url: Option<String>,
     without_native_titlebar: bool
 }
 
@@ -39,6 +39,7 @@ impl WebView {
         WebViewBuilder { 
             title: None,
             appid: None,
+            url: None,
             without_native_titlebar: false
         }
     }
@@ -51,7 +52,8 @@ impl WebViewBuilder {
     pub fn build(&self)->WebView {
         let title = self.title.clone().unwrap_or_else(||{String::from("Webview App")});
         let appid = self.appid.clone().unwrap_or_else(||{String::from("de.uriegel.webviewapp")});
-        WebView { webview: WebViewImpl::new(&title, &appid, self.without_native_titlebar) }
+        let url = self.url.clone().unwrap_or_else(||{String::from("about:blank")});
+        WebView { webview: WebViewImpl::new(&title, &appid, &url, self.without_native_titlebar) }
     }
 
     /// Sets the title of the window containing the web view.
@@ -80,6 +82,14 @@ impl WebViewBuilder {
     /// 
     pub fn without_native_titlebar(mut self)->WebViewBuilder {
         self.without_native_titlebar = true;
+        self
+    }
+
+    /// Sets the web view's url
+    /// 
+    /// There are a few possibilities to show some content, this is one
+    pub fn url(mut self, val: String)->WebViewBuilder {
+        self.url = Some(val);
         self
     }
 }
