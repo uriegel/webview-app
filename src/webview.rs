@@ -2,7 +2,7 @@
 //! and run an application containing only a webview.
 
 #[cfg(target_os = "linux")]
-use crate::linux::app::App as AppImpl;
+use crate::linux::webview::WebView as WebViewImpl;
 #[cfg(target_os = "windows")]
 use crate::windows::webview::WebView as WebViewImpl;
 
@@ -43,7 +43,7 @@ impl WebViewBuilder {
     /// 
     /// Call this function when all settings are set.
     pub fn build(&self)->WebView {
-        WebView { webview: WebViewImpl::new(self.title.clone()) }
+        WebView { webview: WebViewImpl::new(self.title.clone().unwrap_or(String::from("Webview App"))) }
     }
 
     /// Sets the title of the window containing the web view.
