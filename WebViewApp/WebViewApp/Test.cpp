@@ -6,8 +6,12 @@ struct WebViewAppSettings {
     const wchar_t* title;
 };
 
+wchar_t* title;
+
 void Init(const WebViewAppSettings* settings) {
-    MessageBoxW(NULL, settings->title ? settings->title : L"Kein Title", L"Init", MB_OK);
+    auto len = wcslen(settings->title) + 1;
+    title = new wchar_t[len];
+    wcscpy_s(title, len, settings->title);
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -40,10 +44,10 @@ auto RegisterClass(HINSTANCE hInstance) {
 
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
-    // TODO WindowTitle
-    HWND hWnd = CreateWindowW(WINDOW_CLASS, L"Window Title", WS_OVERLAPPEDWINDOW,
+    HWND hWnd = CreateWindowW(WINDOW_CLASS, title, WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
-
+    delete[] title;
+    title = nullptr;
     if (!hWnd)
         return FALSE;
 

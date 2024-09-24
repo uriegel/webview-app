@@ -25,7 +25,6 @@ impl WebView {
         fs::write(path, bytes).expect("Unable to write dll");
         unsafe {
             let lib = Library::new(path).expect("Failed to load DLL");
-            // TODO NONE -> nullptr
             let title = utf_16_null_terminiated(&title.unwrap_or(String::new()));
             let settings = WebViewAppSettings { title: title.as_ptr()};            
             let init: Symbol<unsafe extern fn(settings: *const WebViewAppSettings) -> ()> = lib.get(b"Init").expect("Failed to load function 'Init'");
