@@ -1,17 +1,15 @@
 use gtk::prelude::*;
 use gtk::{Application, ApplicationWindow};
 
-const APP_ID: &str = "de.uriegel.webview_app";
-
 pub struct WebView {
     app: Application,
 }
 
 impl WebView {
-    pub fn new(title: &str)->WebView {
+    pub fn new(title: &str, appid: &str, url: &str, _: bool)->WebView {
         // TODO Adwaita
         let app = Application::builder()
-            .application_id(APP_ID)
+            .application_id(appid)
             .build();
         let title = String::from(title);
         app.connect_activate(move |app| {
