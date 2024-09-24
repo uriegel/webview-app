@@ -43,7 +43,8 @@ impl WebViewBuilder {
     /// 
     /// Call this function when all settings are set.
     pub fn build(&self)->WebView {
-        WebView { webview: WebViewImpl::new(self.title.clone().unwrap_or(String::from("Webview App"))) }
+        let title = self.title.clone().unwrap_or_else(||{String::from("Webview App")});
+        WebView { webview: WebViewImpl::new(&title) }
     }
 
     /// Sets the title of the window containing the web view.

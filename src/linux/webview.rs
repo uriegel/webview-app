@@ -8,11 +8,12 @@ pub struct WebView {
 }
 
 impl WebView {
-    pub fn new(title: String)->WebView {
+    pub fn new(title: &str)->WebView {
         // TODO Adwaita
         let app = Application::builder()
             .application_id(APP_ID)
             .build();
+        let title = String::from(title);
         app.connect_activate(move |app| {
             // TODO app_id from settings
             let window = ApplicationWindow::builder()
