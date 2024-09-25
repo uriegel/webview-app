@@ -14,18 +14,15 @@ pub struct Bounds {
 }
 
 impl Bounds {
+    pub fn restore(config_dir: &str)->Option<Self> {
+        fs::read_to_string(
+            Path::new(config_dir).join("bounds.json"))
+                .ok()
+                .and_then(|json| serde_json::from_str(&json).ok())
+    }
+
     pub fn save(&self, config_dir: &str)->() {
         let json = serde_json::to_string(&self).unwrap();
         fs::write(Path::new(config_dir).join("bounds.json"), json).unwrap();
-    }
-
-    pub fn restore()->Self {
-        Bounds {
-            x: None,
-            y: None,
-            width: None,
-            height: None,
-            is_maximized: false
-        }
     }
 }

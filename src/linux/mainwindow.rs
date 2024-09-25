@@ -14,6 +14,7 @@ use super::super::bounds::Bounds;
 
 impl MainWindow {
     pub fn new(app: &Application, config_dir: &str, title: &str, bounds: Bounds, save_bounds: bool, url: &str)->Self {
+        let bounds = Bounds::restore(config_dir).unwrap_or(bounds);
         let window = MainWindow { 
             window: 
                 ApplicationWindow::builder()
