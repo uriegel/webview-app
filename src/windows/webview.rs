@@ -13,10 +13,6 @@ pub struct WebView {
 }
 
 impl WebView {
-    // TODO Borderless Windows then covert to rust
-    // TODO Include a webview with dragzone
-    // TODO https://github.com/melak47/BorderlessWindow/blob/main/src/main.cpp
-
     pub fn new(title: &str, appid: &str, url: &str, without_native_titlebar: bool)->WebView {
         // TODO path for release dll
         let bytes = include_bytes!("../../WebViewApp/x64/Debug/WebViewApp.dll");

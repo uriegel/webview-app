@@ -1,6 +1,9 @@
 use gtk::prelude::*;
-use gtk::{Application, ApplicationWindow};
+use gtk::Application;
 
+use super::mainwindow::MainWindow;
+
+#[derive(Clone)]
 pub struct WebView {
     app: Application,
 }
@@ -12,13 +15,9 @@ impl WebView {
             .application_id(appid)
             .build();
         let title = String::from(title);
-        app.connect_activate(move |app| {
-            // TODO app_id from settings
-            let window = ApplicationWindow::builder()
-                .title(title.clone())
-                .application(app)
-                .build();
-            window.present();
+        let url = url.to_string();
+        app.connect_activate(move |application| {
+            MainWindow::new(application, &title, &url);
         });
         WebView { 
             app
