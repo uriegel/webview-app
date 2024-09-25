@@ -4,6 +4,8 @@
 use libloading::{Library, Symbol};
 use std::{fs, path::Path};
 
+use crate::bounds::Bounds;
+
 pub fn utf_16_null_terminiated(x: &str) -> Vec<u16> {
     x.encode_utf16().chain(std::iter::once(0)).collect()
 }
@@ -13,7 +15,7 @@ pub struct WebView {
 }
 
 impl WebView {
-    pub fn new(title: &str, appid: &str, url: &str, without_native_titlebar: bool)->WebView {
+    pub fn new(title: &str, appid: &str, bounds: Bounds, url: &str, without_native_titlebar: bool)->WebView {
         // TODO path for release dll
         let bytes = include_bytes!("../../WebViewApp/x64/Debug/WebViewApp.dll");
         let path_app = "C:/Projekte/webview-app/WebViewApp.dll";
@@ -39,6 +41,11 @@ impl WebView {
             let settings = WebViewAppSettings { 
                 title: title.as_ptr(),
                 user_data_path: local_path.as_ptr(),
+                x: bounds.x.unwrap_or(-1),
+                y: bounds.y.unwrap_or(-1),
+                width: bounds.width.unwrap_or(-1),
+                height: bounds.height.unwrap_or(-1),
+                is_maximized: bounds.is_maximized,
                 url: url.as_ptr(),
                 without_native_titlebar 
             };            
@@ -77,6 +84,11 @@ impl WebView {
 struct WebViewAppSettings {
     title: *const u16,
     user_data_path: *const u16,
+    x: i32,
+    y: i32,
+    width: i32,
+    height: i32,
+    is_maximized: bool,
     url: *const u16,
     without_native_titlebar: bool
 }

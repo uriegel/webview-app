@@ -8,7 +8,6 @@ fn main() {
         WebView::builder()
             .appid("de.uriegel.hello".to_string())
             .title("Rust Web View 👍".to_string())
-            .initial_bounds(400, 600)
             .url("https://crates.io/crates/webview_app".to_string())
             .build();
     webview.run();

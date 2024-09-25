@@ -14,12 +14,22 @@ wil::com_ptr<ICoreWebView2Controller> webviewController;
 struct WebViewAppSettings {
     const wchar_t* title;
     const wchar_t* userDataPath;
+    int x;
+    int y;
+    int width;
+    int height;
+    bool isMaximized;
     const wchar_t* url;
     bool withoutNativeTitlebar;
 };
 
 wchar_t* title { nullptr };
 wchar_t* userDataPath { nullptr };
+int x;
+int y;
+int width;
+int height;
+bool isMaximized;
 wchar_t* url { nullptr };
 auto withoutNativeTitlebar = false;
 
@@ -35,6 +45,11 @@ void Init(const WebViewAppSettings* settings) {
     auto hr = CoInitialize(nullptr);
     title = SetString(settings->title);
     url = SetString(settings->url);
+    x = settings->x;
+    y = settings->y;
+    width = settings->width;
+    height = settings->height;
+    isMaximized = settings->isMaximized;
     userDataPath = SetString(settings->userDataPath);
     withoutNativeTitlebar = settings->withoutNativeTitlebar;
 }
@@ -79,22 +94,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
     switch (message) {
         case WM_CREATE:
             CreateWebView(hWnd);
+            if (isMaximized)
+                ShowWindow(hWnd, SW_MAXIMIZE);
             break;
         case WM_NCCALCSIZE:
             if (withoutNativeTitlebar) {
+                auto isZoomed = IsZoomed(hWnd);
+                auto isZoomedTop = isZoomed ? 7 : 0;
+                auto isZoomedAll = isZoomed ? 3 : 0;
+                
                 if (wParam == TRUE) {
                     auto params = (NCCALCSIZE_PARAMS*)lParam;
-                    params->rgrc[0].top += 1;
-                    params->rgrc[0].bottom -= 5;
-                    params->rgrc[0].left += 5;
-                    params->rgrc[0].right -= 5;
+                    params->rgrc[0].top += 1 + isZoomedTop;
+                    params->rgrc[0].bottom -= 5 + isZoomedAll;
+                    params->rgrc[0].left += 5 + isZoomedAll;
+                    params->rgrc[0].right -= 5 + isZoomedAll;
                 }
                 else {
                     auto params = (RECT*)lParam;
-                    params->top += 1;
-                    params->bottom -= 5;
-                    params->left += 5;
-                    params->right -= 5;
+                    params->top += 1 + isZoomedTop;
+                    params->bottom -= 5 + isZoomedAll;
+                    params->left += 5 + isZoomedAll;
+                    params->right -= 5 + isZoomedAll;
                 }
                 return 0;
             }
@@ -102,7 +123,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 return DefWindowProc(hWnd, message, wParam, lParam);
             break;
         case WM_SIZE:
-            // TODO if is maximized (and withoutnativetitlebar) size with padding
             if (webviewController) {
                 RECT bounds;
                 GetClientRect(hWnd, &bounds);
@@ -139,7 +159,9 @@ auto RegisterClass(HINSTANCE hInstance) {
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
     HWND hWnd = CreateWindowW(WINDOW_CLASS, title, WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+        x == -1 ? CW_USEDEFAULT: x, y == -1 ? CW_USEDEFAULT : y, 
+        width == -1 ? CW_USEDEFAULT : width, height == -1 ? CW_USEDEFAULT : height,
+        nullptr, nullptr, hInstance, nullptr);
     delete[] title;
     title = nullptr;
     if (!hWnd)
@@ -155,7 +177,7 @@ int __stdcall Run() {
     auto instance = GetModuleHandle(nullptr);
     RegisterClass(instance);
 
-    // Anwendungsinitialisierung ausführen:
+    // Anwendungsinitialisierung ausfï¿½hren:
     if (!InitInstance(instance, SW_NORMAL))
         return FALSE;
 
@@ -170,8 +192,8 @@ int __stdcall Run() {
 }
 
 wchar_t* __stdcall Test1(wchar_t* text_to_display) {
-    MessageBoxW(NULL, text_to_display, L"Cäptschn", MB_OK);
-    auto txt = L"Das ist ein schöner Result";
+    MessageBoxW(NULL, text_to_display, L"Cï¿½ptschn", MB_OK);
+    auto txt = L"Das ist ein schï¿½ner Result";
     auto len = wcslen(txt);
     auto text = new wchar_t[len + 1];
     wcscpy_s(text, len + 1, txt);
