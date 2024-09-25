@@ -1,5 +1,7 @@
+use adw::Application;
+use adw::HeaderBar;
 use gtk::prelude::*;
-use gtk::{Application, ApplicationWindow};
+use gtk::ApplicationWindow;
 
 use super::webkitview::WebkitView;
 
@@ -21,6 +23,8 @@ impl MainWindow {
         };
 
         WebkitView::new(app, window.clone(), url);
+        let headerbar = HeaderBar::new();
+        window.window.set_titlebar(Some(&headerbar));
         window.window.present();
         window
     }

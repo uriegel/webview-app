@@ -3,6 +3,12 @@
 ## Prerequisites on Linux (Fedora)
 * ```sudo dnf install gtk4-devel```
 * ```sudo dnf install webkitgtk6.0-devel```
+* ```sudo dnf install libadwaita-devel```
+
+## Prerequisites on Linux (Ubuntu)
+* ```sudo apt install libgtk-4-dev```
+* ```sudo apt install libwebkitgtk-6.0-dev```
+* ```sudo apt install libadwaita-1-dev```
 
 ## Run examples
 

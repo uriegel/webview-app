@@ -1,5 +1,5 @@
 use gtk::prelude::*;
-use gtk::Application;
+use adw::Application;
 
 use super::mainwindow::MainWindow;
 
@@ -10,7 +10,6 @@ pub struct WebView {
 
 impl WebView {
     pub fn new(title: &str, appid: &str, url: &str, _: bool)->WebView {
-        // TODO Adwaita
         let app = Application::builder()
             .application_id(appid)
             .build();

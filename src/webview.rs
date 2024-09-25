@@ -28,6 +28,8 @@ pub struct WebViewBuilder {
     title: Option<String>,
     appid: Option<String>,
     url: Option<String>,
+    width: Option<i32>,
+    height: Option<i32>,
     without_native_titlebar: bool
 }
 
@@ -40,6 +42,8 @@ impl WebView {
             title: None,
             appid: None,
             url: None,
+            width: None,
+            height: None,
             without_native_titlebar: false
         }
     }
@@ -63,6 +67,7 @@ impl WebViewBuilder {
     }
 
     /// Sets the appid. 
+    /// It is a reverse domain name, like "de.uriegel.webapp"
     /// 
     /// On Linux, this is the GTK Application ID.
     /// 
@@ -73,6 +78,15 @@ impl WebViewBuilder {
     // TODO docu
     pub fn appid(mut self, val: String)->WebViewBuilder {
         self.appid = Some(val);
+        self
+    }
+
+    /// With the help of this method you can initialize the size of the window with custom values.
+    /// In combination with "save_bounds()" this is the initial width and heigth of the window at first start,
+    /// otherwise the window is always starting with these values.
+    pub fn initial_bounds(mut self, w: i32, h: i32)->WebViewBuilder {
+        self.width = Some(w);
+        self.height = Some(h);
         self
     }
 
@@ -87,7 +101,8 @@ impl WebViewBuilder {
 
     /// Sets the web view's url
     /// 
-    /// There are a few possibilities to show some content, this is one
+    /// You can use ```http(s)://``` scheme, ```file://``` scheme, and custom resource scheme ```res://```. This value is 
+    /// not used, when you set "DebugUrl" and a debugger is attached
     pub fn url(mut self, val: String)->WebViewBuilder {
         self.url = Some(val);
         self

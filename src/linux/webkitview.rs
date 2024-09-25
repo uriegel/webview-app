@@ -1,5 +1,5 @@
+use adw::Application;
 use gtk::prelude::*;
-use gtk::Application;
 use webkit6::prelude::*;
 use webkit6::WebView;
 
