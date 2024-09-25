@@ -13,7 +13,7 @@ pub struct MainWindow {
 use super::super::bounds::Bounds;
 
 impl MainWindow {
-    pub fn new(app: &Application, title: &str, bounds: Bounds, url: &str)->Self {
+    pub fn new(app: &Application, title: &str, bounds: Bounds, save_bounds: bool, url: &str)->Self {
         let window = MainWindow { 
             window: 
                 ApplicationWindow::builder()
@@ -21,13 +21,26 @@ impl MainWindow {
                 .application(app)
                 .default_width(bounds.width.unwrap_or(800))
                 .default_height(bounds.height.unwrap_or(600))
+                .titlebar(&HeaderBar::new())
                 .build()
         };
 
         WebkitView::new(app, window.clone(), url);
-        let headerbar = HeaderBar::new();
-        window.window.set_titlebar(Some(&headerbar));
         window.window.present();
+        if save_bounds  {
+            let gtkwindow = window.window.clone();
+            window.window.connect_close_request(move|_| {
+                let bounds = Bounds {
+                    x: None,
+                    y: None,
+                    width: Some(gtkwindow.width()),
+                    height: Some(gtkwindow.height()),
+                    is_maximized: gtkwindow.is_maximized()
+                };
+                bounds.save();
+                false.into()
+            });
+        }
         window
     }
 }

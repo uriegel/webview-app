@@ -32,6 +32,7 @@ pub struct WebViewBuilder {
     url: Option<String>,
     width: Option<i32>,
     height: Option<i32>,
+    save_bounds: bool,
     without_native_titlebar: bool
 }
 
@@ -46,6 +47,7 @@ impl WebView {
             url: None,
             width: None,
             height: None,
+            save_bounds: false,
             without_native_titlebar: false
         }
     }
@@ -68,7 +70,7 @@ impl WebViewBuilder {
             is_maximized: false
         };
 
-        WebView { webview: WebViewImpl::new(&title, &appid, bounds, &url, self.without_native_titlebar) }
+        WebView { webview: WebViewImpl::new(&title, &appid, bounds, self.save_bounds, &url, self.without_native_titlebar) }
     }
 
     /// Sets the title of the window containing the web view.
@@ -98,6 +100,15 @@ impl WebViewBuilder {
     pub fn initial_bounds(mut self, w: i32, h: i32)->WebViewBuilder {
         self.width = Some(w);
         self.height = Some(h);
+        self
+    }
+
+    /// Saves window bounds after closing app.
+    /// 
+    /// When you call save_bounds, then windows location and width and height and normal/maximized state is saved on close. 
+    /// After restarting the app the webview is displayed at these settings again.
+    pub fn save_bounds(mut self)->WebViewBuilder {
+        self.save_bounds = true;
         self
     }
 

@@ -10,7 +10,7 @@ pub struct WebkitView {
 }
 
 impl WebkitView {
-    pub fn new(application: &Application, mainwindow: MainWindow, url: &str) -> Self {
+    pub fn new(_application: &Application, mainwindow: MainWindow, url: &str) -> Self {
         let webview = WebView::builder()
             .build();
         mainwindow.window.set_child(Some(&webview));

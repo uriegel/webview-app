@@ -1,4 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 #[derive(Copy, Clone)]
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Bounds {
     pub x: Option<i32>,
     pub y: Option<i32>,
@@ -9,7 +13,7 @@ pub struct Bounds {
 
 impl Bounds {
     pub fn save(&self)->() {
-
+        let json = serde_json::to_string(&self).unwrap();
     }
 
     pub fn restore()->Self {
