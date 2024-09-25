@@ -23,9 +23,6 @@ impl WebView {
         fs::write(path_app, bytes).expect("Unable to write dll");
         let bytes = include_bytes!("../../WebViewApp/x64/Debug/WebView2Loader.dll");
 
-        // TODO Linux
-        #[cfg(unix)]
-        let app_data = std::env::var("HOME").expect("No HOME directory");
         let app_data = std::env::var("LOCALAPPDATA").expect("No APP_DATA directory");
         let local_path = Path::new(&app_data).join(appid);
         if !fs::exists(local_path.clone()).expect("Could not access local directory") 
