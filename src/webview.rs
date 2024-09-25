@@ -86,8 +86,8 @@ impl WebViewBuilder {
     /// 
     /// It is also used as path part to a directory to share window settings
     /// 
-    /// * Windows: 
-    /// * Linux:  ~/
+    /// * Windows: ```$LOCALAPPDATA$/<appid>```
+    /// * Linux:  ```~/.config/<appid>```
     // TODO docu
     pub fn appid(mut self, val: String)->WebViewBuilder {
         self.appid = Some(val);
