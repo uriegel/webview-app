@@ -1,9 +1,10 @@
-struct Bounds {
-    x: Option<i32>,
-    y: Option<i32>,
-    width: Option<i32>,
-    height: Option<i32>,
-    is_maximized: bool
+#[derive(Copy, Clone)]
+pub struct Bounds {
+    pub x: Option<i32>,
+    pub y: Option<i32>,
+    pub width: Option<i32>,
+    pub height: Option<i32>,
+    pub is_maximized: bool
 }
 
 impl Bounds {

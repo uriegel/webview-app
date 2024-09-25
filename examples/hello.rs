@@ -6,11 +6,10 @@ use webview_app::webview::WebView;
 fn main() {
     let webview = 
         WebView::builder()
-            // TODO builder pattern enhancement
-            .appid(String::from("de.uriegel.hello"))
-            .title(String::from("Rust Web View 👍"))
+            .appid("de.uriegel.hello".to_string())
+            .title("Rust Web View 👍".to_string())
             .initial_bounds(400, 600)
-            .url(String::from("https://crates.io/crates/webview_app"))
+            .url("https://crates.io/crates/webview_app".to_string())
             .build();
     webview.run();
 }

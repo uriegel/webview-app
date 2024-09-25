@@ -10,15 +10,17 @@ pub struct MainWindow {
     pub window: ApplicationWindow
 }
 
+use super::super::bounds::Bounds;
+
 impl MainWindow {
-    pub fn new(app: &Application, title: &str, url: &str)->Self {
+    pub fn new(app: &Application, title: &str, bounds: Bounds, url: &str)->Self {
         let window = MainWindow { 
             window: 
                 ApplicationWindow::builder()
                 .title(title)
                 .application(app)
-                .default_width(800)
-                .default_height(600)
+                .default_width(bounds.width.unwrap_or(800))
+                .default_height(bounds.height.unwrap_or(600))
                 .build()
         };
 

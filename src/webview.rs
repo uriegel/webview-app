@@ -1,6 +1,8 @@
 //! This module contains all the important structs and implementations to create, configure
 //! and run an application containing only a webview.
 
+use crate::bounds::Bounds;
+
 #[cfg(target_os = "linux")]
 use crate::linux::webview::WebView as WebViewImpl;
 #[cfg(target_os = "windows")]
@@ -54,10 +56,19 @@ impl WebViewBuilder {
     /// 
     /// Call this function when all settings are set.
     pub fn build(&self)->WebView {
-        let title = self.title.clone().unwrap_or_else(||{String::from("Webview App")});
-        let appid = self.appid.clone().unwrap_or_else(||{String::from("de.uriegel.webviewapp")});
-        let url = self.url.clone().unwrap_or_else(||{String::from("about:blank")});
-        WebView { webview: WebViewImpl::new(&title, &appid, &url, self.without_native_titlebar) }
+        let title = self.title.clone().unwrap_or_else(||{"Webview App".to_string()});
+        let appid = self.appid.clone().unwrap_or_else(||{"de.uriegel.webviewapp".to_string()});
+        let url = self.url.clone().unwrap_or_else(||{"about:blank".to_string()});
+
+        let bounds = Bounds {
+            x: None,
+            y: None,
+            width: self.width, 
+            height: self.height, 
+            is_maximized: false
+        };
+
+        WebView { webview: WebViewImpl::new(&title, &appid, bounds, &url, self.without_native_titlebar) }
     }
 
     /// Sets the title of the window containing the web view.
