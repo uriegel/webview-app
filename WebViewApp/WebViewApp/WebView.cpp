@@ -143,9 +143,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             {
                 RECT rect;
                 GetWindowRect(hWnd, &rect);
-                auto res = OnClose(target, rect.left, rect.top, rect.right-rect.left, rect.bottom - rect.top, IsZoomed(hWnd));
+                if (OnClose(target, rect.left, rect.top, rect.right-rect.left, rect.bottom - rect.top, IsZoomed(hWnd)))
+                    DestroyWindow(hWnd);
             }
-            DestroyWindow(hWnd);
             break;
         case WM_DESTROY:
             PostQuitMessage(0);

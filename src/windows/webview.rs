@@ -98,7 +98,7 @@ struct Callback {
 }
 
 impl Callback {
-    fn on_close(&self, x: i32, y: i32, w: i32, h: i32, is_maximized: bool) {
+    fn on_close(&self, x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool {
         if self.should_save_bounds {
             let bounds = Bounds {
                 x: Some(x),
@@ -109,14 +109,15 @@ impl Callback {
             };
             bounds.save(&self.config_dir);
         }
+        true
     }
 }
 
 extern fn on_close(target: *const Callback, x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool { 
     unsafe {
-        (*target).on_close(x, y, w, h, is_maximized);
+        let res = (*target).on_close(x, y, w, h, is_maximized);
+        res
     }
-    false 
 }
 
 #[repr(C)]
