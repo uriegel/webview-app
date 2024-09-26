@@ -9,12 +9,18 @@ pub struct WebkitView {
     //pub _webview: WebView
 }
 
+pub struct WebkitViewParams<'a> {
+    pub _application: &'a Application, 
+    pub mainwindow: MainWindow, 
+    pub url: &'a str
+}
+
 impl WebkitView {
-    pub fn new(_application: &Application, mainwindow: MainWindow, url: &str) -> Self {
+    pub fn new(params: WebkitViewParams) -> Self {
         let webview = WebView::builder()
             .build();
-        mainwindow.window.set_child(Some(&webview));
-        webview.load_uri(url);
+        params.mainwindow.window.set_child(Some(&webview));
+        webview.load_uri(params.url);
         let settings = webkit6::prelude::WebViewExt::settings(&webview);
         settings.unwrap().set_enable_developer_extras(true);
         //let a = webview.context().unwrap();

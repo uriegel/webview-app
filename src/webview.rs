@@ -80,13 +80,19 @@ impl WebViewBuilder {
 
         let params = Params {
             title: &title,
+            appid: &appid,
+            bounds,
+            save_bounds: self.save_bounds,
+            url: &url,
+            #[cfg(target_os = "windows")]
+            without_native_titlebar: self.without_native_titlebar,
             callbacks: Callbacks {
                 on_close: self.on_close
             }
         };
 
         WebView { 
-            webview: WebViewImpl::new(&appid, params, bounds, self.save_bounds, &url, self.without_native_titlebar)
+            webview: WebViewImpl::new(params)
         }
     }
 

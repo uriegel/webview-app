@@ -12,37 +12,50 @@ pub struct MainWindow {
     pub window: ApplicationWindow
 }
 
-pub struct MainWindowCallbacks {
+pub struct MainWindowParams<'a> {
+    pub app: &'a Application,
+    pub config_dir: &'a str, 
+    pub title: &'a str, 
+    pub bounds: Bounds, 
+    pub save_bounds: bool, 
+    pub url: &'a str,
     pub on_close: Rc<dyn Fn()->bool>
 }
 
 use super::super::bounds::Bounds;
+use super::webkitview::WebkitViewParams;
 
 impl MainWindow {
-    pub fn new(app: &Application, config_dir: &str, title: &str, callbacks: MainWindowCallbacks, bounds: Bounds, save_bounds: bool, url: &str)->Self {
+    pub fn new(params: MainWindowParams)->Self {
         let bounds = 
-            if save_bounds
-                {Bounds::restore(config_dir).unwrap_or(bounds)} 
+            if params.save_bounds
+                {Bounds::restore(params.config_dir).unwrap_or(params.bounds)} 
             else
-                {bounds};
+                {params.bounds};
 
         let window = MainWindow { 
             window: 
                 ApplicationWindow::builder()
-                    .title(title)
-                    .application(app)
+                    .title(params.title)
+                    .application(params.app)
                     .default_width(bounds.width.unwrap_or(800))
                     .default_height(bounds.height.unwrap_or(600))
                     .titlebar(&HeaderBar::new())
                     .build()
         };
 
-        WebkitView::new(app, window.clone(), url);
+        let webkitview_params = WebkitViewParams {
+            _application: params.app, 
+            mainwindow: window.clone(), 
+            url: params.url
+        };
+
+        WebkitView::new(webkitview_params);
         window.window.present();
-        window.window.connect_close_request(move|_| ((*callbacks.on_close)() == false).into());
-        if save_bounds  {
+        window.window.connect_close_request(move|_| ((*params.on_close)() == false).into());
+        if params.save_bounds  {
             let gtkwindow = window.window.clone();
-            let config_dir = config_dir.to_string();
+            let config_dir = params.config_dir.to_string();
             window.window.connect_close_request(move|_| {
                 let bounds = Bounds {
                     x: None,

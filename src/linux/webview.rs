@@ -3,9 +3,9 @@ use std::{fs, path::Path};
 use gtk::prelude::*;
 use adw::Application;
 
-use crate::{bounds::Bounds, params::Params};
+use crate::params::Params;
 
-use super::mainwindow::{MainWindow, MainWindowCallbacks};
+use super::mainwindow::{MainWindow, MainWindowParams};
 
 #[derive(Clone)]
 pub struct WebView {
@@ -13,22 +13,28 @@ pub struct WebView {
 }
 
 impl WebView {
-    pub fn new(appid: &str, params: Params, bounds: Bounds, save_bounds: bool, url: &str, _: bool)->WebView {
+    pub fn new(params: Params)->WebView {
         let home = std::env::var("HOME").expect("No HOME directory");
-        let config_dir = Path::new(&home).join(".config").join(appid);
+        let config_dir = Path::new(&home).join(".config").join(params.appid);
         if !fs::exists(config_dir.clone()).expect("Could not access local directory") 
             { fs::create_dir(config_dir.clone()).expect("Could not create local directory") } 
 
         let app = Application::builder()
-            .application_id(appid)
+            .application_id(params.appid)
             .build();
         let title = params.title.to_string();
-        let url = url.to_string();
+        let url = params.url.to_string();
         app.connect_activate(move |application| {
-            let callbacks = MainWindowCallbacks {
-                on_close: params.on_close.clone()
+            let mainwindow_params = MainWindowParams {
+                app: application,
+                config_dir: &config_dir.to_string_lossy(),
+                title: &title,
+                bounds: params.bounds, 
+                save_bounds: params.save_bounds, 
+                url: &url,
+                on_close: params.callbacks.on_close.clone()
             };
-                MainWindow::new(application, &config_dir.to_string_lossy(), &title, callbacks, bounds, save_bounds, &url);
+            MainWindow::new(mainwindow_params);
         });
         WebView { 
             app
