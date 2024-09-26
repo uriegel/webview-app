@@ -15,23 +15,32 @@ pub struct WebView {
 }
 
 impl WebView {
-    pub fn new(title: &str, appid: &str, bounds: Bounds, url: &str, without_native_titlebar: bool)->WebView {
-        // TODO path for release dll
+    pub fn new(title: &str, appid: &str, bounds: Bounds, save_bounds: bool, url: &str, without_native_titlebar: bool)->WebView {
+        #[cfg(debug_assertions)]
         let bytes = include_bytes!("../../WebViewApp/x64/Debug/WebViewApp.dll");
-        let path_app = "C:/Projekte/webview-app/WebViewApp.dll";
-        // TODO file to user user store
-        fs::write(path_app, bytes).expect("Unable to write dll");
-        let bytes = include_bytes!("../../WebViewApp/x64/Debug/WebView2Loader.dll");
-
+        #[cfg(not(debug_assertions))]
+        let bytes = include_bytes!("../../WebViewApp/x64/Release/WebViewApp.dll");
         let app_data = std::env::var("LOCALAPPDATA").expect("No APP_DATA directory");
         let local_path = Path::new(&app_data).join(appid);
         if !fs::exists(local_path.clone()).expect("Could not access local directory") 
             { fs::create_dir(local_path.clone()).expect("Could not create local directory") } 
-        let path = local_path.join("WebView2Loader.dll");
-        fs::write(path, bytes).expect("Unable to write dll");
+        let path_app = local_path.join("WebViewApp.dll");
+        fs::write(path_app.clone(), bytes).expect("Unable to write dll");
+        let bytes = include_bytes!("../../WebViewApp/x64/Debug/WebView2Loader.dll");
 
+        let path_loader = local_path.join("WebView2Loader.dll");
+        fs::write(path_loader.clone(), bytes).expect("Unable to write dll");
+
+        let bounds = 
+            if save_bounds
+                { Bounds::restore(&local_path.to_string_lossy()).unwrap_or(bounds) } 
+            else
+                { bounds};
+
+        // TODO callback from native canclose with bounds
         unsafe {
-            let lib = Library::new(path_app).expect("Failed to load DLL");
+            let _lib = Library::new(path_loader).expect("Failed to load loader DLL");
+            let lib = Library::new(path_app).expect("Failed to load app DLL");
             let title = utf_16_null_terminiated(title);
             let url = utf_16_null_terminiated(url);
             let local_path = utf_16_null_terminiated(local_path.as_os_str().to_str().expect("user data path invalid"));
