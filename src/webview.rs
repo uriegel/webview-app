@@ -88,7 +88,6 @@ impl WebViewBuilder {
     /// 
     /// * Windows: ```$LOCALAPPDATA$/<appid>```
     /// * Linux:  ```~/.config/<appid>```
-    // TODO docu
     pub fn appid(mut self, val: String)->WebViewBuilder {
         self.appid = Some(val);
         self
