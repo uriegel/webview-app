@@ -4,7 +4,7 @@
 use libloading::{Library, Symbol};
 use std::{fs, path::Path};
 
-use crate::bounds::Bounds;
+use crate::{bounds::Bounds, callbacks::Callbacks};
 
 pub fn utf_16_null_terminiated(x: &str) -> Vec<u16> {
     x.encode_utf16().chain(std::iter::once(0)).collect()
@@ -12,11 +12,11 @@ pub fn utf_16_null_terminiated(x: &str) -> Vec<u16> {
 
 pub struct WebView {
     lib: Library,
-    _callback: RefCell<Callback>
+    _callback: Box<Callback>
 }
 
 impl WebView {
-    pub fn new(title: &str, appid: &str, bounds: Bounds, save_bounds: bool, url: &str, without_native_titlebar: bool)->WebView {
+    pub fn new(title: &str, appid: &str, callbacks: Callbacks, bounds: Bounds, save_bounds: bool, url: &str, without_native_titlebar: bool)->WebView {
         #[cfg(debug_assertions)]
         let bytes = include_bytes!("../../WebViewApp/x64/Debug/WebViewApp.dll");
         #[cfg(not(debug_assertions))]
@@ -44,9 +44,10 @@ impl WebView {
             let title = utf_16_null_terminiated(title);
             let url = utf_16_null_terminiated(url);
             let user_data_path = utf_16_null_terminiated(local_path.as_os_str().to_str().expect("user data path invalid"));
-            let callback = RefCell::new(Callback { 
+            let callback = Box::new(Callback { 
                 should_save_bounds: save_bounds,
-                config_dir: local_path.to_string_lossy().to_string()
+                config_dir: local_path.to_string_lossy().to_string(),
+                callbacks
             });
             let settings = WebViewAppSettings { 
                 title: title.as_ptr(),
@@ -94,12 +95,14 @@ impl WebView {
 
 struct Callback {
     should_save_bounds: bool,
-    config_dir: String
+    config_dir: String,
+    callbacks: Callbacks
 }
 
 impl Callback {
     fn on_close(&self, x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool {
-        if self.should_save_bounds {
+        let can_close = (*self.callbacks.on_close)();
+        if can_close && self.should_save_bounds {
             let bounds = Bounds {
                 x: Some(x),
                 y: Some(y),
@@ -109,7 +112,7 @@ impl Callback {
             };
             bounds.save(&self.config_dir);
         }
-        true
+        can_close
     }
 }
 

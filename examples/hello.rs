@@ -4,7 +4,7 @@
 use webview_app::webview::WebView;
 
 fn main() {
-    let can_close = false;
+    let can_close = true;
 
     let webview = 
         WebView::builder()
