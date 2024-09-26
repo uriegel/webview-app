@@ -22,7 +22,9 @@ impl Bounds {
     }
 
     pub fn save(&self, config_dir: &str)->() {
-        let json = serde_json::to_string(&self).unwrap();
-        fs::write(Path::new(config_dir).join("bounds.json"), json).unwrap();
+        if !self.is_maximized {
+            let json = serde_json::to_string(&self).unwrap();
+            fs::write(Path::new(config_dir).join("bounds.json"), json).unwrap();
+        }
     }
 }

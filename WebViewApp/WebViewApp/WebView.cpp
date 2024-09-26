@@ -8,6 +8,8 @@ using namespace Microsoft::WRL;
 
 auto WINDOW_CLASS = L"$$WebView_APP$$";
 
+using OnCloseFunc = bool(void* target, int x, int y, int w, int h, bool isMaximized);
+
 wil::com_ptr<ICoreWebView2> webview;
 wil::com_ptr<ICoreWebView2Controller> webviewController;
 
@@ -19,6 +21,8 @@ struct WebViewAppSettings {
     int width;
     int height;
     bool isMaximized;
+    void* target;
+    OnCloseFunc* OnClose;
     const wchar_t* url;
     bool withoutNativeTitlebar;
 };
@@ -30,6 +34,8 @@ int y;
 int width;
 int height;
 bool isMaximized;
+void* target;
+OnCloseFunc* OnClose;
 wchar_t* url { nullptr };
 auto withoutNativeTitlebar = false;
 
@@ -40,7 +46,6 @@ wchar_t* SetString(const wchar_t* str) {
     return target;
 }
 
-
 void Init(const WebViewAppSettings* settings) {
     auto hr = CoInitialize(nullptr);
     title = SetString(settings->title);
@@ -50,6 +55,8 @@ void Init(const WebViewAppSettings* settings) {
     width = settings->width;
     height = settings->height;
     isMaximized = settings->isMaximized;
+    target = settings->target;
+    OnClose = settings->OnClose;
     userDataPath = SetString(settings->userDataPath);
     withoutNativeTitlebar = settings->withoutNativeTitlebar;
 }
@@ -129,7 +136,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 webviewController->put_Bounds(bounds);
             }
         break;
-
+        case WM_CLOSE:
+            {
+                RECT rect;
+                GetWindowRect(hWnd, &rect);
+                auto res = OnClose(target, rect.left, rect.top, rect.right-rect.left, rect.bottom - rect.top, IsZoomed(hWnd));
+            }
+            DestroyWindow(hWnd);
+            break;
         case WM_DESTROY:
             PostQuitMessage(0);
             break;

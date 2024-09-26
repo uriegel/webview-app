@@ -11,7 +11,8 @@ pub fn utf_16_null_terminiated(x: &str) -> Vec<u16> {
 }
 
 pub struct WebView {
-    lib: Library
+    lib: Library,
+    _callback: Box<Callback>
 }
 
 impl WebView {
@@ -37,27 +38,32 @@ impl WebView {
             else
                 { bounds};
 
-        // TODO callback from native canclose with bounds
         unsafe {
             let _lib = Library::new(path_loader).expect("Failed to load loader DLL");
             let lib = Library::new(path_app).expect("Failed to load app DLL");
             let title = utf_16_null_terminiated(title);
             let url = utf_16_null_terminiated(url);
-            let local_path = utf_16_null_terminiated(local_path.as_os_str().to_str().expect("user data path invalid"));
+            let user_data_path = utf_16_null_terminiated(local_path.as_os_str().to_str().expect("user data path invalid"));
+            let callback = Box::new(Callback { 
+                should_save_bounds: save_bounds,
+                config_dir: local_path.to_string_lossy().to_string()
+            });
             let settings = WebViewAppSettings { 
                 title: title.as_ptr(),
-                user_data_path: local_path.as_ptr(),
+                user_data_path: user_data_path.as_ptr(),
                 x: bounds.x.unwrap_or(-1),
                 y: bounds.y.unwrap_or(-1),
                 width: bounds.width.unwrap_or(-1),
                 height: bounds.height.unwrap_or(-1),
                 is_maximized: bounds.is_maximized,
+                target: & *callback,
+                on_close,
                 url: url.as_ptr(),
                 without_native_titlebar 
             };            
             let init: Symbol<unsafe extern fn(settings: *const WebViewAppSettings) -> ()> = lib.get(b"Init").expect("Failed to load function 'Init'");
             init(&settings as *const WebViewAppSettings);
-            WebView { lib }
+            WebView { lib, _callback: callback }
         }
     }
 
@@ -86,6 +92,33 @@ impl WebView {
     }
 }
 
+struct Callback {
+    should_save_bounds: bool,
+    config_dir: String
+}
+
+impl Callback {
+    fn on_close(&self, x: i32, y: i32, w: i32, h: i32, is_maximized: bool) {
+        if self.should_save_bounds {
+            let bounds = Bounds {
+                x: Some(x),
+                y: Some(y),
+                width: Some(w),
+                height: Some(h),
+                is_maximized 
+            };
+            bounds.save(&self.config_dir);
+        }
+    }
+}
+
+extern fn on_close(target: *const Callback, x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool { 
+    unsafe {
+        (*target).on_close(x, y, w, h, is_maximized);
+    }
+    false 
+}
+
 #[repr(C)]
 struct WebViewAppSettings {
     title: *const u16,
@@ -95,6 +128,8 @@ struct WebViewAppSettings {
     width: i32,
     height: i32,
     is_maximized: bool,
+    target: *const Callback,
+    on_close: extern fn(target: *const Callback, x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool,
     url: *const u16,
     without_native_titlebar: bool
 }
