@@ -4,6 +4,7 @@
 #include "../packages/Microsoft.Windows.ImplementationLibrary.1.0.240803.1/include/wil/com.h"
 #include "../packages/Microsoft.Web.WebView2.1.0.2792.45/build/native/include/WebView2.h"
 #include "../packages/Microsoft.Web.WebView2.1.0.2792.45/build/native/include/WebView2EnvironmentOptions.h"
+#include "DpiUtil.h"
 using namespace Microsoft::WRL;
 
 auto WINDOW_CLASS = L"$$WebView_APP$$";
@@ -48,6 +49,8 @@ wchar_t* SetString(const wchar_t* str) {
 
 void Init(const WebViewAppSettings* settings) {
     auto hr = CoInitialize(nullptr);
+    DpiUtil::SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+
     title = SetString(settings->title);
     url = SetString(settings->url);
     x = settings->x;
