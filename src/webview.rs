@@ -3,7 +3,7 @@
 
 use std::rc::Rc;
 
-use crate::{bounds::Bounds, params::Params};
+use crate::{bounds::Bounds, params::{Callbacks, Params}};
 
 #[cfg(target_os = "linux")]
 use crate::linux::webview::WebView as WebViewImpl;
@@ -12,7 +12,7 @@ use crate::windows::webview::WebView as WebViewImpl;
 
 /// WebView is a Window running as program including a web view
 /// 
-/// WebView ihas to be built with the help of the ```WebView::builder``` function
+/// WebView has to be built with the help of the ```WebView::builder``` function
 pub struct WebView {
     webview: WebViewImpl
 }
@@ -80,7 +80,9 @@ impl WebViewBuilder {
 
         let params = Params {
             title: &title,
-            on_close: self.on_close
+            callbacks: Callbacks {
+                on_close: self.on_close
+            }
         };
 
         WebView { 

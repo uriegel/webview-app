@@ -4,7 +4,7 @@
 use libloading::{Library, Symbol};
 use std::{fs, path::Path};
 
-use crate::{bounds::Bounds, webview_params::WebviewParams};
+use crate::{bounds::Bounds, params::{Callbacks, Params}};
 
 pub fn utf_16_null_terminiated(x: &str) -> Vec<u16> {
     x.encode_utf16().chain(std::iter::once(0)).collect()
@@ -16,7 +16,7 @@ pub struct WebView {
 }
 
 impl WebView {
-    pub fn new(title: &str, appid: &str, params: WebviewParams, bounds: Bounds, save_bounds: bool, url: &str, without_native_titlebar: bool)->WebView {
+    pub fn new(appid: &str, params: Params, bounds: Bounds, save_bounds: bool, url: &str, without_native_titlebar: bool)->WebView {
         let bytes = include_bytes!("../../WebViewApp.dll");
         let app_data = std::env::var("LOCALAPPDATA").expect("No APP_DATA directory");
         let local_path = Path::new(&app_data).join(appid);
@@ -38,13 +38,13 @@ impl WebView {
         unsafe {
             let _lib = Library::new(path_loader).expect("Failed to load loader DLL");
             let lib = Library::new(path_app).expect("Failed to load app DLL");
-            let title = utf_16_null_terminiated(title);
+            let title = utf_16_null_terminiated(params.title);
             let url = utf_16_null_terminiated(url);
             let user_data_path = utf_16_null_terminiated(local_path.as_os_str().to_str().expect("user data path invalid"));
             let callback = Box::new(Callback { 
                 should_save_bounds: save_bounds,
                 config_dir: local_path.to_string_lossy().to_string(),
-                callbacks
+                callbacks: params.callbacks
             });
             let settings = WebViewAppSettings { 
                 title: title.as_ptr(),
@@ -93,7 +93,7 @@ impl WebView {
 struct Callback {
     should_save_bounds: bool,
     config_dir: String,
-    callbacks: Callbacks
+    callbacks: Callbacks    
 }
 
 impl Callback {
