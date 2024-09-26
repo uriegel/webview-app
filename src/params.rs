@@ -10,6 +10,8 @@ pub struct Params<'a> {
     pub url: &'a str,
     #[cfg(target_os = "windows")]
     pub without_native_titlebar: bool,
+    pub devtools: bool,
+    pub default_contextmenu: bool,
     pub callbacks: Callbacks
 }
 

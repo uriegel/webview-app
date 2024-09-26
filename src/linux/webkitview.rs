@@ -12,7 +12,9 @@ pub struct WebkitView {
 pub struct WebkitViewParams<'a> {
     pub _application: &'a Application, 
     pub mainwindow: MainWindow, 
-    pub url: &'a str
+    pub url: &'a str,
+    pub devtools: bool,
+    pub default_contextmenu: bool
 }
 
 impl WebkitView {
@@ -20,15 +22,20 @@ impl WebkitView {
         let webview = WebView::builder()
             .build();
         params.mainwindow.window.set_child(Some(&webview));
-        webview.load_uri(params.url);
-        let settings = webkit6::prelude::WebViewExt::settings(&webview);
-        settings.unwrap().set_enable_developer_extras(true);
+        if params.devtools {
+            let settings = webkit6::prelude::WebViewExt::settings(&webview);
+            settings.unwrap().set_enable_developer_extras(true);
+        }
+        if !params.default_contextmenu {
+            webview.connect_context_menu(|_,_,_|true);
+        }
+
         //let a = webview.context().unwrap();
         // a.register_uri_scheme("res", | aa | {
         //     aa.
         // });
-        // TODO Disable context menu
-        //webview.connect_context_menu(|a, b, c| { true });
+        webview.load_uri(params.url);
+
         WebkitView {
             //webview
         }

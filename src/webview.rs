@@ -86,6 +86,8 @@ impl WebViewBuilder {
             url: &url,
             #[cfg(target_os = "windows")]
             without_native_titlebar: self.without_native_titlebar,
+            devtools: self.devtools,
+            default_contextmenu: self.default_contextmenu,
             callbacks: Callbacks {
                 on_close: self.on_close
             }

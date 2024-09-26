@@ -32,6 +32,8 @@ impl WebView {
                 bounds: params.bounds, 
                 save_bounds: params.save_bounds, 
                 url: &url,
+                default_contextmenu: params.default_contextmenu,
+                devtools: params.devtools,
                 on_close: params.callbacks.on_close.clone()
             };
             MainWindow::new(mainwindow_params);

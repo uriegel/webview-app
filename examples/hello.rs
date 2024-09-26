@@ -12,6 +12,8 @@ fn main() {
             .title("Rust Web View 👍".to_string())
             .save_bounds()
             .url("https://crates.io/crates/webview_app".to_string())
+            .devtools()
+            .default_contextmenu_disabled()
             .can_close(move||{
                 can_close
             })

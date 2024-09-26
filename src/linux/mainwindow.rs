@@ -19,6 +19,8 @@ pub struct MainWindowParams<'a> {
     pub bounds: Bounds, 
     pub save_bounds: bool, 
     pub url: &'a str,
+    pub devtools: bool,
+    pub default_contextmenu: bool,
     pub on_close: Rc<dyn Fn()->bool>
 }
 
@@ -47,7 +49,9 @@ impl MainWindow {
         let webkitview_params = WebkitViewParams {
             _application: params.app, 
             mainwindow: window.clone(), 
-            url: params.url
+            url: params.url,
+            default_contextmenu: params.default_contextmenu,
+            devtools: params.devtools
         };
 
         WebkitView::new(webkitview_params);
