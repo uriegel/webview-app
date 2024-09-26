@@ -39,7 +39,7 @@ impl MainWindow {
 
         WebkitView::new(app, window.clone(), url);
         window.window.present();
-        window.window.connect_close_request(move|_| (*callbacks.on_close)().into());
+        window.window.connect_close_request(move|_| ((*callbacks.on_close)() == false).into());
         if save_bounds  {
             let gtkwindow = window.window.clone();
             let config_dir = config_dir.to_string();
