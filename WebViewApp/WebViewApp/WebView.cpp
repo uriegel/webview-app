@@ -164,7 +164,6 @@ auto RegisterClass(HINSTANCE hInstance) {
     wcex.cbClsExtra = 0;
     wcex.cbWndExtra = 0;
     wcex.hInstance = hInstance;
-    // TODO ICON: build.rs: make resource file with icon 1, version 
     //wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(1));
     wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
     wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
