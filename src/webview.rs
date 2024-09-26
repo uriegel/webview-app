@@ -3,7 +3,7 @@
 
 use std::rc::Rc;
 
-use crate::{bounds::Bounds, callbacks::Callbacks};
+use crate::{bounds::Bounds, params::Params};
 
 #[cfg(target_os = "linux")]
 use crate::linux::webview::WebView as WebViewImpl;
@@ -36,7 +36,9 @@ pub struct WebViewBuilder {
     height: Option<i32>,
     save_bounds: bool,
     on_close: Rc<dyn Fn()->bool>,
-    without_native_titlebar: bool
+    without_native_titlebar: bool,
+    devtools: bool,
+    default_contextmenu: bool
 }
 
 impl WebView {
@@ -52,7 +54,9 @@ impl WebView {
             height: None,
             save_bounds: false,
             on_close: Rc::new(|| true),
-            without_native_titlebar: false
+            without_native_titlebar: false,
+            devtools: false,
+            default_contextmenu : true
         }
     }
 }
@@ -74,12 +78,13 @@ impl WebViewBuilder {
             is_maximized: false
         };
 
-        let callbacks = Callbacks {
+        let params = Params {
+            title: &title,
             on_close: self.on_close
         };
 
         WebView { 
-            webview: WebViewImpl::new(&title, &appid, callbacks, bounds, self.save_bounds, &url, self.without_native_titlebar)
+            webview: WebViewImpl::new(&appid, params, bounds, self.save_bounds, &url, self.without_native_titlebar)
         }
     }
 
@@ -144,6 +149,23 @@ impl WebViewBuilder {
     /// You can prevent closing the app when returning false
     pub fn can_close(mut self, val: impl Fn()->bool + 'static)->WebViewBuilder {
         self.on_close = Rc::new(val);
+        self
+    }
+
+    /// Enable (not to show) the developer tools.
+    /// 
+    /// Used to enable the developer tools. Otherwise it is not possible to open these tools. 
+    /// The developer tools can be shown by default context menu or by calling the javascript method WebView.showDevtools()
+    pub fn devtools(mut self)->WebViewBuilder {
+        self.devtools = true;
+        self
+    }
+
+    /// Diables the default context menu.
+    /// 
+    /// If you set ```default_contextmenu()```, the web view's default context menu is not being displayed when you right click the mouse.    
+    pub fn default_contextmenu_disabled(mut self)->WebViewBuilder {
+        self.default_contextmenu = false;
         self
     }
 }

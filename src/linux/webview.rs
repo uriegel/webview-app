@@ -3,7 +3,7 @@ use std::{fs, path::Path};
 use gtk::prelude::*;
 use adw::Application;
 
-use crate::{bounds::Bounds, callbacks::Callbacks};
+use crate::{bounds::Bounds, params::Params};
 
 use super::mainwindow::{MainWindow, MainWindowCallbacks};
 
@@ -13,7 +13,7 @@ pub struct WebView {
 }
 
 impl WebView {
-    pub fn new(title: &str, appid: &str, callbacks: Callbacks, bounds: Bounds, save_bounds: bool, url: &str, _: bool)->WebView {
+    pub fn new(appid: &str, params: Params, bounds: Bounds, save_bounds: bool, url: &str, _: bool)->WebView {
         let home = std::env::var("HOME").expect("No HOME directory");
         let config_dir = Path::new(&home).join(".config").join(appid);
         if !fs::exists(config_dir.clone()).expect("Could not access local directory") 
@@ -22,11 +22,11 @@ impl WebView {
         let app = Application::builder()
             .application_id(appid)
             .build();
-        let title = title.to_string();
+        let title = params.title.to_string();
         let url = url.to_string();
         app.connect_activate(move |application| {
             let callbacks = MainWindowCallbacks {
-                on_close: callbacks.on_close.clone()
+                on_close: params.on_close.clone()
             };
                 MainWindow::new(application, &config_dir.to_string_lossy(), &title, callbacks, bounds, save_bounds, &url);
         });

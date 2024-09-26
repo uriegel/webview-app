@@ -5,7 +5,7 @@ mod windows;
 
 pub mod webview;
 mod bounds;
-mod callbacks;
+mod params;
 
 // TODO In VisualStudio sln, make a script to copy app.dll and loader dll (debug AND release) to an assets directory
 // in TOML:

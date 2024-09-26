@@ -4,7 +4,7 @@
 use libloading::{Library, Symbol};
 use std::{fs, path::Path};
 
-use crate::{bounds::Bounds, callbacks::Callbacks};
+use crate::{bounds::Bounds, webview_params::WebviewParams};
 
 pub fn utf_16_null_terminiated(x: &str) -> Vec<u16> {
     x.encode_utf16().chain(std::iter::once(0)).collect()
@@ -16,7 +16,7 @@ pub struct WebView {
 }
 
 impl WebView {
-    pub fn new(title: &str, appid: &str, callbacks: Callbacks, bounds: Bounds, save_bounds: bool, url: &str, without_native_titlebar: bool)->WebView {
+    pub fn new(title: &str, appid: &str, params: WebviewParams, bounds: Bounds, save_bounds: bool, url: &str, without_native_titlebar: bool)->WebView {
         let bytes = include_bytes!("../../WebViewApp.dll");
         let app_data = std::env::var("LOCALAPPDATA").expect("No APP_DATA directory");
         let local_path = Path::new(&app_data).join(appid);
