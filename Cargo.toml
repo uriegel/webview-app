@@ -7,8 +7,6 @@ edition = "2021"
 license = "MIT"
 repository = "https://github.com/uriegel/webview-app"
 readme = "README.md"
-# Include additional files when packaging the crate
-include = ["assets/*"]
 
 [dependencies]
 serde = { version = "1.0.210", features = ["derive"] }
