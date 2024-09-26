@@ -16,10 +16,10 @@ pub struct WebView {
 }
 
 impl WebView {
-    pub fn new(appid: &str, params: Params, bounds: Bounds, save_bounds: bool, url: &str, without_native_titlebar: bool)->WebView {
+    pub fn new(params: Params)->WebView {
         let bytes = include_bytes!("../../WebViewApp.dll");
         let app_data = std::env::var("LOCALAPPDATA").expect("No APP_DATA directory");
-        let local_path = Path::new(&app_data).join(appid);
+        let local_path = Path::new(&app_data).join(params.appid);
         if !fs::exists(local_path.clone()).expect("Could not access local directory") 
             { fs::create_dir(local_path.clone()).expect("Could not create local directory") } 
         let path_app = local_path.join("WebViewApp.dll");
@@ -30,19 +30,19 @@ impl WebView {
         fs::write(path_loader.clone(), bytes).expect("Unable to write dll");
 
         let bounds = 
-            if save_bounds
-                { Bounds::restore(&local_path.to_string_lossy()).unwrap_or(bounds) } 
+            if params.save_bounds
+                { Bounds::restore(&local_path.to_string_lossy()).unwrap_or(params.bounds) } 
             else
-                { bounds};
+                { params.bounds};
 
         unsafe {
             let _lib = Library::new(path_loader).expect("Failed to load loader DLL");
             let lib = Library::new(path_app).expect("Failed to load app DLL");
             let title = utf_16_null_terminiated(params.title);
-            let url = utf_16_null_terminiated(url);
+            let url = utf_16_null_terminiated(params.url);
             let user_data_path = utf_16_null_terminiated(local_path.as_os_str().to_str().expect("user data path invalid"));
             let callback = Box::new(Callback { 
-                should_save_bounds: save_bounds,
+                should_save_bounds: params.save_bounds,
                 config_dir: local_path.to_string_lossy().to_string(),
                 callbacks: params.callbacks
             });
@@ -57,7 +57,7 @@ impl WebView {
                 target: & *callback,
                 on_close,
                 url: url.as_ptr(),
-                without_native_titlebar 
+                without_native_titlebar: params.without_native_titlebar 
             };            
             let init: Symbol<unsafe extern fn(settings: *const WebViewAppSettings) -> ()> = lib.get(b"Init").expect("Failed to load function 'Init'");
             init(&settings as *const WebViewAppSettings);
