@@ -166,8 +166,11 @@ impl WebViewBuilder {
     /// 
     /// Used to enable the developer tools. Otherwise it is not possible to open these tools. 
     /// The developer tools can be shown by default context menu or by calling the javascript method WebView.showDevtools()
-    pub fn devtools(mut self)->WebViewBuilder {
+    pub fn devtools(mut self, only_when_debugging: bool)->WebViewBuilder {
         self.devtools = true;
+        if cfg!(not(debug_assertions)) {
+            self.devtools = !only_when_debugging;
+        }
         self
     }
 
