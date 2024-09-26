@@ -6,7 +6,7 @@ use webkit6::WebView;
 use super::mainwindow::MainWindow;
 
 pub struct WebkitView {
-    pub webview: WebView
+    //pub _webview: WebView
 }
 
 impl WebkitView {
@@ -16,10 +16,7 @@ impl WebkitView {
         mainwindow.window.set_child(Some(&webview));
         webview.load_uri(url);
         WebkitView {
-            webview
+            //webview
         }
     }
-
-
-
 }
