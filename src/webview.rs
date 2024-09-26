@@ -1,7 +1,9 @@
 //! This module contains all the important structs and implementations to create, configure
 //! and run an application containing only a webview.
 
-use crate::bounds::Bounds;
+use std::rc::Rc;
+
+use crate::{bounds::Bounds, callbacks::Callbacks};
 
 #[cfg(target_os = "linux")]
 use crate::linux::webview::WebView as WebViewImpl;
@@ -33,6 +35,7 @@ pub struct WebViewBuilder {
     width: Option<i32>,
     height: Option<i32>,
     save_bounds: bool,
+    on_close: Rc<dyn Fn()->bool>,
     without_native_titlebar: bool
 }
 
@@ -48,6 +51,7 @@ impl WebView {
             width: None,
             height: None,
             save_bounds: false,
+            on_close: Rc::new(|| true),
             without_native_titlebar: false
         }
     }
@@ -57,7 +61,7 @@ impl WebViewBuilder {
     /// Builds the WebView.
     /// 
     /// Call this function when all settings are set.
-    pub fn build(&self)->WebView {
+    pub fn build(self)->WebView {
         let title = self.title.clone().unwrap_or_else(||{"Webview App".to_string()});
         let appid = self.appid.clone().unwrap_or_else(||{"de.uriegel.webviewapp".to_string()});
         let url = self.url.clone().unwrap_or_else(||{"about:blank".to_string()});
@@ -70,7 +74,13 @@ impl WebViewBuilder {
             is_maximized: false
         };
 
-        WebView { webview: WebViewImpl::new(&title, &appid, bounds, self.save_bounds, &url, self.without_native_titlebar) }
+        let callbacks = Callbacks {
+            on_close: self.on_close
+        };
+
+        WebView { 
+            webview: WebViewImpl::new(&title, &appid, callbacks, bounds, self.save_bounds, &url, self.without_native_titlebar)
+        }
     }
 
     /// Sets the title of the window containing the web view.
@@ -126,6 +136,14 @@ impl WebViewBuilder {
     /// not used, when you set "DebugUrl" and a debugger is attached
     pub fn url(mut self, val: String)->WebViewBuilder {
         self.url = Some(val);
+        self
+    }
+
+    /// Sets a callback which is invoked an closing the app
+    /// 
+    /// You can prevent closing the app when returning false
+    pub fn can_close(mut self, val: impl Fn()->bool + 'static)->WebViewBuilder {
+        self.on_close = Rc::new(val);
         self
     }
 }

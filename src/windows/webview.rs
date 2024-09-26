@@ -12,7 +12,7 @@ pub fn utf_16_null_terminiated(x: &str) -> Vec<u16> {
 
 pub struct WebView {
     lib: Library,
-    _callback: Box<Callback>
+    _callback: RefCell<Callback>
 }
 
 impl WebView {
@@ -44,7 +44,7 @@ impl WebView {
             let title = utf_16_null_terminiated(title);
             let url = utf_16_null_terminiated(url);
             let user_data_path = utf_16_null_terminiated(local_path.as_os_str().to_str().expect("user data path invalid"));
-            let callback = Box::new(Callback { 
+            let callback = RefCell::new(Callback { 
                 should_save_bounds: save_bounds,
                 config_dir: local_path.to_string_lossy().to_string()
             });

@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use adw::Application;
 use adw::HeaderBar;
 use gtk::prelude::*;
@@ -10,10 +12,14 @@ pub struct MainWindow {
     pub window: ApplicationWindow
 }
 
+pub struct MainWindowCallbacks {
+    pub on_close: Rc<dyn Fn()->bool>
+}
+
 use super::super::bounds::Bounds;
 
 impl MainWindow {
-    pub fn new(app: &Application, config_dir: &str, title: &str, bounds: Bounds, save_bounds: bool, url: &str)->Self {
+    pub fn new(app: &Application, config_dir: &str, title: &str, callbacks: MainWindowCallbacks, bounds: Bounds, save_bounds: bool, url: &str)->Self {
         let bounds = 
             if save_bounds
                 {Bounds::restore(config_dir).unwrap_or(bounds)} 
@@ -33,6 +39,7 @@ impl MainWindow {
 
         WebkitView::new(app, window.clone(), url);
         window.window.present();
+        window.window.connect_close_request(move|_| (*callbacks.on_close)().into());
         if save_bounds  {
             let gtkwindow = window.window.clone();
             let config_dir = config_dir.to_string();
