@@ -149,6 +149,19 @@ impl WebViewBuilder {
     /// 
     /// You can use ```http(s)://``` scheme, ```file://``` scheme, and custom resource scheme ```res://```. This value is 
     /// not used, when you set "DebugUrl" and a debugger is attached
+    /// 
+    /// ### Custom resource scheme
+    /// 
+    /// The complete web site can be included as .NET resources. 
+    /// With the ```res://``` url specifier it is possible that the web view is automatically loaded from resources. 
+    /// All you have to do is include the website parts
+    /// 
+    /// The url is in this case:
+    /// 
+    /// ```
+    /// .url("res://webroot/index.html".to_string())
+    /// ```
+    ///  // TODO to be continued...
     pub fn url(mut self, val: String)->WebViewBuilder {
         self.url = Some(val);
         self

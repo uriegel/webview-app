@@ -25,6 +25,24 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug example 'custom resources'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=custom_resources",
+                    "--package=webview_app"
+                ],
+                "filter": {
+                    "name": "custom_resources",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug unit tests in library 'webview_app'",
             "cargo": {
                 "args": [
