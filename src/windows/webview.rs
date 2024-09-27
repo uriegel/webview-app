@@ -17,14 +17,14 @@ pub struct WebView {
 
 impl WebView {
     pub fn new(params: Params)->WebView {
-        let bytes = include_bytes!("../../WebViewApp.dll");
+        let bytes = include_bytes!("../../assets/WebViewApp.dll");
         let app_data = std::env::var("LOCALAPPDATA").expect("No APP_DATA directory");
         let local_path = Path::new(&app_data).join(params.appid);
         if !fs::exists(local_path.clone()).expect("Could not access local directory") 
             { fs::create_dir(local_path.clone()).expect("Could not create local directory") } 
         let path_app = local_path.join("WebViewApp.dll");
         fs::write(path_app.clone(), bytes).expect("Unable to write dll");
-        let bytes = include_bytes!("../../WebView2Loader.dll");
+        let bytes = include_bytes!("../../assets/WebView2Loader.dll");
 
         let path_loader = local_path.join("WebView2Loader.dll");
         fs::write(path_loader.clone(), bytes).expect("Unable to write dll");

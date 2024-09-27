@@ -1,7 +1,7 @@
 //! This module contains all the important structs and implementations to create, configure
 //! and run an application containing only a webview.
 
-use std::rc::Rc;
+use std::{path::{Path, PathBuf}, rc::Rc};
 
 use crate::{bounds::Bounds, params::{Callbacks, Params}};
 
@@ -216,3 +216,7 @@ impl WebViewBuilder {
     }
 }
 
+pub fn get_assets_path(asset_name: &str)->PathBuf {
+    let base_path = env!("CARGO_MANIFEST_DIR"); // Get the root directory of the crate
+    Path::new(base_path).join("assets").join(asset_name)
+}
