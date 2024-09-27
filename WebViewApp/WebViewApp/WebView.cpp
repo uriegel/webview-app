@@ -26,6 +26,8 @@ struct WebViewAppSettings {
     OnCloseFunc* OnClose;
     const wchar_t* url;
     bool withoutNativeTitlebar;
+    bool devtools;
+    bool defaultContextmenu;
 };
 
 wchar_t* title { nullptr };
@@ -39,6 +41,8 @@ void* target;
 OnCloseFunc* OnClose;
 wchar_t* url { nullptr };
 auto withoutNativeTitlebar = false;
+bool devtools;
+bool defaultContextmenu;
 
 wchar_t* SetString(const wchar_t* str) {
     auto len = wcslen(str) + 1;
@@ -62,6 +66,8 @@ void Init(const WebViewAppSettings* settings) {
     OnClose = settings->OnClose;
     userDataPath = SetString(settings->userDataPath);
     withoutNativeTitlebar = settings->withoutNativeTitlebar;
+    devtools = settings->devtools;
+    defaultContextmenu = settings->defaultContextmenu;
 }
 
 void CreateWebView(HWND hWnd) {
@@ -79,12 +85,22 @@ void CreateWebView(HWND hWnd) {
                             webviewController->get_CoreWebView2(&webview);
                         }
 
-                        wil::com_ptr<ICoreWebView2Settings> settings;
-                        webview->get_Settings(&settings);
+                        wil::com_ptr<ICoreWebView2Settings> settings2;
+                        webview->get_Settings(&settings2);
+                        wil::com_ptr<ICoreWebView2Settings6> settings;
+                        settings2->QueryInterface(&settings);
                         settings->put_IsScriptEnabled(TRUE);
                         settings->put_AreDefaultScriptDialogsEnabled(TRUE);
+                        settings->put_AreBrowserAcceleratorKeysEnabled(FALSE);
+                        settings->put_IsPasswordAutosaveEnabled(TRUE);
                         settings->put_IsWebMessageEnabled(TRUE);
-
+                        settings->put_AreDefaultContextMenusEnabled(defaultContextmenu);
+                        webview->add_WindowCloseRequested(
+                            Callback<ICoreWebView2WindowCloseRequestedEventHandler>(
+                                [hWnd](ICoreWebView2* _, IUnknown* args) -> HRESULT {
+                                    CloseWindow(hWnd);
+                                    return S_OK;
+                                }).Get(), nullptr);
                         RECT bounds;
                         GetClientRect(hWnd, &bounds);
                         webviewController->put_Bounds(bounds);

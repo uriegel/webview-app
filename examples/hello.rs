@@ -13,7 +13,7 @@ fn main() {
             .save_bounds()
             .url("https://crates.io/crates/webview_app".to_string())
             .devtools(true)
-            //.default_contextmenu_disabled()
+            .default_contextmenu_disabled()
             .can_close(move||{
                 can_close
             })

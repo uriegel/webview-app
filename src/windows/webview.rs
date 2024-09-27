@@ -57,7 +57,9 @@ impl WebView {
                 target: & *callback,
                 on_close,
                 url: url.as_ptr(),
-                without_native_titlebar: params.without_native_titlebar 
+                without_native_titlebar: params.without_native_titlebar,
+                devtools: params.devtools,
+                default_contextmenu: params.default_contextmenu
             };            
             let init: Symbol<unsafe extern fn(settings: *const WebViewAppSettings) -> ()> = lib.get(b"Init").expect("Failed to load function 'Init'");
             init(&settings as *const WebViewAppSettings);
@@ -132,6 +134,8 @@ struct WebViewAppSettings {
     target: *const Callback,
     on_close: extern fn(target: *const Callback, x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool,
     url: *const u16,
-    without_native_titlebar: bool
+    without_native_titlebar: bool,
+    devtools: bool,
+    default_contextmenu: bool
 }
 
