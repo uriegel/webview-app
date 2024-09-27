@@ -9,4 +9,4 @@ mod params;
 mod content_type;
 
 // TODO Windows ICON: build.rs: make resource file with icon 1, version 
-// TODO Macro std::include_str!
+

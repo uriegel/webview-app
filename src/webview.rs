@@ -183,6 +183,7 @@ impl WebViewBuilder {
         // TODO resolve the website structure in a tree
         // ../webroot/index.html
         // ../webroot/css/script.css
+        // TODO use a macro containing include_bytes defined in webview_app and include it in the binary crate
         // ...
         self
     }
