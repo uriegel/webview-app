@@ -159,11 +159,31 @@ impl WebViewBuilder {
     /// The url is in this case:
     /// 
     /// ```
-    /// .url("res://webroot/index.html".to_string())
+    /// .url("res://index.html".to_string())
     /// ```
     ///  // TODO to be continued...
     pub fn url(mut self, val: String)->WebViewBuilder {
         self.url = Some(val);
+        self
+    }
+
+    /// If you want your web site be included in the app, call this method.
+    /// 
+    /// You have to specify the root of your website
+    /// 
+    /// With the help of the ```url``` method you can load the web site to your webview:
+    /// 
+    /// ```
+    /// res://index.html
+    /// ```
+    /// 
+    /// The webroot path must be relative to the src directory containing this 
+    /// // TODO example
+    pub fn website_from_resources(mut self, webroot: String)->WebViewBuilder {
+        // TODO resolve the website structure in a tree
+        // ../webroot/index.html
+        // ../webroot/css/script.css
+        // ...
         self
     }
 

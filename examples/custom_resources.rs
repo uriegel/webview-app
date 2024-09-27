@@ -9,7 +9,7 @@ fn main() {
             .appid("de.uriegel.hello".to_string())
             .title("Website form custom resources 👍".to_string())
             .save_bounds()
-            .url("res://webroot/index.html".to_string())
+            .url("res://index.html".to_string())
             .devtools(true)
             .default_contextmenu_disabled()
             .build();
