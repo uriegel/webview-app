@@ -1,4 +1,4 @@
-pub fn get(uri: &str)->String { 
+pub fn _get(uri: &str)->String { 
     if uri.ends_with(".html") {
         "text/html"
     } else if uri.ends_with(".css") {

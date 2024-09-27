@@ -167,26 +167,6 @@ impl WebViewBuilder {
         self
     }
 
-    /// If you want your web site be included in the app, call this method.
-    /// 
-    /// You have to specify the root of your website
-    /// 
-    /// With the help of the ```url``` method you can load the web site to your webview:
-    /// 
-    /// ```
-    /// res://index.html
-    /// ```
-    /// 
-    /// The webroot path must be relative to the src directory containing this 
-    /// // TODO example
-    pub fn website_from_resources(mut self, webroot: String)->WebViewBuilder {
-        // TODO resolve the website structure in a tree
-        // ../webroot/index.html
-        // ../webroot/css/script.css
-        // ...
-        self
-    }
-
     /// Sets a callback which is invoked an closing the app
     /// 
     /// You can prevent closing the app when returning false

@@ -17,17 +17,10 @@ pub struct WebView {
 
 impl WebView {
     pub fn new(params: Params)->WebView {
-        let bytes = include_bytes!("../../assets/WebViewApp.dll");
         let app_data = std::env::var("LOCALAPPDATA").expect("No APP_DATA directory");
         let local_path = Path::new(&app_data).join(params.appid);
         if !fs::exists(local_path.clone()).expect("Could not access local directory") 
             { fs::create_dir(local_path.clone()).expect("Could not create local directory") } 
-        let path_app = local_path.join("WebViewApp.dll");
-        fs::write(path_app.clone(), bytes).expect("Unable to write dll");
-        let bytes = include_bytes!("../../assets/WebView2Loader.dll");
-
-        let path_loader = local_path.join("WebView2Loader.dll");
-        fs::write(path_loader.clone(), bytes).expect("Unable to write dll");
 
         let bounds = 
             if params.save_bounds
@@ -36,8 +29,7 @@ impl WebView {
                 { params.bounds};
 
         unsafe {
-            let _lib = Library::new(path_loader).expect("Failed to load loader DLL");
-            let lib = Library::new(path_app).expect("Failed to load app DLL");
+            let lib = Library::new("WebViewApp").expect("Failed to load app DLL");
             let title = utf_16_null_terminiated(params.title);
             let url = utf_16_null_terminiated(params.url);
             let user_data_path = utf_16_null_terminiated(local_path.as_os_str().to_str().expect("user data path invalid"));
