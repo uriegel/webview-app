@@ -221,3 +221,10 @@ pub fn get_assets_path(asset_name: &str)->PathBuf {
     let base_path = env!("CARGO_MANIFEST_DIR"); // Get the root directory of the crate
     Path::new(base_path).join("assets").join(asset_name)
 }
+
+#[macro_export]
+macro_rules! include_here {
+    ($x: expr) => {
+        include_bytes!($x)
+    }
+}
