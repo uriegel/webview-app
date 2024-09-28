@@ -12,6 +12,11 @@ fn main() {
             .save_bounds()
             .devtools(true)
             .webroot(include_dir!("webroots/custom_resources"))
+
+
+            .url("res://webroot".to_string())
+
+
             .default_contextmenu_disabled()
             .build();
     webview.run();

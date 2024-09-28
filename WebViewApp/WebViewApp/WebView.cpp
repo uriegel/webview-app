@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "objbase.h"
+#include "shlwapi.h"
 #include <wrl.h>
 #include "../packages/Microsoft.Windows.ImplementationLibrary.1.0.240803.1/include/wil/com.h"
 #include "../packages/Microsoft.Web.WebView2.1.0.2792.45/build/native/include/WebView2.h"
@@ -72,14 +73,17 @@ void Init(const WebViewAppSettings* settings) {
 
 void CreateWebView(HWND hWnd) {
     auto options = Microsoft::WRL::Make<CoreWebView2EnvironmentOptions>();
+    auto scheme = Microsoft::WRL::Make<CoreWebView2CustomSchemeRegistration>(L"res");
     if (withoutNativeTitlebar)
         options->put_AdditionalBrowserArguments(L"--enable-features=msWebView2EnableDraggableRegions");
+    ICoreWebView2CustomSchemeRegistration* registrations[1] = { scheme.Get() };
+    options->SetCustomSchemeRegistrations(1, static_cast<ICoreWebView2CustomSchemeRegistration**>(registrations));
     CreateCoreWebView2EnvironmentWithOptions(nullptr, userDataPath, options.Get(),
         Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
             [hWnd](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
                 // Create a CoreWebView2Controller and get the associated CoreWebView2 whose parent is the main window hWnd
                 env->CreateCoreWebView2Controller(hWnd, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
-                    [hWnd](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
+                    [hWnd, env](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
                         if (controller != nullptr) {
                             webviewController = controller;
                             webviewController->get_CoreWebView2(&webview);
@@ -95,6 +99,31 @@ void CreateWebView(HWND hWnd) {
                         settings->put_IsPasswordAutosaveEnabled(TRUE);
                         settings->put_IsWebMessageEnabled(TRUE);
                         settings->put_AreDefaultContextMenusEnabled(defaultContextmenu);
+
+
+
+                        webview->AddWebResourceRequestedFilter(L"res:*", COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL);
+                        webview->add_WebResourceRequested(
+                            Callback<ICoreWebView2WebResourceRequestedEventHandler>(
+                                [env](ICoreWebView2* sender, ICoreWebView2WebResourceRequestedEventArgs* args) {
+
+                                    // TODO callback to rust: url -> u8[] as ptr and length and ContentType
+
+                                    auto affe = "Das ist ein seh schöner Ausgabetext";
+
+
+
+                                    IStream* stream = SHCreateMemStream((const BYTE*)affe, strlen(affe));
+
+                                    wil::com_ptr<ICoreWebView2WebResourceResponse> response;
+                                    env->CreateWebResourceResponse(stream, 200, L"Ok", L"Content-Type: text/plain", &response);
+                                    stream->Release();
+                                    args->put_Response(response.get());
+                                    return S_OK;
+                                }).Get(), nullptr);
+
+
+
                         webview->add_WindowCloseRequested(
                             Callback<ICoreWebView2WindowCloseRequestedEventHandler>(
                                 [hWnd](ICoreWebView2* _, IUnknown* args) -> HRESULT {
