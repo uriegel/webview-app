@@ -1,5 +1,7 @@
 use std::rc::Rc;
 
+use include_dir::Dir;
+
 use crate::bounds::Bounds;
 
 pub struct Params<'a> {
@@ -12,6 +14,7 @@ pub struct Params<'a> {
     pub without_native_titlebar: bool,
     pub devtools: bool,
     pub default_contextmenu: bool,
+    pub webroot: Option<Dir<'static>>,                    
     pub callbacks: Callbacks
 }
 

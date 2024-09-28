@@ -1,7 +1,8 @@
 //! This module contains all the important structs and implementations to create, configure
 //! and run an application containing only a webview.
 
-use std::{path::{Path, PathBuf}, rc::Rc};
+use std::rc::Rc;
+use include_dir::Dir;
 
 use crate::{bounds::Bounds, params::{Callbacks, Params}};
 
@@ -38,7 +39,8 @@ pub struct WebViewBuilder {
     on_close: Rc<dyn Fn()->bool>,
     without_native_titlebar: bool,
     devtools: bool,
-    default_contextmenu: bool
+    default_contextmenu: bool,
+    webroot: Option<Dir<'static>>
 }
 
 impl WebView {
@@ -56,7 +58,8 @@ impl WebView {
             on_close: Rc::new(|| true),
             without_native_titlebar: false,
             devtools: false,
-            default_contextmenu : true
+            default_contextmenu : true,
+            webroot: None
         }
     }
 }
@@ -88,6 +91,7 @@ impl WebViewBuilder {
             without_native_titlebar: self.without_native_titlebar,
             devtools: self.devtools,
             default_contextmenu: self.default_contextmenu,
+            webroot: self.webroot,
             callbacks: Callbacks {
                 on_close: self.on_close
             }
@@ -147,44 +151,44 @@ impl WebViewBuilder {
 
     /// Sets the web view's url
     /// 
-    /// You can use ```http(s)://``` scheme, ```file://``` scheme, and custom resource scheme ```res://```. This value is 
-    /// not used, when you set "DebugUrl" and a debugger is attached
-    /// 
-    /// ### Custom resource scheme
-    /// 
-    /// The complete web site can be included as .NET resources. 
-    /// With the ```res://``` url specifier it is possible that the web view is automatically loaded from resources. 
-    /// All you have to do is include the website parts
-    /// 
-    /// The url is in this case:
-    /// 
-    /// ```
-    /// .url("res://index.html".to_string())
-    /// ```
-    ///  // TODO to be continued...
+    /// You can use 
+    /// * ```http(s)://``` 
+    /// * ```file://```
     pub fn url(mut self, val: String)->WebViewBuilder {
         self.url = Some(val);
         self
     }
 
-    /// If you want your web site be included in the app, call this method.
+    /// If you want your web site be included as a resource in the binary file, call this method.
     /// 
-    /// You have to specify the root of your website
+    /// You must not call the ```url()``` method. It is set automatically to ```res://webroot/index.html```
     /// 
-    /// With the help of the ```url``` method you can load the web site to your webview:
+    /// ```index.html``` has to be present in the webroot directory. All dependant web site resources have to be relatively referenced. 
+    /// The complete web site can be included.
+    /// 
+    /// For this purpose you have to add the crate ```https://crates.io/crates/include_dir```.
+    /// 
+    /// # Hint
+    /// The path to webroot is relative to the crates root directory
+    /// 
+    /// # example
     /// 
     /// ```
-    /// res://index.html
+    /// use include_dir::{include_dir};
+    /// use webview_app::webview::WebView;
+    ///
+    /// fn main() {
+    ///     let webview = 
+    ///         WebView::builder()
+    ///             .appid("de.uriegel.hello".to_string())
+    ///             .title("Website form custom resources 👍".to_string())
+    ///             .webroot(include_dir!("webroots/custom_resources"))
+    ///             .build();
+    ///     webview.run();
+    /// }
     /// ```
-    /// 
-    /// The webroot path must be relative to the src directory containing this 
-    /// // TODO example
-    pub fn website_from_resources(mut self, webroot: String)->WebViewBuilder {
-        // TODO resolve the website structure in a tree
-        // ../webroot/index.html
-        // ../webroot/css/script.css
-        // TODO use a macro containing include_bytes defined in webview_app and include it in the binary crate
-        // ...
+    pub fn webroot(mut self, webroot: Dir<'static>)->WebViewBuilder {
+        self.webroot = Some(webroot);
         self
     }
 
@@ -217,14 +221,3 @@ impl WebViewBuilder {
     }
 }
 
-pub fn get_assets_path(asset_name: &str)->PathBuf {
-    let base_path = env!("CARGO_MANIFEST_DIR"); // Get the root directory of the crate
-    Path::new(base_path).join("assets").join(asset_name)
-}
-
-#[macro_export]
-macro_rules! include_here {
-    ($x: expr) => {
-        include_bytes!($x)
-    }
-}

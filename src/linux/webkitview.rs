@@ -1,7 +1,12 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use adw::Application;
 use gtk::gio::MemoryInputStream;
 use gtk::glib::Bytes;
+use include_dir::Dir;
 use webkit6::prelude::*;
+use webkit6::URISchemeResponse;
 use webkit6::WebView;
 
 use crate::content_type;
@@ -17,7 +22,8 @@ pub struct WebkitViewParams<'a> {
     pub mainwindow: MainWindow, 
     pub url: &'a str,
     pub devtools: bool,
-    pub default_contextmenu: bool
+    pub default_contextmenu: bool,
+    pub webroot: Option<Rc<RefCell<Dir<'static>>>>
 }
 
 impl WebkitView {
@@ -33,60 +39,65 @@ impl WebkitView {
             webview.connect_context_menu(|_,_,_|true);
         }
 
-        webview.load_uri(params.url);
-
         let res = WebkitView {
             webview
         };
 
-        if params.url.starts_with("res://") {
-            res.enable_resource_scheme();
+        // TODO match (params.debug_url, params.webroot) {
+        // (p, Some(webroot)) if p.starts_with("res://") => 
+        match params.webroot {
+            Some(webroot) => {
+                res.webview.load_uri("res://webroot/index.html");
+                res.enable_resource_scheme(webroot)
+            },
+            None => res.webview.load_uri(params.url)
         }
         res
     }
 
-    fn enable_resource_scheme(&self) {
+    fn enable_resource_scheme(&self, webroot: Rc<RefCell<Dir<'static>>>) {
         self.webview
             .context()
             .expect("Could not get default web context")
-            .register_uri_scheme("res", | req | {
+            .register_uri_scheme("res", move | req | {
                 let uri = req.uri().unwrap().to_string();
 
-                let test_result = 
-r##"<!DOCTYPE html>
+                let mut file = uri.clone();
+                let path = file.split_off(14);
 
-<html lang="de" >
+                match webroot
+                        .borrow()
+                        .get_file(path) 
+                        .map(|file| file.contents()) {
+                    Some(bytes) => {
+                        let bs = Bytes::from_static(&bytes);
+                        let stream = MemoryInputStream::from_bytes(&bs);
+                        req.finish(&stream, bytes.len() as i64, Some(&content_type::get(&uri)));
+                    },
+                    None => {
+                        let result404 = 
+r##"<!DOCTYPE html>
+<html>
 <head>
-    <title>Test</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <title>Not Found</title>
     <meta charset="utf-8">
 </head>
-
 <body>
-    <h1>Test Web Page</h1>
-
+    <h1>Not Found</h1>
+                    
     <p>
-        <button id="button">Test 1</button>
-        <button id="button2">Test 2</button>
-        <button id="button3">Test 3</button>
-        <button id="buttonDevTools">Dev Tools</button>
+        Sorry, I cannot find what you're looking for
     </p>
-    <p>
-        <img src="images/image.jpg"/>
-    </p>
-    <p>
-        <img src="http://localhost:2222/get/image?path=forest.jpg" />
-    </p>
-    <div id="dragzone">Drag files<br>but only in without Debugger started app</div>
-    <script src="scripts/script.js"></script>
-
 </body>
 </html>"##;
-                let bytes = test_result.as_bytes();
-                let bs = Bytes::from_static(bytes);
-
-                let stream = MemoryInputStream::from_bytes(&bs);
-                req.finish(&stream, bytes.len() as i64, Some(&content_type::get(&uri)));
+                        let bytes = result404.as_bytes();
+                        let bs = Bytes::from_static(bytes);
+                        let stream = MemoryInputStream::from_bytes(&bs);
+                        let response = URISchemeResponse::new(&stream, bytes.len() as i64);
+                        response.set_status(404, Some("Not Found"));
+                        req.finish_with_response(&response);                        
+                    }
+                };
             });
     }
 }

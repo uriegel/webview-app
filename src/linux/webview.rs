@@ -1,4 +1,4 @@
-use std::{fs, path::Path};
+use std::{cell::RefCell, fs, path::Path, rc::Rc};
 
 use gtk::prelude::*;
 use adw::Application;
@@ -24,6 +24,10 @@ impl WebView {
             .build();
         let title = params.title.to_string();
         let url = params.url.to_string();
+        let webroot = params.webroot.map(|webroot| {
+            Rc::new(RefCell::new(webroot))
+        });
+                
         app.connect_activate(move |application| {
             let mainwindow_params = MainWindowParams {
                 app: application,
@@ -34,6 +38,7 @@ impl WebView {
                 url: &url,
                 default_contextmenu: params.default_contextmenu,
                 devtools: params.devtools,
+                webroot: webroot.clone(),
                 on_close: params.callbacks.on_close.clone()
             };
             MainWindow::new(mainwindow_params);

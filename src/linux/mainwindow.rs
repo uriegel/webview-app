@@ -1,9 +1,11 @@
+use std::cell::RefCell;
 use std::rc::Rc;
 
 use adw::Application;
 use adw::HeaderBar;
 use gtk::prelude::*;
 use gtk::ApplicationWindow;
+use include_dir::Dir;
 
 use super::webkitview::WebkitView;
 
@@ -21,6 +23,7 @@ pub struct MainWindowParams<'a> {
     pub url: &'a str,
     pub devtools: bool,
     pub default_contextmenu: bool,
+    pub webroot: Option<Rc<RefCell<Dir<'static>>>>,
     pub on_close: Rc<dyn Fn()->bool>
 }
 
@@ -51,7 +54,8 @@ impl MainWindow {
             mainwindow: window.clone(), 
             url: params.url,
             default_contextmenu: params.default_contextmenu,
-            devtools: params.devtools
+            devtools: params.devtools,
+            webroot: params.webroot
         };
 
         WebkitView::new(webkitview_params);
