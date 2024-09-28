@@ -10,6 +10,7 @@ pub struct Params<'a> {
     pub bounds: Bounds,
     pub save_bounds: bool,
     pub url: &'a str,
+    pub debug_url: Option<String>,
     #[cfg(target_os = "windows")]
     pub without_native_titlebar: bool,
     pub devtools: bool,

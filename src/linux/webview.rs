@@ -24,6 +24,7 @@ impl WebView {
             .build();
         let title = params.title.to_string();
         let url = params.url.to_string();
+        let debug_url = params.debug_url.map(|s|s.to_string());
         let webroot = params.webroot.map(|webroot| {
             Rc::new(RefCell::new(webroot))
         });
@@ -36,6 +37,7 @@ impl WebView {
                 bounds: params.bounds, 
                 save_bounds: params.save_bounds, 
                 url: &url,
+                debug_url: debug_url.clone(),
                 default_contextmenu: params.default_contextmenu,
                 devtools: params.devtools,
                 webroot: webroot.clone(),

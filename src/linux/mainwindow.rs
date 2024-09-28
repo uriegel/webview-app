@@ -21,6 +21,7 @@ pub struct MainWindowParams<'a> {
     pub bounds: Bounds, 
     pub save_bounds: bool, 
     pub url: &'a str,
+    pub debug_url: Option<String>,
     pub devtools: bool,
     pub default_contextmenu: bool,
     pub webroot: Option<Rc<RefCell<Dir<'static>>>>,
@@ -53,6 +54,7 @@ impl MainWindow {
             _application: params.app, 
             mainwindow: window.clone(), 
             url: params.url,
+            debug_url: params.debug_url,
             default_contextmenu: params.default_contextmenu,
             devtools: params.devtools,
             webroot: params.webroot

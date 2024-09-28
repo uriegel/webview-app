@@ -33,6 +33,7 @@ pub struct WebViewBuilder {
     title: Option<String>,
     appid: Option<String>,
     url: Option<String>,
+    debug_url: Option<String>,
     width: Option<i32>,
     height: Option<i32>,
     save_bounds: bool,
@@ -47,11 +48,31 @@ impl WebView {
     /// Creates a ```WebViewBuilder``` to construct a WebView.
     /// 
     /// Call several WebViewBuilder functions and create the WebView with ```build()```
+    /// 
+    /// # Example
+    /// 
+    /// ```
+    /// #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+    /// Allows console to show up in debug build but not release build.
+    ///
+    /// use webview_app::webview::WebView;
+    /// 
+    /// fn main() {
+    ///     let webview = 
+    ///         WebView::builder()
+    ///             .appid("de.uriegel.hello".to_string())
+    ///             .title("Rust Web View 👍".to_string())
+    ///             .url("https://crates.io/crates/webview_app".to_string())
+    ///             .build();
+    ///     webview.run();
+    /// }
+    /// ```
     pub fn builder()->WebViewBuilder {
-        WebViewBuilder { 
+            WebViewBuilder { 
             title: None,
             appid: None,
             url: None,
+            debug_url: None,
             width: None,
             height: None,
             save_bounds: false,
@@ -87,6 +108,7 @@ impl WebViewBuilder {
             bounds,
             save_bounds: self.save_bounds,
             url: &url,
+            debug_url: self.debug_url.clone(),
             #[cfg(target_os = "windows")]
             without_native_titlebar: self.without_native_titlebar,
             devtools: self.devtools,
@@ -159,6 +181,24 @@ impl WebViewBuilder {
         self
     }
 
+    /// Sets the web view's url when debugging
+    /// 
+    /// This url is used when the app is being debugged. For example, if you use a react website you can set
+    /// 
+    /// * ```debug_url(http://localhost:5173```)
+    /// 
+    /// and for the release version you set an url to the published web site
+    /// 
+    /// You can use 
+    /// * ```http(s)://``` 
+    /// * ```file://```
+    pub fn debug_url(mut self, val: String)->WebViewBuilder {
+        if cfg!(debug_assertions) {
+            self.debug_url = Some(val);
+        }
+        self
+    }
+
     /// If you want your web site be included as a resource in the binary file, call this method.
     /// 
     /// You must not call the ```url()``` method. It is set automatically to ```res://webroot/index.html```
@@ -168,8 +208,10 @@ impl WebViewBuilder {
     /// 
     /// For this purpose you have to add the crate ```https://crates.io/crates/include_dir```.
     /// 
-    /// # Hint
-    /// The path to webroot is relative to the crates root directory
+    /// # Hints
+    /// * The path to webroot is relative to the crates root directory
+    /// * If you set ```debug_url(...)``` then this url is loaded in debug version (for example a react website hosted by vite in comparison to 
+    /// the published react website included in the binary)
     /// 
     /// # example
     /// 

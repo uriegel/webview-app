@@ -21,6 +21,7 @@ pub struct WebkitViewParams<'a> {
     pub _application: &'a Application, 
     pub mainwindow: MainWindow, 
     pub url: &'a str,
+    pub debug_url: Option<String>,
     pub devtools: bool,
     pub default_contextmenu: bool,
     pub webroot: Option<Rc<RefCell<Dir<'static>>>>
@@ -43,14 +44,13 @@ impl WebkitView {
             webview
         };
 
-        // TODO match (params.debug_url, params.webroot) {
-        // (p, Some(webroot)) if p.starts_with("res://") => 
-        match params.webroot {
-            Some(webroot) => {
+        match (params.debug_url, params.webroot) {
+            (None, Some(webroot)) => {
                 res.webview.load_uri("res://webroot/index.html");
                 res.enable_resource_scheme(webroot)
             },
-            None => res.webview.load_uri(params.url)
+            (Some(debug_url), _) => res.webview.load_uri(&debug_url),
+            _ => res.webview.load_uri(params.url)
         }
         res
     }

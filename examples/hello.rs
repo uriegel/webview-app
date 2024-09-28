@@ -11,7 +11,8 @@ fn main() {
             .appid("de.uriegel.hello".to_string())
             .title("Rust Web View 👍".to_string())
             .save_bounds()
-            .url("https://crates.io/crates/webview_app".to_string())
+            .debug_url("https://crates.io/crates/webview_app".to_string())
+            .url("https://crates.io/crates".to_string())
             .devtools(true)
             .default_contextmenu_disabled()
             .can_close(move||{
