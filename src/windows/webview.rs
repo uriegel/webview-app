@@ -39,7 +39,11 @@ impl WebView {
             let _lib = Library::new(path_loader).expect("Failed to load loader DLL");
             let lib = Library::new(path_app).expect("Failed to load app DLL");
             let title = utf_16_null_terminiated(params.title);
-            let url = utf_16_null_terminiated(params.url);
+            let url = match (params.debug_url, params.webroot) {
+                (None, Some(_)) => utf_16_null_terminiated("res://webroot/index.html"),
+                (Some(debug_url), _) => utf_16_null_terminiated(&debug_url),
+                (_, _) => utf_16_null_terminiated(params.url)
+            };
             let user_data_path = utf_16_null_terminiated(local_path.as_os_str().to_str().expect("user data path invalid"));
             let callback = Box::new(Callback { 
                 should_save_bounds: params.save_bounds,
