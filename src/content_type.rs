@@ -1,11 +1,16 @@
 pub fn get(uri: &str)->String { 
-    if uri.ends_with(".html") {
+    let uri_lower = uri.to_lowercase();
+    if uri_lower.ends_with(".html") {
         "text/html"
-    } else if uri.ends_with(".css") {
+    } else if uri_lower.ends_with(".css") {
         "text/css"
-    } else if uri.ends_with(".js") {
+    } else if uri_lower.ends_with(".js") {
         "application/javascript"
-    } else if uri.ends_with(".svg") {
+    } else if uri_lower.ends_with(".jpg") {
+        "image/jpeg"
+    } else if uri_lower.ends_with(".png") {
+        "image/png"
+    } else if uri_lower.ends_with(".svg") {
         "image/svg+xml"
     }
     else {

@@ -10,8 +10,15 @@ using namespace Microsoft::WRL;
 
 auto WINDOW_CLASS = L"$$WebView_APP$$";
 
-using OnCloseFunc = bool(void* target, int x, int y, int w, int h, bool isMaximized);
+struct RequestResult {
+    char* content;
+    size_t len;
+    int status;
+    wchar_t content_type[100];
+};
 
+using OnCloseFunc = bool(void* target, int x, int y, int w, int h, bool isMaximized);
+using OnCustomRequestFunc = void(void* target, const wchar_t* url, int urlLen, RequestResult* requestResult);
 wil::com_ptr<ICoreWebView2> webview;
 wil::com_ptr<ICoreWebView2Controller> webviewController;
 
@@ -25,8 +32,10 @@ struct WebViewAppSettings {
     bool isMaximized;
     void* target;
     OnCloseFunc* OnClose;
+    OnCustomRequestFunc* OnCustomRequest;
     const wchar_t* url;
     bool withoutNativeTitlebar;
+    bool customResourceScheme;
     bool devtools;
     bool defaultContextmenu;
 };
@@ -40,8 +49,10 @@ int height;
 bool isMaximized;
 void* target;
 OnCloseFunc* OnClose;
+OnCustomRequestFunc* OnCustomRequest;
 wchar_t* url { nullptr };
 auto withoutNativeTitlebar = false;
+auto customResourceScheme = false;
 bool devtools;
 bool defaultContextmenu;
 
@@ -65,8 +76,10 @@ void Init(const WebViewAppSettings* settings) {
     isMaximized = settings->isMaximized;
     target = settings->target;
     OnClose = settings->OnClose;
+    OnCustomRequest = settings->OnCustomRequest;
     userDataPath = SetString(settings->userDataPath);
     withoutNativeTitlebar = settings->withoutNativeTitlebar;
+    customResourceScheme = settings->customResourceScheme;
     devtools = settings->devtools;
     defaultContextmenu = settings->defaultContextmenu;
 }
@@ -100,30 +113,52 @@ void CreateWebView(HWND hWnd) {
                         settings->put_IsWebMessageEnabled(TRUE);
                         settings->put_AreDefaultContextMenusEnabled(defaultContextmenu);
 
+                        if (customResourceScheme || withoutNativeTitlebar) {
+                            webview->AddWebResourceRequestedFilter(L"res:*", COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL);
+                            webview->add_WebResourceRequested(
+                                Callback<ICoreWebView2WebResourceRequestedEventHandler>(
+                                    [env](ICoreWebView2* sender, ICoreWebView2WebResourceRequestedEventArgs* args) {
+                                        wil::com_ptr<ICoreWebView2WebResourceRequest> request;
+                                        args->get_Request(&request);
+                                        wchar_t* uri;
+                                        request->get_Uri(&uri);
+                                        RequestResult rr{ 0 };
+                                        OnCustomRequest(target, uri, (int)wcslen(uri), &rr);
+                                        CoTaskMemFree(uri);
+                                        if (rr.status == 200) {
+                                            auto stream = SHCreateMemStream((const BYTE*)rr.content, (int)rr.len);
+                                            wil::com_ptr<ICoreWebView2WebResourceResponse> response;
+                                            wchar_t ct[100];
+                                            wsprintfW(ct, L"Content-Type: %s", rr.content_type);
+                                            env->CreateWebResourceResponse(stream, 200, L"Ok", ct, &response);
+                                            stream->Release();
+                                            args->put_Response(response.get());
+                                        }
+                                        else if (rr.status == 404) {
+                                            auto text = R"(!DOCTYPE html>
+<html>
+<head>
+    <title>Not Found</title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <h1>Not Found</h1>
+                    
+    <p>
+        Sorry, I cannot find what you're looking for
+    </p>
+</body>
+</html>)";
+                                            auto stream = SHCreateMemStream((const BYTE*)text, (int)strlen(text));
+                                            wil::com_ptr<ICoreWebView2WebResourceResponse> response;
+                                            env->CreateWebResourceResponse(stream, 404, L"Not Found", L"Content-Type: text/html", &response);
+                                            stream->Release();
+                                            args->put_Response(response.get());
+                                        }
 
-
-                        webview->AddWebResourceRequestedFilter(L"res:*", COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL);
-                        webview->add_WebResourceRequested(
-                            Callback<ICoreWebView2WebResourceRequestedEventHandler>(
-                                [env](ICoreWebView2* sender, ICoreWebView2WebResourceRequestedEventArgs* args) {
-
-                                    // TODO callback to rust: url -> u8[] as ptr and length and ContentType
-
-                                    auto affe = "Das ist ein seh schöner Ausgabetext";
-
-
-
-                                    IStream* stream = SHCreateMemStream((const BYTE*)affe, strlen(affe));
-
-                                    wil::com_ptr<ICoreWebView2WebResourceResponse> response;
-                                    env->CreateWebResourceResponse(stream, 200, L"Ok", L"Content-Type: text/plain", &response);
-                                    stream->Release();
-                                    args->put_Response(response.get());
-                                    return S_OK;
-                                }).Get(), nullptr);
-
-
-
+                                        return S_OK;
+                                    }).Get(), nullptr);
+                        }
                         webview->add_WindowCloseRequested(
                             Callback<ICoreWebView2WindowCloseRequestedEventHandler>(
                                 [hWnd](ICoreWebView2* _, IUnknown* args) -> HRESULT {
@@ -258,10 +293,6 @@ wchar_t* __stdcall Test1(wchar_t* text_to_display) {
     auto text = new wchar_t[len + 1];
     wcscpy_s(text, len + 1, txt);
     return text;
-}
-
-size_t Strlen(const wchar_t* txt_ptr) {
-    return wcslen(txt_ptr);
 }
 
 void Free(wchar_t* txt_ptr) {

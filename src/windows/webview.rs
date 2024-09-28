@@ -1,10 +1,10 @@
 // extern crate libloading;
 
-//use core::slice;
+use include_dir::Dir;
 use libloading::{Library, Symbol};
-use std::{fs, path::Path};
+use std::{cell::RefCell, fs, path::Path, rc::Rc, slice};
 
-use crate::{bounds::Bounds, params::{Callbacks, Params}};
+use crate::{bounds::Bounds, content_type, params::{Callbacks, Params}};
 
 pub fn utf_16_null_terminiated(x: &str) -> Vec<u16> {
     x.encode_utf16().chain(std::iter::once(0)).collect()
@@ -39,15 +39,20 @@ impl WebView {
             let _lib = Library::new(path_loader).expect("Failed to load loader DLL");
             let lib = Library::new(path_app).expect("Failed to load app DLL");
             let title = utf_16_null_terminiated(params.title);
-            let url = match (params.debug_url, params.webroot) {
-                (None, Some(_)) => utf_16_null_terminiated("res://webroot/index.html"),
-                (Some(debug_url), _) => utf_16_null_terminiated(&debug_url),
-                (_, _) => utf_16_null_terminiated(params.url)
+            let with_webroot = params.webroot.is_some();
+            let webroot = params.webroot.map(|webroot| {
+                Rc::new(RefCell::new(webroot))
+            });
+            let (url, custom_resource_scheme) = match (params.debug_url, with_webroot) {
+                (None, true) => (utf_16_null_terminiated("res://webroot/index.html"), true),
+                (Some(debug_url), _) => (utf_16_null_terminiated(&debug_url), false),
+                (_, _) => (utf_16_null_terminiated(params.url), false)
             };
             let user_data_path = utf_16_null_terminiated(local_path.as_os_str().to_str().expect("user data path invalid"));
             let callback = Box::new(Callback { 
                 should_save_bounds: params.save_bounds,
                 config_dir: local_path.to_string_lossy().to_string(),
+                webroot,
                 callbacks: params.callbacks
             });
             let settings = WebViewAppSettings { 
@@ -60,9 +65,11 @@ impl WebView {
                 is_maximized: bounds.is_maximized,
                 target: & *callback,
                 on_close,
+                on_custom_request,
                 url: url.as_ptr(),
                 without_native_titlebar: params.without_native_titlebar,
                 devtools: params.devtools,
+                custom_resource_scheme, 
                 default_contextmenu: params.default_contextmenu
             };            
             let init: Symbol<unsafe extern fn(settings: *const WebViewAppSettings) -> ()> = lib.get(b"Init").expect("Failed to load function 'Init'");
@@ -81,8 +88,6 @@ impl WebView {
             
             // let wc = utf_16_null_terminiated("Das ist ein sehr schöner Messagebox-Text");
             // let text_ptr = func(wc.as_ptr());
-            // let strlen: Symbol<unsafe extern fn(*const u16) -> usize> =
-            //     self.lib.get(b"Strlen").expect("Failed to load function");
             // let bytes = slice::from_raw_parts(text_ptr, strlen(text_ptr));
             // let bytes: Vec<u16> = Vec::from(bytes);
             // let text = String::from_utf16_lossy(&bytes);
@@ -99,10 +104,38 @@ impl WebView {
 struct Callback {
     should_save_bounds: bool,
     config_dir: String,
+    webroot: Option<Rc<RefCell<Dir<'static>>>>,
     callbacks: Callbacks    
 }
 
 impl Callback {
+    fn on_custom_request(&self, url: *const u16, url_len: u32, result: &mut RequestResult) {
+        unsafe {
+            let bytes = slice::from_raw_parts(url, url_len as usize);
+            let bytes: Vec<u16> = Vec::from(bytes);
+            let url = String::from_utf16_lossy(&bytes);
+            let mut file = url.clone();
+            let path = file.split_off(14);
+
+            match self.webroot.clone().expect("Custom request without webroot").borrow().get_file(path) {
+                Some(file)  => {
+                    let bytes = file.contents();
+                    result.content = bytes.as_ptr();
+                    result.len = bytes.len();
+                    result.status = 200;
+                    let content_type = utf_16_null_terminiated(&content_type::get(&url));
+                    let content_type = content_type.as_slice();
+                    let mut idx = 0;
+                    content_type.iter().for_each(|i|{
+                        result.content_type[idx] = *i;
+                        idx = idx + 1;
+                    });
+                },
+                None => result.status = 404
+            }
+        }
+    }
+
     fn on_close(&self, x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool {
         let can_close = (*self.callbacks.on_close)();
         if can_close && self.should_save_bounds {
@@ -119,11 +152,25 @@ impl Callback {
     }
 }
 
+extern fn on_custom_request(target: *const Callback, url: *const u16, url_len: u32, result: &mut RequestResult) {
+    unsafe {
+        (*target).on_custom_request(url, url_len, result);
+    }
+}
+
 extern fn on_close(target: *const Callback, x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool { 
     unsafe {
         let res = (*target).on_close(x, y, w, h, is_maximized);
         res
     }
+}
+
+#[repr(C)]
+struct RequestResult {
+    content: *const u8,
+    len: usize,
+    status: i32,
+    content_type: [u16; 100],
 }
 
 #[repr(C)]
@@ -137,8 +184,10 @@ struct WebViewAppSettings {
     is_maximized: bool,
     target: *const Callback,
     on_close: extern fn(target: *const Callback, x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool,
+    on_custom_request: extern fn(target: *const Callback, url: *const u16, url_len: u32, &mut RequestResult),
     url: *const u16,
     without_native_titlebar: bool,
+    custom_resource_scheme: bool,
     devtools: bool,
     default_contextmenu: bool
 }
