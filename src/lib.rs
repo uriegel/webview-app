@@ -10,7 +10,6 @@ mod content_type;
 mod javascript;
 mod html;
 
-// TODO Windows Check alternating img from res request
 // TODO Windows Devtools WebviewRequest
 // TODO Webview JsonRequests
 // TODO react test site debug: JsonRequests CORS?

@@ -4,7 +4,7 @@ use include_dir::Dir;
 use libloading::{Library, Symbol};
 use std::{cell::RefCell, fs, path::Path, rc::Rc, slice};
 
-use crate::{bounds::Bounds, content_type, params::{Callbacks, Params}};
+use crate::{bounds::Bounds, content_type, html, params::{Callbacks, Params}};
 
 pub fn utf_16_null_terminiated(x: &str) -> Vec<u16> {
     x.encode_utf16().chain(std::iter::once(0)).collect()
@@ -12,6 +12,7 @@ pub fn utf_16_null_terminiated(x: &str) -> Vec<u16> {
 
 pub struct WebView {
     lib: Library,
+    //init: Symbol<'a, unsafe extern fn(settings: *const WebViewAppSettings) -> ()>,    
     _callback: Box<Callback>
 }
 
@@ -55,9 +56,13 @@ impl WebView {
                 webroot,
                 callbacks: params.callbacks
             });
+            let html_ok = utf_16_null_terminiated(html::ok());
+            let html_not_found = utf_16_null_terminiated(&html::not_found());
             let settings = WebViewAppSettings { 
                 title: title.as_ptr(),
                 user_data_path: user_data_path.as_ptr(),
+                html_ok: html_ok.as_ptr(),
+                html_not_found: html_not_found.as_ptr(),
                 x: bounds.x.unwrap_or(-1),
                 y: bounds.y.unwrap_or(-1),
                 width: bounds.width.unwrap_or(-1),
@@ -177,6 +182,8 @@ struct RequestResult {
 struct WebViewAppSettings {
     title: *const u16,
     user_data_path: *const u16,
+    html_ok: *const u16,
+    html_not_found: *const u16,
     x: i32,
     y: i32,
     width: i32,

@@ -1,4 +1,4 @@
-pub fn get(no_native_titlebar: bool, title: &str, port: i32, windows: bool, files_drop: bool)->String {
+pub fn get(no_native_titlebar: bool, title: &str, port: i32, files_drop: bool)->String {
     format!(
 r##"
 {}
@@ -51,17 +51,10 @@ var WebView = (() => {{
 try {{
     if (onWebViewLoaded) 
         onWebViewLoaded()
-}} catch {{ }}"##, no_titlebar_script(no_native_titlebar, title), dev_tools(windows), on_files_drop(files_drop), on_events_created(windows), port, port)
+}} catch {{ }}"##, no_titlebar_script(no_native_titlebar, title), dev_tools(), on_files_drop(files_drop), on_events_created(), port, port)
 }
 
-fn dev_tools(windows: bool)->String { 
-    if windows {
-    // TODO startDragFiles in devtools?
-r##"        
-    const showDevTools = () => callback.ShowDevtools()
-    const startDragFiles = files => callback.StartDragFiles(JSON.stringify({ files }))
-"##
-    } else {
+fn dev_tools()->String { 
 r##"                
     const showDevTools = () => fetch('req://showDevTools')
     const startDragFiles = files => fetch('req://startDragFiles', {
@@ -69,13 +62,11 @@ r##"
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ files })
     })
-"##
-    }.to_string()
+"##.to_string()
 }
 
-fn on_events_created(windows: bool)->String {
-    if windows { "const onEventsCreated = id => callback.OnEvents(id)" } 
-    else { "const onEventsCreated = id => fetch(`req://onEvents/${id}`)" }.to_string() 
+fn on_events_created()->String {
+    "const onEventsCreated = id => fetch(`req://onEvents/${id}`)".to_string() 
 }
 
 fn no_titlebar_script(no_native_titlebar: bool, title: &str)->String {

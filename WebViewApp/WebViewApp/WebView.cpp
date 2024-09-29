@@ -25,6 +25,8 @@ wil::com_ptr<ICoreWebView2Controller> webviewController;
 struct WebViewAppSettings {
     const wchar_t* title;
     const wchar_t* userDataPath;
+    const wchar_t* htmlOk;
+    const wchar_t* htmlNotFound;
     int x;
     int y;
     int width;
@@ -42,6 +44,8 @@ struct WebViewAppSettings {
 
 wchar_t* title { nullptr };
 wchar_t* userDataPath { nullptr };
+wchar_t* htmlOk;
+wchar_t* htmlNotFound;
 int x;
 int y;
 int width;
@@ -69,6 +73,8 @@ void Init(const WebViewAppSettings* settings) {
 
     title = SetString(settings->title);
     url = SetString(settings->url);
+    htmlOk = SetString(settings->htmlOk);
+    htmlNotFound = SetString(settings->htmlNotFound);
     x = settings->x;
     y = settings->y;
     width = settings->width;
@@ -135,21 +141,7 @@ void CreateWebView(HWND hWnd) {
                                             args->put_Response(response.get());
                                         }
                                         else if (rr.status == 404) {
-                                            auto text = R"(!DOCTYPE html>
-<html>
-<head>
-    <title>Not Found</title>
-    <meta charset="utf-8">
-</head>
-<body>
-    <h1>Not Found</h1>
-                    
-    <p>
-        Sorry, I cannot find what you're looking for
-    </p>
-</body>
-</html>)";
-                                            auto stream = SHCreateMemStream((const BYTE*)text, (int)strlen(text));
+                                            auto stream = SHCreateMemStream((const BYTE*)htmlNotFound, (int)wcslen(htmlNotFound)*2);
                                             wil::com_ptr<ICoreWebView2WebResourceResponse> response;
                                             env->CreateWebResourceResponse(stream, 404, L"Not Found", L"Content-Type: text/html", &response);
                                             stream->Release();
