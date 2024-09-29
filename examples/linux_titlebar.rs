@@ -1,5 +1,6 @@
 use adw::HeaderBar;
 use gio::ActionEntry;
+use glib::clone;
 use gtk::prelude::*;
 use gtk::Button;
 use gtk::Widget;
@@ -13,13 +14,15 @@ fn set_titlebar(app: &adw::Application, webview: &webkit6::WebView)->gtk::Widget
     button.set_action_name(Some("app.devtools"));
     header_bar.pack_end(&button);
 
-    let webview2 = webview.clone();
     let action = ActionEntry::builder("devtools")
-        .activate(move |_, _, _| {
-            if let Some(inspector) = webview2.inspector() {
+        .activate(clone!(
+            #[weak]
+            webview,
+            move |_, _, _| {
+            if let Some(inspector) = webview.inspector() {
                 inspector.show();
             }
-        }).build();
+        })).build();
     app.add_action_entries([action]);
     app.set_accels_for_action("app.devtools", &["<Shift><Ctrl>I"]);
 
