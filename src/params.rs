@@ -1,7 +1,10 @@
 use std::rc::Rc;
 
-use adw::Application;
 use include_dir::Dir;
+
+#[cfg(target_os = "linux")]    
+use adw::Application;
+#[cfg(target_os = "linux")]    
 use webkit6::WebView;
 
 use crate::bounds::Bounds;
