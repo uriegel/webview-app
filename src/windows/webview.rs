@@ -1,26 +1,14 @@
 // extern crate libloading;
 
 use include_dir::Dir;
-use std::{cell::RefCell, path::Path, rc::Rc, slice, sync::Once};
+use std::{cell::RefCell, path::Path, rc::Rc, slice};
 
 use crate::{bounds::Bounds, content_type, html, params::{Callbacks, Params}};
 
-use super::raw_funcs::{RawFuncs, RequestResult, WebViewAppSettings};
+use super::raw_funcs::{load_raw_funcs, RequestResult, WebViewAppSettings};
 
 pub fn utf_16_null_terminiated(x: &str) -> Vec<u16> {
     x.encode_utf16().chain(std::iter::once(0)).collect()
-}
-
-static INIT: Once = Once::new();
-static mut RAWFUNCS: Option<RawFuncs> = None;
-
-fn load_raw_funcs(appid: &str)->& 'static RawFuncs {
-    unsafe {
-        INIT.call_once(|| {
-            RAWFUNCS = Some(RawFuncs::new(appid));
-        });
-        RAWFUNCS.as_ref().unwrap()        
-    }
 }
 
 pub struct WebView {

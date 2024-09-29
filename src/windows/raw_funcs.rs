@@ -1,6 +1,14 @@
-use std::{ffi::CString, fs, path::Path};
+use std::{ffi::CString, fs, path::Path, sync::Once};
 
 use super::webview::Callback;
+
+pub type FnInit = extern fn(settings: *const WebViewAppSettings);
+pub type FnRun = extern fn()->u32;
+
+pub struct RawFuncs {
+    pub init: FnInit,
+    pub run: FnRun
+}
 
 #[repr(C)]
 pub struct RequestResult {
@@ -31,8 +39,14 @@ pub struct WebViewAppSettings {
     pub default_contextmenu: bool
 }
 
-pub type FnInit = extern fn(settings: *const WebViewAppSettings);
-pub type FnRun = extern fn()->u32;
+pub fn load_raw_funcs(appid: &str)->& 'static RawFuncs {
+    unsafe {
+        INIT.call_once(|| {
+            RAWFUNCS = Some(RawFuncs::new(appid));
+        });
+        RAWFUNCS.as_ref().unwrap()        
+    }
+}
 
 #[link(name = "kernel32")]
 extern "stdcall" {
@@ -40,10 +54,8 @@ extern "stdcall" {
     pub fn GetProcAddress(hModule: *const usize, lpProcName: *const u8) -> *const usize;
 }
 
-pub struct RawFuncs {
-    pub init: FnInit,
-    pub run: FnRun
-}
+static INIT: Once = Once::new();
+static mut RAWFUNCS: Option<RawFuncs> = None;
 
 impl RawFuncs {
     pub fn new(appid: &str)->RawFuncs {
