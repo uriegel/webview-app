@@ -1,6 +1,8 @@
 use std::rc::Rc;
 
+use adw::Application;
 use include_dir::Dir;
+use webkit6::WebView;
 
 use crate::bounds::Bounds;
 
@@ -13,6 +15,8 @@ pub struct Params<'a> {
     pub debug_url: Option<String>,
     #[cfg(target_os = "windows")]
     pub without_native_titlebar: bool,
+    #[cfg(target_os = "linux")]    
+    pub titlebar: Option<Rc<dyn Fn(&Application, &WebView)->gtk::Widget>>,
     pub devtools: bool,
     pub default_contextmenu: bool,
     pub webroot: Option<Dir<'static>>,                    

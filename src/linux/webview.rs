@@ -41,7 +41,8 @@ impl WebView {
                 default_contextmenu: params.default_contextmenu,
                 devtools: params.devtools,
                 webroot: webroot.clone(),
-                on_close: params.callbacks.on_close.clone()
+                on_close: params.callbacks.on_close.clone(),
+                titlebar: params.titlebar.clone()
             };
             MainWindow::new(mainwindow_params);
         });

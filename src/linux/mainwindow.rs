@@ -5,7 +5,9 @@ use adw::Application;
 use adw::HeaderBar;
 use gtk::prelude::*;
 use gtk::ApplicationWindow;
+use gtk::Widget;
 use include_dir::Dir;
+use webkit6::WebView;
 
 use super::webkitview::WebkitView;
 
@@ -25,7 +27,9 @@ pub struct MainWindowParams<'a> {
     pub devtools: bool,
     pub default_contextmenu: bool,
     pub webroot: Option<Rc<RefCell<Dir<'static>>>>,
-    pub on_close: Rc<dyn Fn()->bool>
+    pub on_close: Rc<dyn Fn()->bool>,
+    #[cfg(target_os = "linux")]    
+    pub titlebar: Option<Rc<dyn Fn(&Application, &WebView)->Widget>>
 }
 
 use super::super::bounds::Bounds;
@@ -46,7 +50,6 @@ impl MainWindow {
                     .application(params.app)
                     .default_width(bounds.width.unwrap_or(800))
                     .default_height(bounds.height.unwrap_or(600))
-                    .titlebar(&HeaderBar::new())
                     .build()
         };
 
@@ -60,7 +63,13 @@ impl MainWindow {
             webroot: params.webroot
         };
 
-        WebkitView::new(webkitview_params);
+        let webview = WebkitView::new(webkitview_params);
+        let headerbar: Widget = 
+            match params.titlebar {
+                Some(titlebar) => (*titlebar)(&params.app, &webview.webview),
+                None => HeaderBar::new().upcast::<Widget>()
+            };
+        window.window.set_titlebar(Some(&headerbar));
         window.window.present();
         window.window.connect_close_request(move|_| ((*params.on_close)() == false).into());
         if params.save_bounds  {

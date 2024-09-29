@@ -38,6 +38,8 @@ pub struct WebViewBuilder {
     height: Option<i32>,
     save_bounds: bool,
     on_close: Rc<dyn Fn()->bool>,
+    #[cfg(target_os = "linux")]    
+    titlebar: Option<Rc<dyn Fn(&adw::Application, &webkit6::WebView)->gtk::Widget>>,
     without_native_titlebar: bool,
     devtools: bool,
     default_contextmenu: bool,
@@ -77,6 +79,8 @@ impl WebView {
             height: None,
             save_bounds: false,
             on_close: Rc::new(|| true),
+            #[cfg(target_os = "linux")]
+            titlebar: None,
             without_native_titlebar: false,
             devtools: false,
             default_contextmenu : true,
@@ -111,6 +115,8 @@ impl WebViewBuilder {
             debug_url: self.debug_url.clone(),
             #[cfg(target_os = "windows")]
             without_native_titlebar: self.without_native_titlebar,
+            #[cfg(target_os = "linux")]    
+            titlebar: self.titlebar,
             devtools: self.devtools,
             default_contextmenu: self.default_contextmenu,
             webroot: self.webroot,
@@ -180,6 +186,13 @@ impl WebViewBuilder {
         self.url = Some(val);
         self
     }
+
+    #[cfg(target_os = "linux")]
+    /// Callback to set a custom HeaderBar in Linux WebView app
+    pub fn titlebar(mut self, val: impl Fn(&adw::Application, &webkit6::WebView)->gtk::Widget + 'static)->WebViewBuilder {
+        self.titlebar = Some(Rc::new(val));
+        self
+    }        
 
     /// Sets the web view's url when debugging
     /// 
