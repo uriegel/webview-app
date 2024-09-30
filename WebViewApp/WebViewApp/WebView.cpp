@@ -97,7 +97,7 @@ void __stdcall Init(const WebViewAppSettings* settings) {
 
 void CreateWebView(HWND hWnd) {
     auto options = Microsoft::WRL::Make<CoreWebView2EnvironmentOptions>();
-    auto scheme = Microsoft::WRL::Make<CoreWebView2CustomSchemeRegistration>(L"res");
+    auto scheme = Microsoft::WRL::Make<CoreWebView2CustomSchemeRegistration>(L"req");
     if (withoutNativeTitlebar)
         options->put_AdditionalBrowserArguments(L"--enable-features=msWebView2EnableDraggableRegions");
     ICoreWebView2CustomSchemeRegistration* registrations[1] = { scheme.Get() };
@@ -125,7 +125,7 @@ void CreateWebView(HWND hWnd) {
                         settings->put_AreDefaultContextMenusEnabled(defaultContextmenu);
 
                         if (customResourceScheme || withoutNativeTitlebar) {
-                            webview->AddWebResourceRequestedFilter(L"res:*", COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL);
+                            webview->AddWebResourceRequestedFilter(L"req:*", COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL);
                             webview->add_WebResourceRequested(
                                 Callback<ICoreWebView2WebResourceRequestedEventHandler>(
                                     [env](ICoreWebView2* sender, ICoreWebView2WebResourceRequestedEventArgs* args) {
@@ -133,20 +133,30 @@ void CreateWebView(HWND hWnd) {
                                         args->get_Request(&request);
                                         wchar_t* uri;
                                         request->get_Uri(&uri);
-                                        RequestResult rr{ 0 };
-                                        OnCustomRequest(target, uri, (int)wcslen(uri), &rr);
-                                        CoTaskMemFree(uri);
-                                        if (rr.status == 200) {
-                                            auto stream = SHCreateMemStream((const BYTE*)rr.content, (int)rr.len);
-                                            wil::com_ptr<ICoreWebView2WebResourceResponse> response;
-                                            wchar_t ct[100];
-                                            wsprintfW(ct, L"Content-Type: %s", rr.content_type);
-                                            env->CreateWebResourceResponse(stream, 200, L"Ok", ct, &response);
-                                            stream->Release();
-                                            args->put_Response(response.get());
+
+                                        if (wcsncmp(uri, L"req://webroot", 13) == 0) {
+                                            RequestResult rr{ 0 };
+                                            OnCustomRequest(target, uri, (int)wcslen(uri), &rr);
+                                            CoTaskMemFree(uri);
+                                            if (rr.status == 200) {
+                                                auto stream = SHCreateMemStream((const BYTE*)rr.content, (int)rr.len);
+                                                wil::com_ptr<ICoreWebView2WebResourceResponse> response;
+                                                wchar_t ct[100];
+                                                wsprintfW(ct, L"Content-Type: %s", rr.content_type);
+                                                env->CreateWebResourceResponse(stream, 200, L"Ok", ct, &response);
+                                                stream->Release();
+                                                args->put_Response(response.get());
+                                            }
+                                            else if (rr.status == 404) {
+                                                auto stream = SHCreateMemStream((const BYTE*)htmlNotFound, (int)wcslen(htmlNotFound) * 2);
+                                                wil::com_ptr<ICoreWebView2WebResourceResponse> response;
+                                                env->CreateWebResourceResponse(stream, 404, L"Not Found", L"Content-Type: text/html", &response);
+                                                stream->Release();
+                                                args->put_Response(response.get());
+                                            }
                                         }
-                                        else if (rr.status == 404) {
-                                            auto stream = SHCreateMemStream((const BYTE*)htmlNotFound, (int)wcslen(htmlNotFound)*2);
+                                        else {
+                                            auto stream = SHCreateMemStream((const BYTE*)htmlNotFound, (int)wcslen(htmlNotFound) * 2);
                                             wil::com_ptr<ICoreWebView2WebResourceResponse> response;
                                             env->CreateWebResourceResponse(stream, 404, L"Not Found", L"Content-Type: text/html", &response);
                                             stream->Release();
@@ -167,13 +177,23 @@ void CreateWebView(HWND hWnd) {
                         webviewController->put_Bounds(bounds);
                         ShowWindow(hWnd, SW_SHOW);
                         auto webviewWnd = GetWindow(hWnd, GW_CHILD);
-                        ShowWindow(webviewWnd, SW_SHOW);
+                        webview->add_WebMessageReceived(
+                            Callback<ICoreWebView2WebMessageReceivedEventHandler>(
+                                [](ICoreWebView2* sender, ICoreWebView2WebMessageReceivedEventArgs* args) {
+                                    wil::unique_cotaskmem_string messageRaw;
+                                    wil::unique_cotaskmem_string message;
+                                    args->TryGetWebMessageAsString(&message);
+                                    auto mm = message.get();
+                                    return S_OK;
+                                }).Get(), nullptr);
+
                         webview->Navigate(url);
                         delete[] url;
                         url = nullptr;
                         ExecuteScript(initScript);
                         delete[] initScript;
                         initScript = nullptr;
+                        ShowWindow(webviewWnd, SW_SHOW);
                         return S_OK;
                     }).Get());
                 return S_OK;
@@ -293,6 +313,14 @@ bool __stdcall ExecuteScript(wchar_t* script) {
                 return S_OK;
             }).Get());
     return true;
+}
+
+void __stdcall PostMessageAsString(wchar_t* txt) {
+    webview->PostWebMessageAsString(txt);
+}
+
+void __stdcall PostMessageAsJson(wchar_t* json) {
+    webview->PostWebMessageAsJson(json);
 }
 
 wchar_t* __stdcall Test1(wchar_t* text_to_display) {

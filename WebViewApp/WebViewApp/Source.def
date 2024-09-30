@@ -3,4 +3,6 @@ EXPORTS
 	Init
 	Run
 	ExecuteScript
+	PostMessageAsString
+	PostMessageAsJson
 	Free

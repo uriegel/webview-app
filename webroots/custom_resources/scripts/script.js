@@ -5,7 +5,11 @@ const btn3 = document.getElementById("button3")
 const btnDevTools = document.getElementById("buttonDevTools")
 const dragzone = document.getElementById("dragzone")
 
-btnDevTools.onclick = () => WebView.showDevTools()
+//btnDevTools.onclick = () => WebView.showDevTools()
+
+btnDevTools.onclick = () => {
+    window.chrome.webview.postMessage("Das it etwas, was ich gepostet häbö 👍")
+}
 
 let currentDirectory = ""
 

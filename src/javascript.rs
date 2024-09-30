@@ -56,8 +56,8 @@ try {{
 
 fn dev_tools()->String { 
 r##"                
-    const showDevTools = () => fetch('req://showDevTools')
-    const startDragFiles = files => fetch('req://startDragFiles', {
+    const showDevTools = () => fetch('devtools')
+    const startDragFiles = files => fetch('req://startdragfiles', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ files })
@@ -87,7 +87,7 @@ const WEBVIEWNoNativeTitlebarInitialize = () => {{
 
     const favicon = document.getElementById('$FAVICON$')
     if (favicon)
-        favicon.src = 'res://icon'
+        favicon.src = 'req://icon'
     const title = document.getElementById('$TITLE$')
     if (title)
         title.innerText = '{}'

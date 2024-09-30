@@ -10,7 +10,10 @@ mod content_type;
 mod javascript;
 mod html;
 
-// TODO Windows Devtools WebviewRequest
+// TODO Windows PostMessage in both directions
+// TODO Windows javascript measure time postmessage from js and answer back
+// TODO Windows send back to js a very large json object (and measure time)
+// TODO Windows Devtools 
 // TODO Webview JsonRequests
 // TODO react test site debug: JsonRequests CORS?
 // TODO Windows Headerbar 

@@ -32,7 +32,7 @@ impl WebView {
             Rc::new(RefCell::new(webroot))
         });
         let (url, custom_resource_scheme) = match (params.debug_url, with_webroot) {
-            (None, true) => (utf_16_null_terminiated("res://webroot/index.html"), true),
+            (None, true) => (utf_16_null_terminiated("req://webroot/index.html"), true),
             (Some(debug_url), _) => (utf_16_null_terminiated(&debug_url), false),
             (_, _) => (utf_16_null_terminiated(params.url), false)
         };
