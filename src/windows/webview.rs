@@ -3,7 +3,7 @@
 use include_dir::Dir;
 use std::{cell::RefCell, path::Path, rc::Rc, slice};
 
-use crate::{bounds::Bounds, content_type, html, javascript, params::{Callbacks, Params}};
+use crate::{bounds::Bounds, content_type, html, javascript::{self, RequestData}, params::{Callbacks, Params}};
 
 use super::raw_funcs::{load_raw_funcs, RequestResult, WebViewAppSettings};
 
@@ -156,17 +156,8 @@ impl Callback {
             if self.devtools && msg == "devtools" 
                 { (load_raw_funcs("").show_devtools)() }
             else if msg.starts_with("request,") {
-                // TODO common for Linux and Windows
-                let msg = &msg[8..];
-                let idx = msg.find(',').unwrap();
-                let _cmd = &msg[..idx];
-                let msg= &msg[idx+1..];
-                let idx = msg.find(',').unwrap();
-                let id = &msg[..idx];
-                let json = &msg[idx+1..];
-                let _ = &json[1..2];
-
-                let back = format!("result,{},{}", id, json);
+                let request_data = RequestData::new(&msg);
+                let back = format!("result,{},{}", request_data.id, request_data.json);
                 (load_raw_funcs("").postmessage)(utf_16_null_terminiated(&back).as_ptr()) 
             }
                 

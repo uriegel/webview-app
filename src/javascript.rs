@@ -183,7 +183,7 @@ r##"
     const request = (method, data) => new Promise(res => {
         webviewrequests.set((++webviewrequestsid).toString(), res)
         const msg = `request,${method},${webviewrequestsid},${JSON.stringify(data)}`
-        alert(msg)
+        send_request(msg)
     })
 "##.to_string()
 }
@@ -191,9 +191,19 @@ r##"
 fn request_result(windows: bool)->String {
     if windows {
 r##"    
+    function send_request(data) {
+        window.chrome.webview.postMessage(data)
+    }
+
     window.chrome.webview.addEventListener('message', arg => {
         WebView.backtothefuture(arg.data) 
-})
+    })
 "##
-    }  else { "" }.to_string() 
+    }  else { 
+r##"            
+    function send_request(data) {
+        alert(msg)
+    }
+"##
+     }.to_string() 
 }
