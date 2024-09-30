@@ -202,7 +202,7 @@ r##"
     }  else { 
 r##"            
     function send_request(data) {
-        alert(msg)
+        alert(data)
     }
 "##
      }.to_string() 
