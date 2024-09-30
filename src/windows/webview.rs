@@ -156,6 +156,7 @@ impl Callback {
             if self.devtools && msg == "devtools" 
                 { (load_raw_funcs("").show_devtools)() }
             else if msg.starts_with("request,") {
+                // TODO common for Linux and Windows
                 let msg = &msg[8..];
                 let idx = msg.find(',').unwrap();
                 let _cmd = &msg[..idx];

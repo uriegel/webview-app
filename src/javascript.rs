@@ -34,7 +34,8 @@ var WebView = (() => {{
         dropFiles,
         setDroppedFilesEventHandler,
         setDroppedEvent,
-        closeWindow
+        closeWindow,
+        backtothefuture
     }}
 }})()
 
@@ -147,11 +148,11 @@ r##"
             const res = webviewrequests.get(id)    
             webviewrequests.delete(id)
             res(data)
-    }}
+        }}
         else
-            console.log("Nachricht empfangen", arg, arg.data)
-    }});
-    
+            console.log("Message received", arg, arg.data)
+    }})
+   
     const request = (method, data) => new Promise(res => {{
         webviewrequests.set((++webviewrequestsid).toString(), res)
         const msg = `request,${method},${webviewrequestsid},${JSON.stringify(data)}`
@@ -160,14 +161,30 @@ r##"
 "##
     } else {
 r##"        
-    const request = async (method, data) => {
-        const res = await fetch(`http://localhost:1234/requests/${method}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        })
-        return await res.json()
+    var webviewrequestsid = 0
+    var webviewrequests = new Map()
+
+    const backtothefuture = (data) => {
+        console.log('data', data)
+        if (data.startsWith("result,")) {
+            const msg = data.substring(7)
+            const idx = msg.indexOf(',')
+            const id = msg.substring(0, idx)
+            console.log('data2', id)
+            const json = JSON.parse(msg.substring(idx + 1))
+            const res = webviewrequests.get(id)    
+            webviewrequests.delete(id)
+            res(json)
+        }
+        else
+            console.log("Message received", data)
     }
+    
+    const request = (method, data) => new Promise(res => {
+        webviewrequests.set((++webviewrequestsid).toString(), res)
+        const msg = `request,${method},${webviewrequestsid},${JSON.stringify(data)}`
+        alert(msg)
+    })
 "##
     }.to_string()
 }

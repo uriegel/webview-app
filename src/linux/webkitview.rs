@@ -60,11 +60,36 @@ impl WebkitView {
             _ => res.webview.load_uri(params.url)
         }
 
+        res.webview.connect_script_dialog(|webview, d| {
+            let wv = webview.clone();
+            let txt = d.message().unwrap();
+            let msg = txt.as_str().to_string();
+            let msg = &msg[8..];
+            let idx = msg.find(',').unwrap();
+            let _cmd = &msg[..idx];
+            let msg= &msg[idx+1..];
+            let idx = msg.find(',').unwrap();
+            let id = &msg[..idx];
+            let json = &msg[idx+1..];
+            let _ = &json[1..2];
+
+            let back = format!("result,{},{}", id, json);
+            MainContext::default().spawn_local(async move {
+                wv.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
+            });
+            true
+        });
+
         res.webview.connect_load_changed(|webview, evt| {
             let webview = webview.clone();
             if evt == LoadEvent::Committed {
                 MainContext::default().spawn_local(async move {
                     let script = javascript::get(false, "", false, false);
+
+
+                    println!("{}", script);
+
+
                     webview.evaluate_javascript_future(&script, None, None).await.expect("error in initial running script");
                 });
             }
