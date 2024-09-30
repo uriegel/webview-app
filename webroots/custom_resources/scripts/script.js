@@ -8,8 +8,6 @@ btnDevTools.onclick = () => WebView.showDevTools()
 
 let currentDirectory = ""
 
-const viele = [...Array(100000).keys()].map(i => ` das ist ein sehr langer Name: ${i}`);
-
 const initialize = async () => {
     WebView.registerEvents("fast", console.log)
     WebView.registerEvents("slow", console.log)
@@ -39,11 +37,10 @@ btn1.onclick = async () => {
 
 btn2.onclick = async () => {
     const t0 = performance.now()
-    var res = await WebView.request("cmd2", { viele })
-    console.log("cmd2", res)
+    var res = await WebView.request("cmd2", { })
     const t1 = performance.now()
     const tdiff = t1 - t0
-    console.log(`${tdiff}`, "cmd1", res)
+    console.log(`${tdiff}`, "cmd2", res)
 }
 
 dragzone.onmousedown = () => WebView.startDragFiles([

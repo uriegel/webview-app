@@ -61,19 +61,7 @@ impl WebkitView {
             let msg = txt.as_str().to_string();
             let request_data = RequestData::new(&msg);
             
-            let contacts: Vec<Kontakt> = (1..100000).map(|id| {
-                Kontakt {
-                    name: "Uwe Riegel, der Erbauer dieses komischen Crates".to_string(),
-                    email: "uriegel@hotmail.de".to_string(),
-                    date:"Sonntag, 23. August, 1997".to_string(),
-                    number: 8908908908098,
-                    id
-                }
-            }).collect();
-            let json = serde_json::to_string(&contacts).unwrap();
-            let affe = json.len();
-            
-            let back = format!("result,{},{}", request_data.id, json);
+            let back = format!("result,{},{}", request_data.id, request_data.json);
             MainContext::default().spawn_local(async move {
                 wv.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
             });
@@ -148,15 +136,3 @@ impl WebkitView {
     }
 }
 
-use serde::{Deserialize, Serialize};
-
-#[derive(Clone)]
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Kontakt {
-    pub name: String,
-    pub email: String,
-    pub date: String,
-    pub number: i64,
-    pub id: i32
-}
