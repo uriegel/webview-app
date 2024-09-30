@@ -10,8 +10,6 @@ mod content_type;
 mod javascript;
 mod html;
 
-// TODO Linux send back to js a very large json object (and measure time)
-// TODO Windows send back to js a very large json object (and measure time)
 // TODO runtime for windows and linux
 // TODO Windows res and req scheme
 // TODO Windows Headerbar 
