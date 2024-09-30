@@ -1,6 +1,32 @@
+pub struct RequestData<'a> {
+    pub _cmd: &'a str,
+    pub id: &'a str,
+    pub json: &'a str
+}
+
+impl <'a>RequestData<'a> {
+    pub fn new(msg: &'a str)->RequestData<'a> {
+        let msg = &msg[8..];
+        let idx = msg.find(',').unwrap();
+        let 
+        _cmd = &msg[..idx];
+        let msg= &msg[idx+1..];
+        let idx = msg.find(',').unwrap();
+        let id = &msg[..idx];
+        let json = &msg[idx+1..];
+        let _ = &json[1..2];
+        RequestData {
+            _cmd,
+            id,
+            json
+        }
+    }
+}
+
 pub fn get(no_native_titlebar: bool, title: &str, windows: bool, files_drop: bool)->String {
     format!(
 r##"
+{}
 {}
 
 var webViewEventSinks = new Map()
@@ -42,7 +68,8 @@ var WebView = (() => {{
 try {{
     if (onWebViewLoaded) 
         onWebViewLoaded()
-}} catch {{ }}"##, no_titlebar_script(no_native_titlebar, title), dev_tools(windows), requests(windows), on_files_drop(files_drop), on_events_created(windows))
+}} catch {{ }}"##, no_titlebar_script(no_native_titlebar, title), request_result(windows), dev_tools(windows), 
+                requests(), on_files_drop(files_drop), on_events_created(windows))
 }
 
 fn dev_tools(windows: bool)->String { 
@@ -133,39 +160,12 @@ r##"
     }.to_string()
 }
 
-fn requests(windows: bool)->String {
-    if windows {
-r##"        
-    var webviewrequestsid = 0
-    var webviewrequests = new Map()
-
-    window.chrome.webview.addEventListener('message', arg => {{
-        if (arg.data.startsWith("result,")) {{
-            const msg = arg.data.substring(7)
-            const idx = msg.indexOf(',')
-            const id = msg.substring(0, idx)
-            const data = JSON.parse(msg.substring(idx + 1))
-            const res = webviewrequests.get(id)    
-            webviewrequests.delete(id)
-            res(data)
-        }}
-        else
-            console.log("Message received", arg, arg.data)
-    }})
-   
-    const request = (method, data) => new Promise(res => {{
-        webviewrequests.set((++webviewrequestsid).toString(), res)
-        const msg = `request,${method},${webviewrequestsid},${JSON.stringify(data)}`
-        window.chrome.webview.postMessage(msg)
-    }})
-"##
-    } else {
+fn requests()->String {
 r##"        
     var webviewrequestsid = 0
     var webviewrequests = new Map()
 
     const backtothefuture = (data) => {
-        console.log('data', data)
         if (data.startsWith("result,")) {
             const msg = data.substring(7)
             const idx = msg.indexOf(',')
@@ -185,6 +185,15 @@ r##"
         const msg = `request,${method},${webviewrequestsid},${JSON.stringify(data)}`
         alert(msg)
     })
+"##.to_string()
+}
+
+fn request_result(windows: bool)->String {
+    if windows {
+r##"    
+    window.chrome.webview.addEventListener('message', arg => {
+        WebView.backtothefuture(arg.data) 
+})
 "##
-    }.to_string()
+    }  else { "" }.to_string() 
 }

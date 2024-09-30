@@ -1,21 +1,16 @@
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::{{cell::RefCell}, rc::Rc};
 
 use adw::Application;
 use gtk::gio::MemoryInputStream;
-use gtk::glib::Bytes;
-use gtk::glib::MainContext;
+use gtk::glib::{Bytes, MainContext};
 use include_dir::Dir;
 use webkit6::prelude::*;
-use webkit6::soup::MessageHeaders;
-use webkit6::LoadEvent;
-use webkit6::URISchemeRequest;
-use webkit6::URISchemeResponse;
-use webkit6::WebView;
+use webkit6::{soup::MessageHeaders, LoadEvent, URISchemeRequest, URISchemeResponse, WebView};
 
 use crate::content_type;
 use crate::html;
 use crate::javascript;
+use crate::javascript::RequestData;
 
 use super::mainwindow::MainWindow;
 
@@ -64,16 +59,8 @@ impl WebkitView {
             let wv = webview.clone();
             let txt = d.message().unwrap();
             let msg = txt.as_str().to_string();
-            let msg = &msg[8..];
-            let idx = msg.find(',').unwrap();
-            let _cmd = &msg[..idx];
-            let msg= &msg[idx+1..];
-            let idx = msg.find(',').unwrap();
-            let id = &msg[..idx];
-            let json = &msg[idx+1..];
-            let _ = &json[1..2];
-
-            let back = format!("result,{},{}", id, json);
+            let request_data = RequestData::new(&msg);
+            let back = format!("result,{},{}", request_data.id, request_data.json);
             MainContext::default().spawn_local(async move {
                 wv.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
             });
@@ -85,11 +72,6 @@ impl WebkitView {
             if evt == LoadEvent::Committed {
                 MainContext::default().spawn_local(async move {
                     let script = javascript::get(false, "", false, false);
-
-
-                    println!("{}", script);
-
-
                     webview.evaluate_javascript_future(&script, None, None).await.expect("error in initial running script");
                 });
             }
@@ -152,3 +134,4 @@ impl WebkitView {
         request.finish_with_response(&response);                        
     }
 }
+
