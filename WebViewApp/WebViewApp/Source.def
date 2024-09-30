@@ -5,4 +5,5 @@ EXPORTS
 	ExecuteScript
 	PostMessageAsString
 	PostMessageAsJson
+	ShowDevTools
 	Free

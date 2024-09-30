@@ -41,11 +41,12 @@ impl WebView {
             should_save_bounds: params.save_bounds,
             config_dir: local_path.to_string_lossy().to_string(),
             webroot,
+            devtools: params.devtools,
             callbacks: params.callbacks
         });
         let html_ok = utf_16_null_terminiated(html::ok());
         let html_not_found = utf_16_null_terminiated(&html::not_found());
-        let script = javascript::get(params.without_native_titlebar, params.title, 0, false);
+        let script = javascript::get(params.without_native_titlebar, params.title, true, false);
         let init_script = utf_16_null_terminiated(&script);
         let settings = WebViewAppSettings { 
             title: title.as_ptr(),
@@ -75,6 +76,8 @@ impl WebView {
 
     pub fn run(&self)->u32 {
         (load_raw_funcs("").run)()
+
+
         // let run: &'static fn()->u32 = get_function::<fn()->u32>(&self.appid, "Run");
         // let res = run();
 
@@ -96,6 +99,7 @@ impl WebView {
 
 pub struct Callback {
     should_save_bounds: bool,
+    devtools: bool,
     config_dir: String,
     webroot: Option<Rc<RefCell<Dir<'static>>>>,
     callbacks: Callbacks    
@@ -149,7 +153,22 @@ impl Callback {
             let bytes = slice::from_raw_parts(msg, msg_len as usize);
             let bytes: Vec<u16> = Vec::from(bytes);
             let msg = String::from_utf16_lossy(&bytes);
-            (load_raw_funcs("").postmessage)(utf_16_null_terminiated(&msg).as_ptr());
+            if self.devtools && msg == "devtools" 
+                { (load_raw_funcs("").show_devtools)() }
+            else if msg.starts_with("request,") {
+                let msg = &msg[8..];
+                let idx = msg.find(',').unwrap();
+                let _cmd = &msg[..idx];
+                let msg= &msg[idx+1..];
+                let idx = msg.find(',').unwrap();
+                let id = &msg[..idx];
+                let json = &msg[idx+1..];
+                let _ = &json[1..2];
+
+                let back = format!("result,{},{}", id, json);
+                (load_raw_funcs("").postmessage)(utf_16_null_terminiated(&back).as_ptr()) 
+            }
+                
         }
     }
 

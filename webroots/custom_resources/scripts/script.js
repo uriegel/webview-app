@@ -1,19 +1,10 @@
 console.log("script loaded")
 const btn1 = document.getElementById("button")
 const btn2 = document.getElementById("button2")
-const btn3 = document.getElementById("button3")
 const btnDevTools = document.getElementById("buttonDevTools")
 const dragzone = document.getElementById("dragzone")
 
-//btnDevTools.onclick = () => WebView.showDevTools()
-
-btnDevTools.onclick = () => {
-    window.chrome.webview.postMessage("Das it etwas, was ich gepostet häbö 👍")
-}
-
-window.chrome.webview.addEventListener('message', arg => {
-    console.log("Nachricht empfangen", arg, arg.data)
-});
+btnDevTools.onclick = () => WebView.showDevTools()
 
 let currentDirectory = ""
 
@@ -44,8 +35,6 @@ btn2.onclick = async () => {
     var res = await WebView.request("cmd2", {})
     console.log("cmd2", res)
 }
-
-btn3.onclick = () => alert("A message from javascript")
 
 dragzone.onmousedown = () => WebView.startDragFiles([
         "TestApp.dll",

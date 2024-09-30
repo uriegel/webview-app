@@ -327,6 +327,10 @@ void __stdcall PostMessageAsJson(wchar_t* json) {
     webview->PostWebMessageAsJson(json);
 }
 
+void __stdcall ShowDevTools() {
+    webview->OpenDevToolsWindow();
+}
+
 wchar_t* __stdcall Test1(wchar_t* text_to_display) {
     MessageBoxW(NULL, text_to_display, L"C�ptschn", MB_OK);
     auto txt = L"Das ist ein sch�ner Result";

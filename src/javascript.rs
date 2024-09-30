@@ -1,4 +1,4 @@
-pub fn get(no_native_titlebar: bool, title: &str, port: i32, files_drop: bool)->String {
+pub fn get(no_native_titlebar: bool, title: &str, windows: bool, files_drop: bool)->String {
     format!(
 r##"
 {}
@@ -9,14 +9,7 @@ var WebView = (() => {{
     {}
     {}
     {}
-    const request = async (method, data) => {{
-        const res = await fetch(`http://localhost:{}/requests/${{method}}`, {{
-            method: 'POST',
-            headers: {{ 'Content-Type': 'application/json' }},
-            body: JSON.stringify(data)
-        }})
-        return await res.json()
-    }}
+    {}
 
     const registerEvents = (id, evt) => {{
         webViewEventSinks.set(id, evt)
@@ -30,8 +23,6 @@ var WebView = (() => {{
 
     initializeNoTitlebar = () => WEBVIEWNoNativeTitlebarInitialize()
 
-    getRequestUrl = () => `http://localhost:{}/requests/`
-
     closeWindow = () => window.close()
 
     return {{
@@ -43,7 +34,6 @@ var WebView = (() => {{
         dropFiles,
         setDroppedFilesEventHandler,
         setDroppedEvent,
-        getRequestUrl,
         closeWindow
     }}
 }})()
@@ -51,22 +41,31 @@ var WebView = (() => {{
 try {{
     if (onWebViewLoaded) 
         onWebViewLoaded()
-}} catch {{ }}"##, no_titlebar_script(no_native_titlebar, title), dev_tools(), on_files_drop(files_drop), on_events_created(), port, port)
+}} catch {{ }}"##, no_titlebar_script(no_native_titlebar, title), dev_tools(windows), requests(windows), on_files_drop(files_drop), on_events_created(windows))
 }
 
-fn dev_tools()->String { 
+fn dev_tools(windows: bool)->String { 
+    if windows {
+    // TODO startDragFiles in devtools?
+r##"        
+    const showDevTools = () => window.chrome.webview.postMessage("devtools")
+    const startDragFiles = files => callback.StartDragFiles(JSON.stringify({ files }))
+"##
+    } else {
 r##"                
-    const showDevTools = () => fetch('devtools')
-    const startDragFiles = files => fetch('req://startdragfiles', {
+    const showDevTools = () => fetch('req://showDevTools')
+    const startDragFiles = files => fetch('req://startDragFiles', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ files })
     })
-"##.to_string()
+"##
+    }.to_string()
 }
 
-fn on_events_created()->String {
-    "const onEventsCreated = id => fetch(`req://onEvents/${id}`)".to_string() 
+fn on_events_created(windows: bool)->String {
+    if windows { "const onEventsCreated = id => callback.OnEvents(id)" } 
+    else { "const onEventsCreated = id => fetch(`req://onEvents/${id}`)" }.to_string() 
 }
 
 fn no_titlebar_script(no_native_titlebar: bool, title: &str)->String {
@@ -130,5 +129,45 @@ r##"
 r##"   
     function dropFiles() {}
 "## 
+    }.to_string()
+}
+
+fn requests(windows: bool)->String {
+    if windows {
+r##"        
+    var webviewrequestsid = 0
+    var webviewrequests = new Map()
+
+    window.chrome.webview.addEventListener('message', arg => {{
+        if (arg.data.startsWith("result,")) {{
+            const msg = arg.data.substring(7)
+            const idx = msg.indexOf(',')
+            const id = msg.substring(0, idx)
+            const data = JSON.parse(msg.substring(idx + 1))
+            const res = webviewrequests.get(id)    
+            webviewrequests.delete(id)
+            res(data)
+    }}
+        else
+            console.log("Nachricht empfangen", arg, arg.data)
+    }});
+    
+    const request = (method, data) => new Promise(res => {{
+        webviewrequests.set((++webviewrequestsid).toString(), res)
+        const msg = `request,${method},${webviewrequestsid},${JSON.stringify(data)}`
+        window.chrome.webview.postMessage(msg)
+    }})
+"##
+    } else {
+r##"        
+    const request = async (method, data) => {{
+        const res = await fetch(`http://localhost:{}/requests/${{method}}`, {{
+            method: 'POST',
+            headers: {{ 'Content-Type': 'application/json' }},
+            body: JSON.stringify(data)
+        }})
+        return await res.json()
+    }}
+"##
     }.to_string()
 }

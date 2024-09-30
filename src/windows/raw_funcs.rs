@@ -6,7 +6,7 @@ pub type FnInit = extern fn(settings: *const WebViewAppSettings);
 pub type FnRun = extern fn()->u32;
 //pub type FnExecuteScript = extern fn(*const u16)->bool;
 pub type FnPostMessageAsString = extern fn(*const u16);
-//pub type FnPostMessageAsJson = extern fn(*const u16);
+pub type FnShowDevTools = extern fn();
 
 pub struct RawFuncs {
     pub init: FnInit,
@@ -14,6 +14,7 @@ pub struct RawFuncs {
 //    pub execute_script: FnExecuteScript,
     pub postmessage: FnPostMessageAsString,
 //    pub postjson: FnPostMessageAsJson,
+    pub show_devtools: FnShowDevTools
 }
 
 #[repr(C)]
@@ -91,14 +92,14 @@ impl RawFuncs {
   //          let execute_script = std::mem::transmute::<*const usize, FnExecuteScript>(fnp);
             let fnp = GetProcAddress(module, b"PostMessageAsString\0".as_ptr());
             let postmessage = std::mem::transmute::<*const usize, FnPostMessageAsString>(fnp);
-//            let fnp = GetProcAddress(module, b"PostMessageAsJson\0".as_ptr());
-//            let postjson = std::mem::transmute::<*const usize, FnPostMessageAsJson>(fnp);
+            let fnp = GetProcAddress(module, b"ShowDevTools\0".as_ptr());
+            let show_devtools = std::mem::transmute::<*const usize, FnShowDevTools>(fnp);
             RawFuncs {
                 init,
                 run,
  //               execute_script,
                 postmessage,
-//                postjson
+                show_devtools
             }
         }
     }
