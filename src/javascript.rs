@@ -170,7 +170,6 @@ r##"
             const msg = data.substring(7)
             const idx = msg.indexOf(',')
             const id = msg.substring(0, idx)
-            console.log('data2', id)
             const json = JSON.parse(msg.substring(idx + 1))
             const res = webviewrequests.get(id)    
             webviewrequests.delete(id)
