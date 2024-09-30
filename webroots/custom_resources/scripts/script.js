@@ -31,7 +31,8 @@ btn1.onclick = async () => {
         id: 123
     })
     const t1 = performance.now()
-    console.log("${t1 - t0}", "cmd1", res)
+    const tdiff = t1 - t0
+    console.log(`${tdiff}`, "cmd1", res)
 }
 
 btn2.onclick = async () => {
