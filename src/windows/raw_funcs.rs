@@ -4,10 +4,16 @@ use super::webview::Callback;
 
 pub type FnInit = extern fn(settings: *const WebViewAppSettings);
 pub type FnRun = extern fn()->u32;
+//pub type FnExecuteScript = extern fn(*const u16)->bool;
+pub type FnPostMessageAsString = extern fn(*const u16);
+//pub type FnPostMessageAsJson = extern fn(*const u16);
 
 pub struct RawFuncs {
     pub init: FnInit,
-    pub run: FnRun
+    pub run: FnRun,
+//    pub execute_script: FnExecuteScript,
+    pub postmessage: FnPostMessageAsString,
+//    pub postjson: FnPostMessageAsJson,
 }
 
 #[repr(C)]
@@ -33,6 +39,7 @@ pub struct WebViewAppSettings {
     pub target: *const Callback,
     pub on_close: extern fn(target: *const Callback, x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool,
     pub on_custom_request: extern fn(target: *const Callback, url: *const u16, url_len: u32, &mut RequestResult),
+    pub on_message: extern fn(target: *const Callback, msg: *const u16, msg_len: u32),
     pub url: *const u16,
     pub without_native_titlebar: bool,
     pub custom_resource_scheme: bool,
@@ -80,9 +87,18 @@ impl RawFuncs {
             let init = std::mem::transmute::<*const usize, FnInit>(fnp);
             let fnp = GetProcAddress(module, b"Run\0".as_ptr());
             let run = std::mem::transmute::<*const usize, FnRun>(fnp);
+//            let fnp = GetProcAddress(module, b"ExecuteScript\0".as_ptr());
+  //          let execute_script = std::mem::transmute::<*const usize, FnExecuteScript>(fnp);
+            let fnp = GetProcAddress(module, b"PostMessageAsString\0".as_ptr());
+            let postmessage = std::mem::transmute::<*const usize, FnPostMessageAsString>(fnp);
+//            let fnp = GetProcAddress(module, b"PostMessageAsJson\0".as_ptr());
+//            let postjson = std::mem::transmute::<*const usize, FnPostMessageAsJson>(fnp);
             RawFuncs {
                 init,
-                run
+                run,
+ //               execute_script,
+                postmessage,
+//                postjson
             }
         }
     }

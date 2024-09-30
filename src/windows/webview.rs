@@ -61,6 +61,7 @@ impl WebView {
             target: & *callback,
             on_close,
             on_custom_request,
+            on_message,
             url: url.as_ptr(),
             without_native_titlebar: params.without_native_titlebar,
             devtools: params.devtools,
@@ -142,11 +143,27 @@ impl Callback {
         }
         can_close
     }
+
+    fn on_message(&self, msg: *const u16, msg_len: u32) {
+        unsafe {
+            let bytes = slice::from_raw_parts(msg, msg_len as usize);
+            let bytes: Vec<u16> = Vec::from(bytes);
+            let msg = String::from_utf16_lossy(&bytes);
+            (load_raw_funcs("").postmessage)(utf_16_null_terminiated(&msg).as_ptr());
+        }
+    }
+
 }
 
 extern fn on_custom_request(target: *const Callback, url: *const u16, url_len: u32, result: &mut RequestResult) {
     unsafe {
         (*target).on_custom_request(url, url_len, result);
+    }
+}
+
+extern fn on_message(target: *const Callback, msg: *const u16, msg_len: u32) { 
+    unsafe {
+       (*target).on_message(msg, msg_len);
     }
 }
 

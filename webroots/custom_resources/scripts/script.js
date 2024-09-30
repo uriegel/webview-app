@@ -11,6 +11,10 @@ btnDevTools.onclick = () => {
     window.chrome.webview.postMessage("Das it etwas, was ich gepostet häbö 👍")
 }
 
+window.chrome.webview.addEventListener('message', arg => {
+    console.log("Nachricht empfangen", arg, arg.data)
+});
+
 let currentDirectory = ""
 
 const initialize = async () => {

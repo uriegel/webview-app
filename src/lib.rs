@@ -10,11 +10,11 @@ mod content_type;
 mod javascript;
 mod html;
 
-// TODO Windows PostMessage in both directions
+// TODO Windows Devtools with PostMessage
+// TODO Windows WebView.request (postjson) as async function in injected javascript
 // TODO Windows javascript measure time postmessage from js and answer back
 // TODO Windows send back to js a very large json object (and measure time)
-// TODO Windows Devtools 
-// TODO Webview JsonRequests
+// TODO Linux send back to js a very large json object (and measure time)
 // TODO react test site debug: JsonRequests CORS?
 // TODO Windows Headerbar 
 // TODO DragDrop

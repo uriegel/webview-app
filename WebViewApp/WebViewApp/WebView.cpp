@@ -21,6 +21,7 @@ bool __stdcall ExecuteScript(wchar_t* script);
 
 using OnCloseFunc = bool(void* target, int x, int y, int w, int h, bool isMaximized);
 using OnCustomRequestFunc = void(void* target, const wchar_t* url, int urlLen, RequestResult* requestResult);
+using OnMessageFunc = void(void* target, const wchar_t* msg, int msgLen);
 wil::com_ptr<ICoreWebView2> webview;
 wil::com_ptr<ICoreWebView2Controller> webviewController;
 
@@ -38,6 +39,7 @@ struct WebViewAppSettings {
     void* target;
     OnCloseFunc* OnClose;
     OnCustomRequestFunc* OnCustomRequest;
+    OnMessageFunc* OnMessage;
     const wchar_t* url;
     bool withoutNativeTitlebar;
     bool customResourceScheme;
@@ -58,6 +60,7 @@ bool isMaximized;
 void* target;
 OnCloseFunc* OnClose;
 OnCustomRequestFunc* OnCustomRequest;
+OnMessageFunc* OnMessage;
 wchar_t* url { nullptr };
 auto withoutNativeTitlebar = false;
 auto customResourceScheme = false;
@@ -88,6 +91,7 @@ void __stdcall Init(const WebViewAppSettings* settings) {
     target = settings->target;
     OnClose = settings->OnClose;
     OnCustomRequest = settings->OnCustomRequest;
+    OnMessage = settings->OnMessage;
     userDataPath = SetString(settings->userDataPath);
     withoutNativeTitlebar = settings->withoutNativeTitlebar;
     customResourceScheme = settings->customResourceScheme;
@@ -183,7 +187,7 @@ void CreateWebView(HWND hWnd) {
                                     wil::unique_cotaskmem_string messageRaw;
                                     wil::unique_cotaskmem_string message;
                                     args->TryGetWebMessageAsString(&message);
-                                    auto mm = message.get();
+                                    OnMessage(target, message.get(), (int)wcslen(message.get()));
                                     return S_OK;
                                 }).Get(), nullptr);
 
