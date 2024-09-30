@@ -24,6 +24,7 @@ pub struct WebViewAppSettings {
     pub user_data_path: *const u16,
     pub html_ok: *const u16,
     pub html_not_found: *const u16,
+    pub init_script: *const u16, 
     pub x: i32,
     pub y: i32,
     pub width: i32,

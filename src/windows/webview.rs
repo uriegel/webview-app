@@ -3,7 +3,7 @@
 use include_dir::Dir;
 use std::{cell::RefCell, path::Path, rc::Rc, slice};
 
-use crate::{bounds::Bounds, content_type, html, params::{Callbacks, Params}};
+use crate::{bounds::Bounds, content_type, html, javascript, params::{Callbacks, Params}};
 
 use super::raw_funcs::{load_raw_funcs, RequestResult, WebViewAppSettings};
 
@@ -45,11 +45,14 @@ impl WebView {
         });
         let html_ok = utf_16_null_terminiated(html::ok());
         let html_not_found = utf_16_null_terminiated(&html::not_found());
+        let script = javascript::get(params.without_native_titlebar, params.title, 0, false);
+        let init_script = utf_16_null_terminiated(&script);
         let settings = WebViewAppSettings { 
             title: title.as_ptr(),
             user_data_path: user_data_path.as_ptr(),
             html_ok: html_ok.as_ptr(),
             html_not_found: html_not_found.as_ptr(),
+            init_script: init_script.as_ptr(),
             x: bounds.x.unwrap_or(-1),
             y: bounds.y.unwrap_or(-1),
             width: bounds.width.unwrap_or(-1),

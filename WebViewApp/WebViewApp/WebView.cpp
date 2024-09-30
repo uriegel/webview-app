@@ -17,6 +17,8 @@ struct RequestResult {
     wchar_t content_type[100];
 };
 
+bool __stdcall ExecuteScript(wchar_t* script);
+
 using OnCloseFunc = bool(void* target, int x, int y, int w, int h, bool isMaximized);
 using OnCustomRequestFunc = void(void* target, const wchar_t* url, int urlLen, RequestResult* requestResult);
 wil::com_ptr<ICoreWebView2> webview;
@@ -27,6 +29,7 @@ struct WebViewAppSettings {
     const wchar_t* userDataPath;
     const wchar_t* htmlOk;
     const wchar_t* htmlNotFound;
+    const wchar_t* initScript;
     int x;
     int y;
     int width;
@@ -46,6 +49,7 @@ wchar_t* title { nullptr };
 wchar_t* userDataPath { nullptr };
 wchar_t* htmlOk;
 wchar_t* htmlNotFound;
+wchar_t* initScript;
 int x;
 int y;
 int width;
@@ -67,7 +71,7 @@ wchar_t* SetString(const wchar_t* str) {
     return target;
 }
 
-void Init(const WebViewAppSettings* settings) {
+void __stdcall Init(const WebViewAppSettings* settings) {
     auto hr = CoInitialize(nullptr);
     DpiUtil::SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
@@ -75,6 +79,7 @@ void Init(const WebViewAppSettings* settings) {
     url = SetString(settings->url);
     htmlOk = SetString(settings->htmlOk);
     htmlNotFound = SetString(settings->htmlNotFound);
+    initScript = SetString(settings->initScript);
     x = settings->x;
     y = settings->y;
     width = settings->width;
@@ -166,6 +171,9 @@ void CreateWebView(HWND hWnd) {
                         webview->Navigate(url);
                         delete[] url;
                         url = nullptr;
+                        ExecuteScript(initScript);
+                        delete[] initScript;
+                        initScript = nullptr;
                         return S_OK;
                     }).Get());
                 return S_OK;
@@ -278,6 +286,15 @@ int __stdcall Run() {
     return (int)msg.wParam;
 }
 
+bool __stdcall ExecuteScript(wchar_t* script) {
+    webview->ExecuteScript(script,
+        Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
+            [](HRESULT error, LPCWSTR result)->HRESULT {
+                return S_OK;
+            }).Get());
+    return true;
+}
+
 wchar_t* __stdcall Test1(wchar_t* text_to_display) {
     MessageBoxW(NULL, text_to_display, L"C�ptschn", MB_OK);
     auto txt = L"Das ist ein sch�ner Result";
@@ -287,6 +304,6 @@ wchar_t* __stdcall Test1(wchar_t* text_to_display) {
     return text;
 }
 
-void Free(wchar_t* txt_ptr) {
+void __stdcall Free(wchar_t* txt_ptr) {
     delete[] txt_ptr;
 }

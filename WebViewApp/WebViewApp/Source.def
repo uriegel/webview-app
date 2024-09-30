@@ -2,4 +2,5 @@ LIBRARY
 EXPORTS
 	Init
 	Run
+	ExecuteScript
 	Free
