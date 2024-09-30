@@ -64,7 +64,7 @@ impl WebkitView {
             let webview = webview.clone();
             if evt == LoadEvent::Committed {
                 MainContext::default().spawn_local(async move {
-                    let script = javascript::get(false, "", 0, false);
+                    let script = javascript::get(false, "", false, false);
                     webview.evaluate_javascript_future(&script, None, None).await.expect("error in initial running script");
                 });
             }

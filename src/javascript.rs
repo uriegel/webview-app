@@ -160,14 +160,14 @@ r##"
 "##
     } else {
 r##"        
-    const request = async (method, data) => {{
-        const res = await fetch(`http://localhost:{}/requests/${{method}}`, {{
+    const request = async (method, data) => {
+        const res = await fetch(`http://localhost:1234/requests/${method}`, {
             method: 'POST',
-            headers: {{ 'Content-Type': 'application/json' }},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
-        }})
+        })
         return await res.json()
-    }}
+    }
 "##
     }.to_string()
 }
