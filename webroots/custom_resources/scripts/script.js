@@ -24,11 +24,14 @@ function onWebViewLoaded() {
 }
 
 btn1.onclick = async () => {
+    const t0 = performance.now()
+
     var res = await WebView.request("cmd1", {
         text: "Text",
         id: 123
     })
-    console.log("cmd1", res)
+    const t1 = performance.now()
+    console.log("${t1 - t0}", "cmd1", res)
 }
 
 btn2.onclick = async () => {
