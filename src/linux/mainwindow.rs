@@ -13,7 +13,8 @@ use super::webkitview::WebkitView;
 
 #[derive(Clone)]
 pub struct MainWindow {
-    pub window: ApplicationWindow
+    pub window: ApplicationWindow,
+    pub webview: WebkitView
 }
 
 pub struct MainWindowParams<'a> {
@@ -43,6 +44,16 @@ impl MainWindow {
             else
                 {params.bounds};
 
+        let webkitview_params = WebkitViewParams {
+            _application: params.app, 
+            url: params.url,
+            debug_url: params.debug_url,
+            default_contextmenu: params.default_contextmenu,
+            devtools: params.devtools,
+            webroot: params.webroot
+        };
+        let webview = WebkitView::new(webkitview_params);
+
         let window = MainWindow { 
             window: 
                 ApplicationWindow::builder()
@@ -50,25 +61,16 @@ impl MainWindow {
                     .application(params.app)
                     .default_width(bounds.width.unwrap_or(800))
                     .default_height(bounds.height.unwrap_or(600))
-                    .build()
+                    .build(),
+                webview: webview.clone()                    
         };
 
-        let webkitview_params = WebkitViewParams {
-            _application: params.app, 
-            mainwindow: window.clone(), 
-            url: params.url,
-            debug_url: params.debug_url,
-            default_contextmenu: params.default_contextmenu,
-            devtools: params.devtools,
-            webroot: params.webroot
-        };
-
-        let webview = WebkitView::new(webkitview_params);
         let headerbar: Widget = 
             match params.titlebar {
                 Some(titlebar) => (*titlebar)(&params.app, &webview.webview),
                 None => HeaderBar::new().upcast::<Widget>()
             };
+        window.window.set_child(Some(&webview.webview));
         window.window.set_titlebar(Some(&headerbar));
         window.window.present();
         window.window.connect_close_request(move|_| ((*params.on_close)() == false).into());

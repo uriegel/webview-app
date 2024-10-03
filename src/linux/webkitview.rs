@@ -12,15 +12,13 @@ use crate::html;
 use crate::javascript;
 use crate::javascript::RequestData;
 
-use super::mainwindow::MainWindow;
-
+#[derive(Clone)]
 pub struct WebkitView {
     pub webview: WebView
 }
 
 pub struct WebkitViewParams<'a> {
     pub _application: &'a Application, 
-    pub mainwindow: MainWindow, 
     pub url: &'a str,
     pub debug_url: Option<String>,
     pub devtools: bool,
@@ -32,7 +30,6 @@ impl WebkitView {
     pub fn new(params: WebkitViewParams) -> Self {
         let webview = WebView::builder()
             .build();
-        params.mainwindow.window.set_child(Some(&webview));
         if params.devtools {
             let settings = webkit6::prelude::WebViewExt::settings(&webview);
             settings.unwrap().set_enable_developer_extras(true);
