@@ -16,8 +16,7 @@ fn on_activate(app: &Application) {
         .can_close(move||{
             can_close
         })
-        // TODO 2* app!!!
-        .build(app);
+        .build();
 }
 
 fn main() {

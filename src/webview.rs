@@ -21,7 +21,7 @@ pub struct WebView {
 /// Builder to construct a WebView
 pub struct WebViewBuilder {
     title: Option<String>,
-    appid: String,
+    app: Application,
     url: Option<String>,
     debug_url: Option<String>,
     width: Option<i32>,
@@ -62,7 +62,7 @@ impl WebView {
     pub fn builder(app: &Application)->WebViewBuilder {
             WebViewBuilder { 
             title: None,
-            appid: app.get_appid(),
+            app: app.clone(),
             url: None,
             debug_url: None,
             width: None,
@@ -83,7 +83,7 @@ impl WebViewBuilder {
     /// Builds the WebView.
     /// 
     /// Call this function when all settings are set.
-    pub fn build(self, app: &Application)->WebView {
+    pub fn build(self)->WebView {
         let title = self.title.clone().unwrap_or_else(||{"Webview App".to_string()});
         let url = self.url.clone().unwrap_or_else(||{"about:blank".to_string()});
 
@@ -97,7 +97,7 @@ impl WebViewBuilder {
 
         let params = Params {
             title: &title,
-            app,
+            app: &self.app,
             bounds,
             save_bounds: self.save_bounds,
             url: &url,

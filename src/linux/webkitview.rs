@@ -1,6 +1,5 @@
 use std::{cell::RefCell, rc::Rc};
 
-use adw::Application;
 use gtk::gio::MemoryInputStream;
 use gtk::glib::{Bytes, MainContext};
 use include_dir::Dir;
