@@ -19,7 +19,7 @@ impl WebView {
     pub fn new(params: Params)->WebView {
 
         let app_data = std::env::var("LOCALAPPDATA").expect("No APP_DATA directory");
-        let local_path = Path::new(&app_data).join(params.appid);
+        let local_path = Path::new(&app_data).join(params.app.get_appid());
         let bounds = 
             if params.save_bounds
                 { Bounds::restore(&local_path.to_string_lossy()).unwrap_or(params.bounds) } 
@@ -69,8 +69,7 @@ impl WebView {
             custom_resource_scheme, 
             default_contextmenu: params.default_contextmenu
         };            
-        (load_raw_funcs(params.appid).init)(&settings);
-
+        (load_raw_funcs(&params.app.get_appid()).init)(&settings);
         WebView { _callback: callback }
     }
 

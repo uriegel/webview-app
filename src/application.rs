@@ -1,5 +1,7 @@
 #[cfg(target_os = "linux")]
 use crate::linux::application::Application as ApplicationImpl;
+#[cfg(target_os = "windows")]
+use crate::windows::application::Application as ApplicationImpl;
 
 #[derive(Clone)]
 pub struct Application {
