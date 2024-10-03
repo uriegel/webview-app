@@ -1,16 +1,41 @@
 #[cfg(target_os = "linux")]
 use crate::linux::application::Application as ApplicationImpl;
 
-pub struct Application<'a> {
-    app: ApplicationImpl<'a>
+#[derive(Clone)]
+pub struct Application {
+    pub app: ApplicationImpl
 }
 
 /// Implementation of Application
-impl<'a> Application<'a> {
-    pub fn new(appid: &'a str, on_activate: impl Fn() + 'static)->Self {
+impl Application {
+    /// Creates an application
+    /// 
+    /// param appid:
+    /// It is a reverse domain name, like "de.uriegel.webapp"
+    /// 
+    /// On Linux, this is the GTK Application ID.
+    /// 
+    /// It is also used as path part to a directory to share window settings
+    /// 
+    /// * Windows: ```$LOCALAPPDATA$/<appid>```
+    /// * Linux:  ```~/.config/<appid>```
+    /// 
+    pub fn new(appid: &str)->Self {
         Application {
-            app: ApplicationImpl::new(appid, on_activate) 
+            app: ApplicationImpl::new(appid) 
         }
+    }
+
+    pub fn get_appid(&self)->String {
+        self.app.get_appid()
+    }
+
+    pub fn on_activate(&self, val: impl Fn(&Application) + 'static)->&Self {
+        let app = self.clone();
+        self.app.on_activate(move ||{
+            val(&app)
+        });
+        self
     }
 
     /// Runs the web view application.

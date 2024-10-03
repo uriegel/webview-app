@@ -4,7 +4,7 @@
 use std::rc::Rc;
 use include_dir::Dir;
 
-use crate::{bounds::Bounds, params::{Callbacks, Params}};
+use crate::{application::Application, bounds::Bounds, params::{Callbacks, Params}};
 
 #[cfg(target_os = "linux")]
 use crate::linux::webview::WebView as WebViewImpl;
@@ -18,20 +18,10 @@ pub struct WebView {
     webview: WebViewImpl
 }
 
-/// Implementation of WebView
-impl WebView {
-    /// Runs the web view application.
-    /// 
-    /// The function blocks until the window (and the application) is closed.
-    pub fn run(&self)->u32 {
-        self.webview.run()
-    }
-}
-
 /// Builder to construct a WebView
 pub struct WebViewBuilder {
     title: Option<String>,
-    appid: Option<String>,
+    appid: String,
     url: Option<String>,
     debug_url: Option<String>,
     width: Option<i32>,
@@ -69,10 +59,10 @@ impl WebView {
     ///     webview.run();
     /// }
     /// ```
-    pub fn builder()->WebViewBuilder {
+    pub fn builder(app: &Application)->WebViewBuilder {
             WebViewBuilder { 
             title: None,
-            appid: None,
+            appid: app.get_appid(),
             url: None,
             debug_url: None,
             width: None,
@@ -93,9 +83,8 @@ impl WebViewBuilder {
     /// Builds the WebView.
     /// 
     /// Call this function when all settings are set.
-    pub fn build(self)->WebView {
+    pub fn build(self, app: &Application)->WebView {
         let title = self.title.clone().unwrap_or_else(||{"Webview App".to_string()});
-        let appid = self.appid.clone().unwrap_or_else(||{"de.uriegel.webviewapp".to_string()});
         let url = self.url.clone().unwrap_or_else(||{"about:blank".to_string()});
 
         let bounds = Bounds {
@@ -108,7 +97,7 @@ impl WebViewBuilder {
 
         let params = Params {
             title: &title,
-            appid: &appid,
+            app,
             bounds,
             save_bounds: self.save_bounds,
             url: &url,
@@ -133,20 +122,6 @@ impl WebViewBuilder {
     /// Sets the title of the window containing the web view.
     pub fn title(mut self, val: String)->WebViewBuilder {
         self.title = Some(val);
-        self
-    }
-
-    /// Sets the appid. 
-    /// It is a reverse domain name, like "de.uriegel.webapp"
-    /// 
-    /// On Linux, this is the GTK Application ID.
-    /// 
-    /// It is also used as path part to a directory to share window settings
-    /// 
-    /// * Windows: ```$LOCALAPPDATA$/<appid>```
-    /// * Linux:  ```~/.config/<appid>```
-    pub fn appid(mut self, val: String)->WebViewBuilder {
-        self.appid = Some(val);
         self
     }
 

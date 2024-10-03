@@ -18,9 +18,9 @@ pub struct MainWindow {
 }
 
 pub struct MainWindowParams<'a> {
-    pub app: &'a Application,
     pub config_dir: &'a str, 
     pub title: &'a str, 
+    pub app: &'a adw::Application,
     pub bounds: Bounds, 
     pub save_bounds: bool, 
     pub url: &'a str,
@@ -45,7 +45,6 @@ impl MainWindow {
                 {params.bounds};
 
         let webkitview_params = WebkitViewParams {
-            _application: params.app, 
             url: params.url,
             debug_url: params.debug_url,
             default_contextmenu: params.default_contextmenu,

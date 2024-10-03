@@ -18,7 +18,6 @@ pub struct WebkitView {
 }
 
 pub struct WebkitViewParams<'a> {
-    pub _application: &'a Application, 
     pub url: &'a str,
     pub debug_url: Option<String>,
     pub devtools: bool,

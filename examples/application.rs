@@ -1,10 +1,9 @@
 use webview_app::application::Application;
 
 fn main() {
-    let app = Application::new(
-        "de.uriegel.hello", 
-            || {
+    Application::new("de.uriegel.hello")
+        .on_activate(|| {
             println!("Bin ativiert")
-        });
-    app.run();
+        })
+        .run();
 }
