@@ -13,7 +13,7 @@ pub struct WebView {
 }
 
 impl WebView {
-    pub fn new(params: Params)->WebView {
+    pub fn new(params: Params)->Self {
         let home = std::env::var("HOME").expect("No HOME directory");
         let config_dir = Path::new(&home).join(".config").join(params.appid);
         if !fs::exists(config_dir.clone()).expect("Could not access local directory") 

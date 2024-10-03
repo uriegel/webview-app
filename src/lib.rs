@@ -3,6 +3,7 @@ mod linux;
 #[cfg(target_os = "windows")]
 mod windows;
 
+pub mod application;
 pub mod webview;
 mod bounds;
 mod params;

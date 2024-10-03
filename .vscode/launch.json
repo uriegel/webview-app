@@ -7,6 +7,23 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug example 'application'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=application",
+                    "--package=webview_app"
+                ],
+                "filter": {
+                    "name": "application",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }, {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug example 'hello'",
             "cargo": {
                 "args": [
