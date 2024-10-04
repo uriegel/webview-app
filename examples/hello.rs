@@ -13,7 +13,6 @@ fn on_activate(app: &Application) {
         .url("https://crates.io/crates".to_string())
         .devtools(true)
         .default_contextmenu_disabled()
-
         .build();
 
     webview.can_close(move||can_close);

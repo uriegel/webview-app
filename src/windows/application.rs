@@ -2,7 +2,7 @@ use super::raw_funcs::load_raw_funcs;
 
 #[derive(Clone)]
 pub struct Application {
-    pub appid: String,
+    pub appid: String
 }
 
 impl Application {

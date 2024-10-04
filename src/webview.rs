@@ -1,7 +1,6 @@
 //! This module contains all the important structs and implementations to create, configure
 //! and run an application containing only a webview.
 
-use std::rc::Rc;
 use include_dir::Dir;
 
 use crate::{application::Application, bounds::Bounds, params::Params};
@@ -63,7 +62,7 @@ impl WebView {
     /// 
     /// You can prevent closing the app when returning false
     pub fn can_close(self, val: impl Fn()->bool + 'static) {
-        self.webview.can_close(val);
+        self.webview.set_can_close(val);
     }
 
 }

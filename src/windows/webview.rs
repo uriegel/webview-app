@@ -3,7 +3,7 @@
 use include_dir::Dir;
 use std::{cell::RefCell, path::Path, rc::Rc, slice, sync::Once};
 
-use crate::{bounds::Bounds, content_type, html, javascript::{self, RequestData}, params::{Callbacks, Params}};
+use crate::{bounds::Bounds, content_type, html, javascript::{self, RequestData}, params::Params};
 
 use super::raw_funcs::{load_raw_funcs, RequestResult, WebViewAppSettings};
 
@@ -11,20 +11,7 @@ pub fn utf_16_null_terminiated(x: &str) -> Vec<u16> {
     x.encode_utf16().chain(std::iter::once(0)).collect()
 }
 
-pub fn get_webview(params: Option<Callback>)->& 'static Callback {
-    unsafe {
-        INIT.call_once(|| {
-            CALLBACK = params;
-        });
-        CALLBACK.as_ref().unwrap()        
-    }
-}
-
-static INIT: Once = Once::new();
-static mut CALLBACK: Option<Callback> = None;
-
-pub struct WebView {
-}
+pub struct WebView {}
 
 impl WebView {
     pub fn new(params: Params)->WebView {
@@ -47,12 +34,12 @@ impl WebView {
             (_, _) => (utf_16_null_terminiated(params.url), false)
         };
         let user_data_path = utf_16_null_terminiated(local_path.as_os_str().to_str().expect("user data path invalid"));
-        let callback = Callback { 
+        let web_view_data = WebViewData { 
             should_save_bounds: params.save_bounds,
             config_dir: local_path.to_string_lossy().to_string(),
             webroot,
             devtools: params.devtools,
-            callbacks: params.callbacks
+            can_close: None
         };
         let html_ok = utf_16_null_terminiated(html::ok());
         let html_not_found = utf_16_null_terminiated(&html::not_found());
@@ -79,8 +66,12 @@ impl WebView {
             default_contextmenu: params.default_contextmenu
         };            
         (load_raw_funcs(&params.app.get_appid()).init)(&settings);
-        get_webview(Some(callback));
+        set_webview(web_view_data);
         WebView {}
+    }
+
+    pub fn set_can_close(&self, val: impl Fn()->bool + 'static) {
+        get_mut_webview().set_can_close(val);
     }
 
     // pub fn run(&self)->u32 {
@@ -106,15 +97,15 @@ impl WebView {
     // }
 }
 
-pub struct Callback {
+pub struct WebViewData {
     should_save_bounds: bool,
     devtools: bool,
     config_dir: String,
     webroot: Option<Rc<RefCell<Dir<'static>>>>,
-    callbacks: Callbacks    
+    can_close: Option<Box<dyn Fn()->bool + 'static>>
 }
 
-impl Callback {
+impl WebViewData {
     fn on_custom_request(&self, url: *const u16, url_len: u32, result: &mut RequestResult) {
         unsafe {
             let bytes = slice::from_raw_parts(url, url_len as usize);
@@ -143,7 +134,11 @@ impl Callback {
     }
 
     fn on_close(&self, x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool {
-        let can_close = (*self.callbacks.on_close)();
+        let can_close = if let Some(ref get_can_close) = self.can_close {
+            get_can_close()
+        }
+        else { true };
+
         if can_close && self.should_save_bounds {
             let bounds = Bounds {
                 x: Some(x),
@@ -169,22 +164,38 @@ impl Callback {
                 let back = format!("result,{},{}", request_data.id, request_data.json);
                 (load_raw_funcs("").postmessage)(utf_16_null_terminiated(&back).as_ptr()) 
             }
-                
         }
     }
 
+    fn set_can_close(&mut self, val: impl Fn()->bool + 'static) {
+        self.can_close = Some(Box::new(val));
+    }
 }
 
 extern fn on_custom_request(url: *const u16, url_len: u32, result: &mut RequestResult) {
-    get_webview(None).on_custom_request(url, url_len, result);
+    get_webview().on_custom_request(url, url_len, result);
 }
 
 extern fn on_message(msg: *const u16, msg_len: u32) { 
-    get_webview(None).on_message(msg, msg_len);
+    get_webview().on_message(msg, msg_len);
 }
 
 extern fn on_close(x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool { 
-    let res = get_webview(None).on_close(x, y, w, h, is_maximized);
-    res
+    get_webview().on_close(x, y, w, h, is_maximized)
 }
 
+fn set_webview(params: WebViewData) {
+    unsafe {
+        INIT_WEBVIEW.call_once(|| {
+            WEBVIEW = Some(params);
+        });
+    }
+}
+fn get_webview()->& 'static WebViewData {
+    unsafe { WEBVIEW.as_ref().unwrap() }
+}
+fn get_mut_webview()->& 'static mut WebViewData {
+    unsafe { WEBVIEW.as_mut().unwrap() }
+}
+static INIT_WEBVIEW: Once = Once::new();
+static mut WEBVIEW: Option<WebViewData> = None;

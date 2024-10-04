@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use include_dir::Dir;
 
 // #[cfg(target_os = "linux")]    
