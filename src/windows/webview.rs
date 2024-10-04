@@ -70,7 +70,7 @@ impl WebView {
         WebView {}
     }
 
-    pub fn set_can_close(&self, val: impl Fn()->bool + 'static) {
+    pub fn can_close(&self, val: impl Fn()->bool + 'static) {
         get_mut_webview().set_can_close(val);
     }
 
