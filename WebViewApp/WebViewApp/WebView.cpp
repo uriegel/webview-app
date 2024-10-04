@@ -19,9 +19,9 @@ struct RequestResult {
 
 bool __stdcall ExecuteScript(wchar_t* script);
 
-using OnCloseFunc = bool(void* target, int x, int y, int w, int h, bool isMaximized);
-using OnCustomRequestFunc = void(void* target, const wchar_t* url, int urlLen, RequestResult* requestResult);
-using OnMessageFunc = void(void* target, const wchar_t* msg, int msgLen);
+using OnCloseFunc = bool(int x, int y, int w, int h, bool isMaximized);
+using OnCustomRequestFunc = void(const wchar_t* url, int urlLen, RequestResult* requestResult);
+using OnMessageFunc = void(const wchar_t* msg, int msgLen);
 wil::com_ptr<ICoreWebView2> webview;
 wil::com_ptr<ICoreWebView2Controller> webviewController;
 
@@ -36,7 +36,6 @@ struct WebViewAppSettings {
     int width;
     int height;
     bool isMaximized;
-    void* target;
     OnCloseFunc* OnClose;
     OnCustomRequestFunc* OnCustomRequest;
     OnMessageFunc* OnMessage;
@@ -57,7 +56,6 @@ int y;
 int width;
 int height;
 bool isMaximized;
-void* target;
 OnCloseFunc* OnClose;
 OnCustomRequestFunc* OnCustomRequest;
 OnMessageFunc* OnMessage;
@@ -88,7 +86,6 @@ void __stdcall Init(const WebViewAppSettings* settings) {
     width = settings->width;
     height = settings->height;
     isMaximized = settings->isMaximized;
-    target = settings->target;
     OnClose = settings->OnClose;
     OnCustomRequest = settings->OnCustomRequest;
     OnMessage = settings->OnMessage;
@@ -140,7 +137,7 @@ void CreateWebView(HWND hWnd) {
 
                                         if (wcsncmp(uri, L"req://webroot", 13) == 0) {
                                             RequestResult rr{ 0 };
-                                            OnCustomRequest(target, uri, (int)wcslen(uri), &rr);
+                                            OnCustomRequest(uri, (int)wcslen(uri), &rr);
                                             CoTaskMemFree(uri);
                                             if (rr.status == 200) {
                                                 auto stream = SHCreateMemStream((const BYTE*)rr.content, (int)rr.len);
@@ -187,7 +184,7 @@ void CreateWebView(HWND hWnd) {
                                     wil::unique_cotaskmem_string messageRaw;
                                     wil::unique_cotaskmem_string message;
                                     args->TryGetWebMessageAsString(&message);
-                                    OnMessage(target, message.get(), (int)wcslen(message.get()));
+                                    OnMessage(message.get(), (int)wcslen(message.get()));
                                     return S_OK;
                                 }).Get(), nullptr);
 
@@ -247,7 +244,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             {
                 RECT rect;
                 GetWindowRect(hWnd, &rect);
-                if (OnClose(target, rect.left, rect.top, rect.right-rect.left, rect.bottom - rect.top, IsZoomed(hWnd)))
+                if (OnClose(rect.left, rect.top, rect.right-rect.left, rect.bottom - rect.top, IsZoomed(hWnd)))
                     DestroyWindow(hWnd);
             }
             break;

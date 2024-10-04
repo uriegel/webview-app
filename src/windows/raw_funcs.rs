@@ -1,7 +1,5 @@
 use std::{ffi::CString, fs, path::Path, sync::Once};
 
-use super::webview::Callback;
-
 pub type FnInit = extern fn(settings: *const WebViewAppSettings);
 pub type FnRun = extern fn()->u32;
 //pub type FnExecuteScript = extern fn(*const u16)->bool;
@@ -37,10 +35,9 @@ pub struct WebViewAppSettings {
     pub width: i32,
     pub height: i32,
     pub is_maximized: bool,
-    pub target: *const Callback,
-    pub on_close: extern fn(target: *const Callback, x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool,
-    pub on_custom_request: extern fn(target: *const Callback, url: *const u16, url_len: u32, &mut RequestResult),
-    pub on_message: extern fn(target: *const Callback, msg: *const u16, msg_len: u32),
+    pub on_close: extern fn(x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool,
+    pub on_custom_request: extern fn(url: *const u16, url_len: u32, &mut RequestResult),
+    pub on_message: extern fn(msg: *const u16, msg_len: u32),
     pub url: *const u16,
     pub without_native_titlebar: bool,
     pub custom_resource_scheme: bool,

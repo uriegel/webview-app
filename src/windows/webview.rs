@@ -1,7 +1,7 @@
 // extern crate libloading;
 
 use include_dir::Dir;
-use std::{cell::RefCell, path::Path, rc::Rc, slice};
+use std::{cell::RefCell, path::Path, rc::Rc, slice, sync::Once};
 
 use crate::{bounds::Bounds, content_type, html, javascript::{self, RequestData}, params::{Callbacks, Params}};
 
@@ -11,13 +11,23 @@ pub fn utf_16_null_terminiated(x: &str) -> Vec<u16> {
     x.encode_utf16().chain(std::iter::once(0)).collect()
 }
 
+pub fn get_webview(params: Option<Callback>)->& 'static Callback {
+    unsafe {
+        INIT.call_once(|| {
+            CALLBACK = params;
+        });
+        CALLBACK.as_ref().unwrap()        
+    }
+}
+
+static INIT: Once = Once::new();
+static mut CALLBACK: Option<Callback> = None;
+
 pub struct WebView {
-    _callback: Box<Callback>
 }
 
 impl WebView {
     pub fn new(params: Params)->WebView {
-
         let app_data = std::env::var("LOCALAPPDATA").expect("No APP_DATA directory");
         let local_path = Path::new(&app_data).join(params.app.get_appid());
         let bounds = 
@@ -37,13 +47,13 @@ impl WebView {
             (_, _) => (utf_16_null_terminiated(params.url), false)
         };
         let user_data_path = utf_16_null_terminiated(local_path.as_os_str().to_str().expect("user data path invalid"));
-        let callback = Box::new(Callback { 
+        let callback = Callback { 
             should_save_bounds: params.save_bounds,
             config_dir: local_path.to_string_lossy().to_string(),
             webroot,
             devtools: params.devtools,
             callbacks: params.callbacks
-        });
+        };
         let html_ok = utf_16_null_terminiated(html::ok());
         let html_not_found = utf_16_null_terminiated(&html::not_found());
         let script = javascript::get(params.without_native_titlebar, params.title, true, false);
@@ -59,7 +69,6 @@ impl WebView {
             width: bounds.width.unwrap_or(-1),
             height: bounds.height.unwrap_or(-1),
             is_maximized: bounds.is_maximized,
-            target: & *callback,
             on_close,
             on_custom_request,
             on_message,
@@ -70,30 +79,31 @@ impl WebView {
             default_contextmenu: params.default_contextmenu
         };            
         (load_raw_funcs(&params.app.get_appid()).init)(&settings);
-        WebView { _callback: callback }
+        get_webview(Some(callback));
+        WebView {}
     }
 
-    pub fn run(&self)->u32 {
-        (load_raw_funcs("").run)()
+    // pub fn run(&self)->u32 {
+    //     (load_raw_funcs("").run)()
 
 
-        // let run: &'static fn()->u32 = get_function::<fn()->u32>(&self.appid, "Run");
-        // let res = run();
+    //     // let run: &'static fn()->u32 = get_function::<fn()->u32>(&self.appid, "Run");
+    //     // let res = run();
 
-        // let func: Symbol<unsafe extern fn(*const u16) -> *const u16> =
-        //     self.lib.get(b"Test1").expect("Failed to load function");
+    //     // let func: Symbol<unsafe extern fn(*const u16) -> *const u16> =
+    //     //     self.lib.get(b"Test1").expect("Failed to load function");
         
-        // let wc = utf_16_null_terminiated("Das ist ein sehr schöner Messagebox-Text");
-        // let text_ptr = func(wc.as_ptr());
-        // let bytes = slice::from_raw_parts(text_ptr, strlen(text_ptr));
-        // let bytes: Vec<u16> = Vec::from(bytes);
-        // let text = String::from_utf16_lossy(&bytes);
-        // let wc = utf_16_null_terminiated(&text);
-        // func(wc.as_ptr());
-        // let free: Symbol<unsafe extern fn(*const u16) -> ()> =
-        //     self.lib.get(b"Free").expect("Failed to load function");
-        // free(text_ptr);
-    }
+    //     // let wc = utf_16_null_terminiated("Das ist ein sehr schöner Messagebox-Text");
+    //     // let text_ptr = func(wc.as_ptr());
+    //     // let bytes = slice::from_raw_parts(text_ptr, strlen(text_ptr));
+    //     // let bytes: Vec<u16> = Vec::from(bytes);
+    //     // let text = String::from_utf16_lossy(&bytes);
+    //     // let wc = utf_16_null_terminiated(&text);
+    //     // func(wc.as_ptr());
+    //     // let free: Symbol<unsafe extern fn(*const u16) -> ()> =
+    //     //     self.lib.get(b"Free").expect("Failed to load function");
+    //     // free(text_ptr);
+    // }
 }
 
 pub struct Callback {
@@ -165,22 +175,16 @@ impl Callback {
 
 }
 
-extern fn on_custom_request(target: *const Callback, url: *const u16, url_len: u32, result: &mut RequestResult) {
-    unsafe {
-        (*target).on_custom_request(url, url_len, result);
-    }
+extern fn on_custom_request(url: *const u16, url_len: u32, result: &mut RequestResult) {
+    get_webview(None).on_custom_request(url, url_len, result);
 }
 
-extern fn on_message(target: *const Callback, msg: *const u16, msg_len: u32) { 
-    unsafe {
-       (*target).on_message(msg, msg_len);
-    }
+extern fn on_message(msg: *const u16, msg_len: u32) { 
+    get_webview(None).on_message(msg, msg_len);
 }
 
-extern fn on_close(target: *const Callback, x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool { 
-    unsafe {
-        let res = (*target).on_close(x, y, w, h, is_maximized);
-        res
-    }
+extern fn on_close(x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool { 
+    let res = get_webview(None).on_close(x, y, w, h, is_maximized);
+    res
 }
 
