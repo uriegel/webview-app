@@ -11,7 +11,6 @@ mod content_type;
 mod javascript;
 mod html;
 
-// TODO Do not set on_close in builder
 // TODO runtime for windows and linux
 // TODO Windows res and req scheme
 // TODO Windows Headerbar 

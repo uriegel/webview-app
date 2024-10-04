@@ -6,17 +6,17 @@ use webview_app::{application::Application, webview::WebView};
 fn on_activate(app: &Application) {
     let can_close = true;
 
-    WebView::builder(app)
+    let webview = WebView::builder(app)
         .title("Rust Web View 👍".to_string())
         .save_bounds()
         .debug_url("https://crates.io/crates/webview_app".to_string())
         .url("https://crates.io/crates".to_string())
         .devtools(true)
         .default_contextmenu_disabled()
-        .can_close(move||{
-            can_close
-        })
+
         .build();
+
+    webview.can_close(move||can_close);
 }
 
 fn main() {

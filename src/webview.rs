@@ -4,7 +4,7 @@
 use std::rc::Rc;
 use include_dir::Dir;
 
-use crate::{application::Application, bounds::Bounds, params::{Callbacks, Params}};
+use crate::{application::Application, bounds::Bounds, params::Params};
 
 #[cfg(target_os = "linux")]
 use crate::linux::webview::WebView as WebViewImpl;
@@ -16,24 +16,6 @@ use crate::windows::webview::WebView as WebViewImpl;
 /// WebView has to be built with the help of the ```WebView::builder``` function
 pub struct WebView {
     webview: WebViewImpl
-}
-
-/// Builder to construct a WebView
-pub struct WebViewBuilder {
-    title: Option<String>,
-    app: Application,
-    url: Option<String>,
-    debug_url: Option<String>,
-    width: Option<i32>,
-    height: Option<i32>,
-    save_bounds: bool,
-    on_close: Rc<dyn Fn()->bool>,
-    #[cfg(target_os = "linux")]    
-    titlebar: Option<Rc<dyn Fn(&adw::Application, &webkit6::WebView)->gtk::Widget>>,
-    without_native_titlebar: bool,
-    devtools: bool,
-    default_contextmenu: bool,
-    webroot: Option<Dir<'static>>
 }
 
 impl WebView {
@@ -68,7 +50,6 @@ impl WebView {
             width: None,
             height: None,
             save_bounds: false,
-            on_close: Rc::new(|| true),
             #[cfg(target_os = "linux")]
             titlebar: None,
             without_native_titlebar: false,
@@ -77,6 +58,31 @@ impl WebView {
             webroot: None
         }
     }
+
+    /// Sets a callback which is invoked an closing the app
+    /// 
+    /// You can prevent closing the app when returning false
+    pub fn can_close(self, val: impl Fn()->bool + 'static) {
+        self.webview.can_close(val);
+    }
+
+}
+
+/// Builder to construct a WebView
+pub struct WebViewBuilder {
+    title: Option<String>,
+    app: Application,
+    url: Option<String>,
+    debug_url: Option<String>,
+    width: Option<i32>,
+    height: Option<i32>,
+    save_bounds: bool,
+    #[cfg(target_os = "linux")]    
+    titlebar: Option<Rc<dyn Fn(&adw::Application, &webkit6::WebView)->gtk::Widget>>,
+    without_native_titlebar: bool,
+    devtools: bool,
+    default_contextmenu: bool,
+    webroot: Option<Dir<'static>>
 }
 
 impl WebViewBuilder {
@@ -109,9 +115,6 @@ impl WebViewBuilder {
             devtools: self.devtools,
             default_contextmenu: self.default_contextmenu,
             webroot: self.webroot,
-            callbacks: Callbacks {
-                on_close: self.on_close
-            }
         };
 
         WebView { 
@@ -219,14 +222,6 @@ impl WebViewBuilder {
     /// ```
     pub fn webroot(mut self, webroot: Dir<'static>)->WebViewBuilder {
         self.webroot = Some(webroot);
-        self
-    }
-
-    /// Sets a callback which is invoked an closing the app
-    /// 
-    /// You can prevent closing the app when returning false
-    pub fn can_close(mut self, val: impl Fn()->bool + 'static)->WebViewBuilder {
-        self.on_close = Rc::new(val);
         self
     }
 

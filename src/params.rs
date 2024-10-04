@@ -22,11 +22,6 @@ pub struct Params<'a> {
     pub titlebar: Option<Rc<dyn Fn(&adw::Application, &WebView)->gtk::Widget>>,
     pub devtools: bool,
     pub default_contextmenu: bool,
-    pub webroot: Option<Dir<'static>>,                    
-    pub callbacks: Callbacks
+    pub webroot: Option<Dir<'static>>
 }
 
-#[derive(Clone)]
-pub struct Callbacks {
-    pub on_close: Rc<dyn Fn()->bool>
-}

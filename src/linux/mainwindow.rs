@@ -28,7 +28,6 @@ pub struct MainWindowParams<'a> {
     pub devtools: bool,
     pub default_contextmenu: bool,
     pub webroot: Option<Rc<RefCell<Dir<'static>>>>,
-    pub on_close: Rc<dyn Fn()->bool>,
     #[cfg(target_os = "linux")]    
     pub titlebar: Option<Rc<dyn Fn(&Application, &WebView)->Widget>>
 }
@@ -72,7 +71,7 @@ impl MainWindow {
         window.window.set_child(Some(&webview.webview));
         window.window.set_titlebar(Some(&headerbar));
         window.window.present();
-        window.window.connect_close_request(move|_| ((*params.on_close)() == false).into());
+     
         if params.save_bounds  {
             let gtkwindow = window.window.clone();
             let config_dir = params.config_dir.to_string();
@@ -89,5 +88,9 @@ impl MainWindow {
             });
         }
         window
+    }
+
+    pub fn can_close(self, val: impl Fn()->bool + 'static) {
+        self.window.connect_close_request(move|_| (val() == false).into());
     }
 }
