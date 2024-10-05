@@ -25,8 +25,7 @@ impl Application {
 
     pub fn on_activate(&self, val: impl Fn()->WebView + 'static) {
         self.app.connect_activate(move |_| {
-            let webview = val();
-            webview.webview.init();
+            val();
         });
     }
 

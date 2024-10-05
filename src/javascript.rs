@@ -1,28 +1,3 @@
-pub struct RequestData<'a> {
-    pub cmd: &'a str,
-    pub id: &'a str,
-    pub json: &'a str
-}
-
-impl <'a>RequestData<'a> {
-    pub fn new(msg: &'a str)->RequestData<'a> {
-        let msg = &msg[8..];
-        let idx = msg.find(',').unwrap();
-        let 
-        cmd = &msg[..idx];
-        let msg= &msg[idx+1..];
-        let idx = msg.find(',').unwrap();
-        let id = &msg[..idx];
-        let json = &msg[idx+1..];
-        let _ = &json[1..2];
-        RequestData {
-            cmd,
-            id,
-            json
-        }
-    }
-}
-
 pub fn get(no_native_titlebar: bool, title: &str, windows: bool, files_drop: bool)->String {
     format!(
 r##"

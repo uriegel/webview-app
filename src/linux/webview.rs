@@ -6,13 +6,13 @@ use gtk::{ApplicationWindow, Widget};
 
 use crate::{bounds::Bounds, params::Params};
 
-use super::request::Request;
-use super::{webkitview::{WebkitView, WebkitViewParams}};
+use super::webkitview::WebkitViewParams;
+use super::{webkitview::WebkitView};
 
 #[derive(Clone)]
 pub struct WebView {
     window: ApplicationWindow,
-    webview: WebkitView
+    pub webview: WebkitView
 }
 
 impl WebView {
@@ -83,11 +83,4 @@ impl WebView {
         self.window.connect_close_request(move|_| (val() == false).into());
     }
 
-    pub fn set_on_request(&self, request: impl Fn(&str, Request)->String + 'static) {
-        self.webview.set_on_request(request);
-    }
-
-    pub fn init(&self) {
-        self.webview.init();
-    }
 }

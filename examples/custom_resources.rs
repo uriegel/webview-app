@@ -29,37 +29,7 @@ fn on_activate(app: &Application)->WebView {
         .default_contextmenu_disabled()
         .build();
 
-    webview.on_request(|cmd, req|{
-        match cmd {
-            "cmd1" => {
-                let input: Input = req.get_input();
-                let res = Output {
-                    email: "uriegel@hotmail.de".to_string(),
-                    text: input.text,
-                    number: input.id + 1,
-                };
-                req.get_output(&res)
-            },
-            "cmd2" => {
-                let res = Output {
-                    email: "uriegel@hotmail.de".to_string(),
-                    text: "Return fom cmd2".to_string(),
-                    number: 456,
-                };
-                req.get_output(&res)
-            },
-            _ => {
-                let res = Output {
-                    email: "uriegel@hotmail.de".to_string(),
-                    text: "Unknown request".to_string(),
-                    number: 0,
-                };
-                req.get_output(&res)
-            }
-        }
-    });
-
-    webview
+     webview
 }
 
 fn main() {
