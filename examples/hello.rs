@@ -3,7 +3,7 @@
 
 use webview_app::{application::Application, webview::WebView};
 
-fn on_activate(app: &Application) {
+fn on_activate(app: &Application)->WebView {
     let can_close = true;
 
     let webview = WebView::builder(app)
@@ -15,7 +15,8 @@ fn on_activate(app: &Application) {
         .default_contextmenu_disabled()
         .build();
 
-    webview.can_close(move||can_close);
+    webview.can_close(move ||can_close);
+    webview
 }
 
 fn main() {

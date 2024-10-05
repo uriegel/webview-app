@@ -64,7 +64,7 @@ impl WebView {
     /// Sets a callback which is invoked an closing the app
     /// 
     /// You can prevent closing the app when returning false
-    pub fn can_close(self, val: impl Fn()->bool + 'static) {
+    pub fn can_close(&self, val: impl Fn()->bool + 'static) {
         self.webview.can_close(val);
     }
 

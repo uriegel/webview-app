@@ -39,8 +39,8 @@ impl WebView {
             config_dir: local_path.to_string_lossy().to_string(),
             webroot,
             devtools: params.devtools,
-            can_close: None,
-            on_request: RefCell::new(Rc::new(||{}))
+            can_close: RefCell::new(Box::new(||true)),
+            on_request: RefCell::new(Box::new(||{}))
         };
         let html_ok = utf_16_null_terminiated(html::ok());
         let html_not_found = utf_16_null_terminiated(&html::not_found());
@@ -72,12 +72,13 @@ impl WebView {
     }
 
     pub fn can_close(&self, val: impl Fn()->bool + 'static) {
-        get_mut_webview().set_can_close(val);
+        let webview = get_webview();
+        let _ = webview.can_close.replace(Box::new(val));
     }
 
     pub fn set_on_request(&self, request: impl Fn() + 'static) {
         let webview = get_webview();
-        webview.on_request.replace(Rc::new(request));
+        let _ = webview.on_request.replace(Box::new(request));
     }
 
     // pub fn run(&self)->u32 {
@@ -108,8 +109,8 @@ pub struct WebViewData {
     devtools: bool,
     config_dir: String,
     webroot: Option<Rc<RefCell<Dir<'static>>>>,
-    can_close: Option<Box<dyn Fn()->bool + 'static>>,
-    on_request: RefCell<Rc<dyn Fn() + 'static>>
+    can_close: RefCell<Box<dyn Fn()->bool + 'static>>,
+    on_request: RefCell<Box<dyn Fn() + 'static>>
 }
 
 impl WebViewData {
@@ -141,12 +142,9 @@ impl WebViewData {
     }
 
     fn on_close(&self, x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool {
-        let can_close = if let Some(ref get_can_close) = self.can_close {
-            get_can_close()
-        }
-        else { true };
-
-        if can_close && self.should_save_bounds {
+        let can_close = self.can_close.borrow();
+        let res = can_close();
+        if res && self.should_save_bounds {
             let bounds = Bounds {
                 x: Some(x),
                 y: Some(y),
@@ -156,7 +154,7 @@ impl WebViewData {
             };
             bounds.save(&self.config_dir);
         }
-        can_close
+        res
     }
 
     fn on_message(&self, msg: *const u16, msg_len: u32) {
@@ -176,10 +174,6 @@ impl WebViewData {
                 (load_raw_funcs("").postmessage)(utf_16_null_terminiated(&back).as_ptr()) 
             }
         }
-    }
-
-    fn set_can_close(&mut self, val: impl Fn()->bool + 'static) {
-        self.can_close = Some(Box::new(val));
     }
 }
 
@@ -204,9 +198,6 @@ fn set_webview(params: WebViewData) {
 }
 fn get_webview()->& 'static WebViewData {
     unsafe { WEBVIEW.as_ref().unwrap() }
-}
-fn get_mut_webview()->& 'static mut WebViewData {
-    unsafe { WEBVIEW.as_mut().unwrap() }
 }
 static INIT_WEBVIEW: Once = Once::new();
 static mut WEBVIEW: Option<WebViewData> = None;
