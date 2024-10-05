@@ -68,6 +68,9 @@ impl WebView {
         self.webview.can_close(val);
     }
 
+    pub fn on_request(self, request: impl Fn() + 'static) {
+        self.webview.on_request(request);
+    }
 }
 
 /// Builder to construct a WebView

@@ -1,12 +1,16 @@
 use std::{cell::RefCell, fs, path::Path, rc::Rc};
 
-use crate::params::Params;
+use adw::HeaderBar;
+use gtk::prelude::*;
+use gtk::{ApplicationWindow, Widget};
 
-use super::mainwindow::{MainWindow, MainWindowParams};
+use crate::{bounds::Bounds, params::Params};
+
+use super::{webkitview::{WebkitView, WebkitViewParams}};
 
 #[derive(Clone)]
 pub struct WebView {
-    window: MainWindow
+    window: ApplicationWindow
 }
 
 impl WebView {
@@ -15,34 +19,67 @@ impl WebView {
         let config_dir = Path::new(&home).join(".config").join(params.app.get_appid());
         if !fs::exists(config_dir.clone()).expect("Could not access local directory") 
             { fs::create_dir(config_dir.clone()).expect("Could not create local directory") } 
+        let config_dir = config_dir.to_string_lossy().to_string();
+        let bounds = 
+        if params.save_bounds
+            {Bounds::restore(&config_dir).unwrap_or(params.bounds)} 
+        else
+            {params.bounds};
 
-        let title = params.title.to_string();
-        let url = params.url.to_string();
         let debug_url = params.debug_url.map(|s|s.to_string());
         let webroot = params.webroot.map(|webroot| {
             Rc::new(RefCell::new(webroot))
         });
-                
-        let mainwindow_params = MainWindowParams {
-            config_dir: &config_dir.to_string_lossy(),
-            app: &params.app.app.app.clone(),
-            title: &title,
-            bounds: params.bounds, 
-            save_bounds: params.save_bounds, 
-            url: &url,
-            debug_url: debug_url.clone(),
+
+        let webkitview_params = WebkitViewParams {
+            url: params.url,
+            debug_url: debug_url,
             default_contextmenu: params.default_contextmenu,
             devtools: params.devtools,
-            webroot: webroot.clone(),
-            titlebar: params.titlebar.clone()
+            webroot: webroot
         };
-        let window = MainWindow::new(mainwindow_params);
-        WebView { 
+        let webview = WebkitView::new(webkitview_params);
+
+        let window = ApplicationWindow::builder()
+            .title(params.title)
+            .application(&params.app.app.app)
+            .default_width(bounds.width.unwrap_or(800))
+            .default_height(bounds.height.unwrap_or(600))
+            .build();
+
+        let headerbar: Widget = 
+            match params.titlebar {
+                Some(titlebar) => (*titlebar)(&params.app.app.app, &webview.webview),
+                None => HeaderBar::new().upcast::<Widget>()
+            };
+        window.set_child(Some(&webview.webview));
+        window.set_titlebar(Some(&headerbar));
+        window.present();           
+
+        if params.save_bounds {
+            let gtkwindow = window.clone();
+            //let config_dir = config_dir.to_string();
+            window.connect_close_request(move|_| {
+                let bounds = Bounds {
+                    x: None,
+                    y: None,
+                    width: Some(gtkwindow.width()),
+                    height: Some(gtkwindow.height()),
+                    is_maximized: gtkwindow.is_maximized()
+                };
+                bounds.save(&config_dir);
+                false.into()
+            });
+        }        
+        Self {
             window
         }
     }
 
     pub fn can_close(self, val: impl Fn()->bool + 'static) {
-        self.window.can_close(val);
+        self.window.connect_close_request(move|_| (val() == false).into());
+    }
+
+    pub fn on_request(self, request: impl Fn() + 'static) {
     }
 }
