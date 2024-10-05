@@ -17,7 +17,7 @@ use crate::windows::webview::WebView as WebViewImpl;
 /// 
 /// WebView has to be built with the help of the ```WebView::builder``` function
 pub struct WebView {
-    webview: WebViewImpl
+    pub(crate) webview: WebViewImpl
 }
 
 impl WebView {
@@ -68,7 +68,7 @@ impl WebView {
         self.webview.can_close(val);
     }
 
-    pub fn on_request(self, request: impl Fn() + 'static) {
+    pub fn on_request(&self, request: impl Fn() + 'static) {
         self.webview.on_request(request);
     }
 }

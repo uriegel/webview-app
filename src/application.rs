@@ -1,3 +1,4 @@
+use crate::webview::WebView;
 #[cfg(target_os = "linux")]
 use crate::linux::application::Application as ApplicationImpl;
 #[cfg(target_os = "windows")]
@@ -32,7 +33,7 @@ impl Application {
         self.app.get_appid()
     }
 
-    pub fn on_activate(&self, val: impl Fn(&Application) + 'static)->&Self {
+    pub fn on_activate(&self, val: impl Fn(&Application)->WebView + 'static)->&Self {
         let app = self.clone();
         self.app.on_activate(move ||{
             val(&app)

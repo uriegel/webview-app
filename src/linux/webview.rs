@@ -10,7 +10,8 @@ use super::{webkitview::{WebkitView, WebkitViewParams}};
 
 #[derive(Clone)]
 pub struct WebView {
-    window: ApplicationWindow
+    window: ApplicationWindow,
+    webview: WebkitView
 }
 
 impl WebView {
@@ -70,16 +71,22 @@ impl WebView {
                 bounds.save(&config_dir);
                 false.into()
             });
-        }        
+        }      
         Self {
-            window
+            window,
+            webview
         }
     }
 
-    pub fn can_close(self, val: impl Fn()->bool + 'static) {
+    pub fn can_close(&self, val: impl Fn()->bool + 'static) {
         self.window.connect_close_request(move|_| (val() == false).into());
     }
 
-    pub fn on_request(self, request: impl Fn() + 'static) {
+    pub fn on_request(&self, request: impl Fn() + 'static) {
+        self.webview.set_on_request(request);
+    }
+
+    pub fn init(&self) {
+        self.webview.init();
     }
 }

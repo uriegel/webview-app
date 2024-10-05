@@ -4,14 +4,20 @@
 use include_dir::include_dir;
 use webview_app::{application::Application, webview::WebView};
 
-fn on_activate(app: &Application) {
-    WebView::builder(app)
+fn on_activate(app: &Application)->WebView {
+    let webview = WebView::builder(app)
         .title("Website form custom resources 👍".to_string())
         .save_bounds()
         .devtools(true)
         .webroot(include_dir!("webroots/custom_resources"))
         .default_contextmenu_disabled()
         .build();
+
+    webview.on_request(||{
+        println!("Ein Request");
+    });
+
+    webview
 }
 
 fn main() {

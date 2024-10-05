@@ -13,7 +13,8 @@ use crate::javascript::RequestData;
 
 #[derive(Clone)]
 pub struct WebkitView {
-    pub webview: WebView
+    pub webview: WebView,
+    on_request: RefCell<Rc<dyn Fn() + 'static>>
 }
 
 pub struct WebkitViewParams<'a> {
@@ -37,7 +38,8 @@ impl WebkitView {
         }
 
         let res = WebkitView {
-            webview
+            webview,
+            on_request: RefCell::new(Rc::new(||{}))
         };
 
         res.enable_request_scheme();
@@ -50,19 +52,6 @@ impl WebkitView {
             _ => res.webview.load_uri(params.url)
         }
 
-        res.webview.connect_script_dialog(|webview, d| {
-            let wv = webview.clone();
-            let txt = d.message().unwrap();
-            let msg = txt.as_str().to_string();
-            let request_data = RequestData::new(&msg);
-            
-            let back = format!("result,{},{}", request_data.id, request_data.json);
-            MainContext::default().spawn_local(async move {
-                wv.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
-            });
-            true
-        });
-
         res.webview.connect_load_changed(|webview, evt| {
             let webview = webview.clone();
             if evt == LoadEvent::Committed {
@@ -74,6 +63,28 @@ impl WebkitView {
         });
 
         res
+    }
+
+    pub fn init(&self) {
+        // TODO alert message box
+        let on_request = self.on_request.borrow().clone();
+        self.webview.connect_script_dialog(move|webview, d| {
+            let wv = webview.clone();
+            let txt = d.message().unwrap();
+            let msg = txt.as_str().to_string();
+            let request_data = RequestData::new(&msg);
+            on_request();
+            
+            let back: String = format!("result,{},{}", request_data.id, request_data.json);
+            MainContext::default().spawn_local(async move {
+                wv.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
+            });
+            true
+        });
+    }
+
+    pub fn set_on_request(&self, request: impl Fn() + 'static) {
+        self.on_request.replace(Rc::new(request));
     }
 
     fn enable_request_scheme(&self) {

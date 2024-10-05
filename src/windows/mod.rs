@@ -1,3 +1,3 @@
 pub mod application;
 pub mod webview;
-pub mod raw_funcs;
+mod raw_funcs;

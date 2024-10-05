@@ -1,5 +1,7 @@
 use gtk::prelude::*;
 
+use crate::webview::WebView;
+
 #[derive(Clone)]
 pub struct Application {
     pub app: adw::Application
@@ -21,9 +23,10 @@ impl Application {
         }).unwrap_or("de.uriegel.webviewapp".to_string())
     }
 
-    pub fn on_activate(&self, val: impl Fn() + 'static) {
+    pub fn on_activate(&self, val: impl Fn()->WebView + 'static) {
         self.app.connect_activate(move |_| {
-            val();
+            let webview = val();
+            webview.webview.init();
         });
     }
 
