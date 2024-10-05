@@ -36,33 +36,12 @@ fn on_activate(app: &Application)->WebView {
     webview.get_webkit().connect_script_dialog(move|webview, d| {
         let txt = d.message().unwrap();
         let msg = txt.as_str().to_string();
-        spawn_future_local(clone!(
-            #[weak]
-            webview,
-            async move {
-                let msg = txt.as_str().to_string();
-                let request_data = RequestData::new(&msg);
-                let cmd = request_data.cmd.to_string();
-                let id = request_data.id.to_string();
-                let json = request_data.json.to_string();
-
-
-
-                let response = gio::spawn_blocking( move|| {
-                    let five_seconds = Duration::from_secs(5);
-                    thread::sleep(five_seconds);
-
-                    on_request(&cmd, &Request::new(&json))
-                })
-                .await
-                .expect("Task needs to finish successfully.");
-                let back: String = format!("result,{},{}", id, response);
-                MainContext::default().spawn_local(async move {
-                    webview.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
-                });
-            }
-        ));
-        println!("Jetzt zuende");
+        let request_data = RequestData::new(&msg);
+        let cmd = request_data.cmd.to_string();
+        let id = request_data.id.to_string();
+        let json = request_data.json.to_string();
+        let req = Request::new(cmd, id, json);
+        on_request2(webview, req);     
         true
     });
     webview
@@ -77,7 +56,7 @@ fn main() {
 fn on_request(cmd: &str, req: &Request)->String {
     match cmd {
         "cmd1" => {
-            let input: Input = req.get_input();
+            let input: Input = Request::get_input(&req.input);
             let res = Output {
                 email: "uriegel@hotmail.de".to_string(),
                 text: input.text,
@@ -129,17 +108,19 @@ impl <'a>RequestData<'a> {
     }
 }
 
-pub struct Request<'a> {
-    input: &'a str
+pub struct Request {
+    cmd: String,
+    id: String,
+    input: String
 }
 
-impl<'a> Request<'a> {
-    pub fn new(input: &'a str)->Self {
-        Self { input }
+impl Request {
+    pub fn new(cmd: String, id: String, input: String)->Self {
+        Self { id, cmd, input }
     }
 
-    pub fn get_input<T>(&self)->T where T: Deserialize<'a> {
-        serde_json::from_str(&self.input).unwrap()
+    pub fn get_input<'a, T>(data: &'a str)->T where T: Deserialize<'a> {
+        serde_json::from_str(data).unwrap()
     }
 
     pub fn get_output<T>(&self, result: &T)->String where T: Serialize {
@@ -147,3 +128,48 @@ impl<'a> Request<'a> {
     }
 }
 
+fn test<R: 'static, F: std::future::Future<Output = R> + 'static>(
+    on_request: F) {
+        spawn_future_local(async move {
+            on_request.await
+    });
+} 
+
+// fn test_blocking<R: 'static, F: std::future::Future<Output = R> + 'static>(
+//     on_request: F) {
+//         spawn_future_local(async move {
+//             let response = gio::spawn_blocking( move|| {
+//                 on_request
+//     });
+// } 
+
+fn on_request2(webview: &webkit6::WebView, req: Request) {
+    test(clone!(
+        #[weak]
+        webview,
+        async move {
+
+//             thread::spawn(|| {
+//                 let five_seconds = Duration::from_secs(5);
+//                 thread::sleep(five_seconds);
+//                 // MainContext::default().spawn_local(async move {
+//                 //     webview.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
+//                 // });
+//             });
+
+            let id = req.id.clone();
+            let response = gio::spawn_blocking( move|| {
+//                 // let five_seconds = Duration::from_secs(5);
+//                 // thread::sleep(five_seconds);
+
+                on_request(&req.cmd, &req)
+            })
+            .await
+            .expect("Task needs to finish successfully.");
+            let back: String = format!("result,{},{}", id, response);
+//         //    MainContext::default().spawn_local(async move {
+            webview.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
+            
+        }
+    ));
+}
