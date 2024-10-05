@@ -40,8 +40,7 @@ fn on_activate(app: &Application)->WebView {
         let cmd = request_data.cmd.to_string();
         let id = request_data.id.to_string();
         let json = request_data.json.to_string();
-        let req = Request::new(cmd, id, json);
-        on_request2(webview, req);     
+        on_request(webview, id, cmd, json);     
         true
     });
     webview
@@ -53,16 +52,16 @@ fn main() {
     .run();
 }
 
-fn on_request(cmd: &str, req: &Request)->String {
+fn process_request(cmd: &str, input: &str)->String {
     match cmd {
         "cmd1" => {
-            let input: Input = Request::get_input(&req.input);
+            let input: Input = Request::get_input(input);
             let res = Output {
                 email: "uriegel@hotmail.de".to_string(),
                 text: input.text,
                 number: input.id + 1,
             };
-            req.get_output(&res)
+            Request::get_output(&res)
         },
         "cmd2" => {
             let res = Output {
@@ -70,7 +69,7 @@ fn on_request(cmd: &str, req: &Request)->String {
                 text: "Return fom cmd2".to_string(),
                 number: 456,
             };
-            req.get_output(&res)
+            Request::get_output(&res)
         },
         _ => {
             let res = Output {
@@ -78,7 +77,7 @@ fn on_request(cmd: &str, req: &Request)->String {
                 text: "Unknown request".to_string(),
                 number: 0,
             };
-            req.get_output(&res)
+            Request::get_output(&res)
         }
     }
 }
@@ -108,34 +107,29 @@ impl <'a>RequestData<'a> {
     }
 }
 
-pub struct Request {
-    cmd: String,
-    id: String,
-    input: String
-}
+pub struct Request {}
 
 impl Request {
-    pub fn new(cmd: String, id: String, input: String)->Self {
-        Self { id, cmd, input }
-    }
-
     pub fn get_input<'a, T>(data: &'a str)->T where T: Deserialize<'a> {
         serde_json::from_str(data).unwrap()
     }
 
-    pub fn get_output<T>(&self, result: &T)->String where T: Serialize {
+    pub fn get_output<T>(result: &T)->String where T: Serialize {
         serde_json::to_string(result).unwrap()
     }
 }
 
-fn test<R: 'static, F: std::future::Future<Output = R> + 'static>(
-    on_request: F) {
+fn request_async<F: std::future::Future<Output = String> + 'static>(
+    webview: webkit6::WebView, id: String, on_request: F) {
         spawn_future_local(async move {
-            on_request.await
+            let response = on_request.await;
+            let back: String = format!("result,{},{}", id, response);
+            //         //    MainContext::default().spawn_local(async move {
+            webview.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
     });
 } 
 
-// fn test_blocking<R: 'static, F: std::future::Future<Output = R> + 'static>(
+// fn request_blocking<R: 'static, F: std::future::Future<Output = R> + 'static>(
 //     on_request: F) {
 //         spawn_future_local(async move {
 //             let response = gio::spawn_blocking( move|| {
@@ -143,12 +137,25 @@ fn test<R: 'static, F: std::future::Future<Output = R> + 'static>(
 //     });
 // } 
 
-fn on_request2(webview: &webkit6::WebView, req: Request) {
-    test(clone!(
-        #[weak]
-        webview,
-        async move {
+fn on_request(webview: &webkit6::WebView, id: String, cmd: String, json: String) {
 
+
+    //route cmd
+
+    // for each cmd:
+
+    // request_blocking or
+
+    request_async(webview.clone(), id, async move {
+        let response = gio::spawn_blocking( move|| {
+                            let five_seconds = Duration::from_secs(5);
+                            thread::sleep(five_seconds);
+            
+                process_request(&cmd, &json)
+            })
+            .await
+            .expect("Task needs to finish successfully.");
+            
 //             thread::spawn(|| {
 //                 let five_seconds = Duration::from_secs(5);
 //                 thread::sleep(five_seconds);
@@ -156,20 +163,6 @@ fn on_request2(webview: &webkit6::WebView, req: Request) {
 //                 //     webview.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
 //                 // });
 //             });
-
-            let id = req.id.clone();
-            let response = gio::spawn_blocking( move|| {
-//                 // let five_seconds = Duration::from_secs(5);
-//                 // thread::sleep(five_seconds);
-
-                on_request(&req.cmd, &req)
-            })
-            .await
-            .expect("Task needs to finish successfully.");
-            let back: String = format!("result,{},{}", id, response);
-//         //    MainContext::default().spawn_local(async move {
-            webview.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
-            
-        }
-    ));
+        response
+    });
 }
