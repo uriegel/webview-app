@@ -30,7 +30,7 @@ fn set_titlebar(app: &adw::Application, webview: &webkit6::WebView)->gtk::Widget
     header_bar.upcast::<Widget>()
 }
 
-fn on_activate(app: &Application) {
+fn on_activate(app: &Application)->WebView {
     WebView::builder(app)
     .title("Linux Titlebar 👍".to_string())
     .titlebar(set_titlebar)
@@ -39,7 +39,7 @@ fn on_activate(app: &Application) {
     .url("https://crates.io/crates".to_string())
     .devtools(true)
     .default_contextmenu_disabled()
-    .build();
+    .build()
 }
 
 fn main() {
