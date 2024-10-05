@@ -6,7 +6,7 @@ use std::rc::Rc;
 
 use include_dir::Dir;
 
-use crate::{application::Application, bounds::Bounds, params::Params};
+use crate::{application::Application, bounds::Bounds, linux::request::Request, params::Params};
 
 #[cfg(target_os = "linux")]
 use crate::linux::webview::WebView as WebViewImpl;
@@ -68,7 +68,7 @@ impl WebView {
         self.webview.can_close(val);
     }
 
-    pub fn on_request(&self, request: impl Fn() + 'static) {
+    pub fn on_request(&self, request: impl Fn(&str, &Request) + 'static) {
         self.webview.set_on_request(request);
     }
 }

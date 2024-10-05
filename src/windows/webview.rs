@@ -76,7 +76,7 @@ impl WebView {
         let _ = webview.can_close.replace(Box::new(val));
     }
 
-    pub fn set_on_request(&self, request: impl Fn() + 'static) {
+    pub fn set_on_request(&self, request: impl Fn(&str, &Request) + 'static) {
         let webview = get_webview();
         let _ = webview.on_request.replace(Box::new(request));
     }
