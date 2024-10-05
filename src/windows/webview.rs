@@ -39,7 +39,8 @@ impl WebView {
             config_dir: local_path.to_string_lossy().to_string(),
             webroot,
             devtools: params.devtools,
-            can_close: None
+            can_close: None,
+            on_request: RefCell::new(Rc::new(||{}))
         };
         let html_ok = utf_16_null_terminiated(html::ok());
         let html_not_found = utf_16_null_terminiated(&html::not_found());
@@ -74,7 +75,9 @@ impl WebView {
         get_mut_webview().set_can_close(val);
     }
 
-    pub fn on_request(&self, request: impl Fn() + 'static) {
+    pub fn set_on_request(&self, request: impl Fn() + 'static) {
+        let webview = get_webview();
+        webview.on_request.replace(Rc::new(request));
     }
 
     // pub fn run(&self)->u32 {
@@ -105,7 +108,8 @@ pub struct WebViewData {
     devtools: bool,
     config_dir: String,
     webroot: Option<Rc<RefCell<Dir<'static>>>>,
-    can_close: Option<Box<dyn Fn()->bool + 'static>>
+    can_close: Option<Box<dyn Fn()->bool + 'static>>,
+    on_request: RefCell<Rc<dyn Fn() + 'static>>
 }
 
 impl WebViewData {
@@ -164,6 +168,10 @@ impl WebViewData {
                 { (load_raw_funcs("").show_devtools)() }
             else if msg.starts_with("request,") {
                 let request_data = RequestData::new(&msg);
+
+                let rq = self.on_request.borrow();
+                rq();
+
                 let back = format!("result,{},{}", request_data.id, request_data.json);
                 (load_raw_funcs("").postmessage)(utf_16_null_terminiated(&back).as_ptr()) 
             }

@@ -1,3 +1,5 @@
+use crate::webview::WebView;
+
 use super::raw_funcs::load_raw_funcs;
 
 #[derive(Clone)]
@@ -16,7 +18,7 @@ impl Application {
         self.appid.clone()
     }
 
-    pub fn on_activate(&self, val: impl Fn() + 'static) {
+    pub fn on_activate(&self, val: impl Fn()->WebView + 'static) {
         val();
     }
 

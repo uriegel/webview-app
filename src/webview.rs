@@ -69,7 +69,7 @@ impl WebView {
     }
 
     pub fn on_request(&self, request: impl Fn() + 'static) {
-        self.webview.on_request(request);
+        self.webview.set_on_request(request);
     }
 }
 
