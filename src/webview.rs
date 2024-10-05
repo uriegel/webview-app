@@ -68,7 +68,7 @@ impl WebView {
         self.webview.can_close(val);
     }
 
-    pub fn on_request(&self, request: impl Fn(&str, &Request) + 'static) {
+    pub fn on_request(&self, request: impl Fn(&str, Request)->String + 'static) {
         self.webview.set_on_request(request);
     }
 }

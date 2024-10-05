@@ -38,7 +38,7 @@ fn on_activate(app: &Application)->WebView {
                     text: input.text,
                     number: input.id + 1,
                 };
-                req.send_result(&res);
+                req.get_output(&res)
             },
             "cmd2" => {
                 let res = Output {
@@ -46,7 +46,7 @@ fn on_activate(app: &Application)->WebView {
                     text: "Return fom cmd2".to_string(),
                     number: 456,
                 };
-                req.send_result(&res);
+                req.get_output(&res)
             },
             _ => {
                 let res = Output {
@@ -54,9 +54,9 @@ fn on_activate(app: &Application)->WebView {
                     text: "Unknown request".to_string(),
                     number: 0,
                 };
-                req.send_result(&res);
+                req.get_output(&res)
             }
-        };
+        }
     });
 
     webview

@@ -83,7 +83,7 @@ impl WebView {
         self.window.connect_close_request(move|_| (val() == false).into());
     }
 
-    pub fn set_on_request(&self, request: impl Fn(&str, &Request) + 'static) {
+    pub fn set_on_request(&self, request: impl Fn(&str, Request)->String + 'static) {
         self.webview.set_on_request(request);
     }
 

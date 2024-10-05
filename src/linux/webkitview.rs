@@ -16,7 +16,7 @@ use super::request::Request;
 #[derive(Clone)]
 pub struct WebkitView {
     pub webview: WebView,
-    on_request: RefCell<Rc<dyn Fn(&str, &Request) + 'static>>
+    on_request: RefCell<Rc<dyn Fn(&str, Request)->String + 'static>>
 }
 
 pub struct WebkitViewParams<'a> {
@@ -41,7 +41,7 @@ impl WebkitView {
 
         let res = WebkitView {
             webview,
-            on_request: RefCell::new(Rc::new(|_,_|{}))
+            on_request: RefCell::new(Rc::new(|_,_|{"".to_string()}))
         };
 
         res.enable_request_scheme();
@@ -70,17 +70,24 @@ impl WebkitView {
     pub fn init(&self) {
         // TODO alert message box
         let on_request = self.on_request.borrow().clone();
-        self.webview.connect_script_dialog(move|webview, d| {
-            let webview = webview.clone();
+        let webview = self.webview.clone();
+        self.webview.connect_script_dialog(move|_, d| {
             let txt = d.message().unwrap();
             let msg = txt.as_str().to_string();
             let request_data = RequestData::new(&msg);
-            on_request(request_data.cmd, &Request::new(webview, request_data.id, request_data.json));
+            let response = on_request(request_data.cmd, Request::new(request_data.json));
+            let back: String = format!("result,{},{}", request_data.id, response);
+            let webview = webview.clone();
+            // TODO synchron!
+            MainContext::default().spawn_local(async move {
+                webview.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
+                //self.webview.evaluate_javascript(&format!("WebView.backtothefuture('{}')", back), None, None, None::<&_>, |_|{});
+            });        
             true
         });
     }
 
-    pub fn set_on_request(&self, request: impl Fn(&str, &Request) + 'static) {
+    pub fn set_on_request(&self, request: impl Fn(&str, Request)->String + 'static) {
         self.on_request.replace(Rc::new(request));
     }
 
