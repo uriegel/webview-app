@@ -74,6 +74,9 @@ impl WebView {
         get_mut_webview().set_can_close(val);
     }
 
+    pub fn on_request(self, request: impl Fn() + 'static) {
+    }
+
     // pub fn run(&self)->u32 {
     //     (load_raw_funcs("").run)()
 
