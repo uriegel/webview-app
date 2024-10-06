@@ -33,7 +33,34 @@ fn on_activate(app: &Application)->WebView {
         .default_contextmenu_disabled()
         .build();
     
-    webview.connect_request(on_request);
+    webview.connect_request(|webview, id, cmd, json| {
+        //route cmd 
+
+        // for each cmd:
+
+        // request_blocking or
+
+        request_async(webview.clone(), id, async move {
+            let response = gio::spawn_blocking( move|| {
+                                let five_seconds = Duration::from_secs(5);
+                                //thread::sleep(five_seconds);
+                
+                    process_request(&cmd, &json)
+                })
+                .await
+                .expect("Task needs to finish successfully.");
+                
+    //             thread::spawn(|| {
+    //                 let five_seconds = Duration::from_secs(5);
+    //                 thread::sleep(five_seconds);
+    //                 // MainContext::default().spawn_local(async move {
+    //                 //     webview.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
+    //                 // });
+    //             });
+            response
+        });
+        true
+    });
     webview
 }
 
@@ -128,33 +155,3 @@ fn request_async<F: std::future::Future<Output = String> + 'static>(
 //     });
 // } 
 
-fn on_request(webview: &webkit6::WebView, id: String, cmd: String, json: String)->bool {
-
-
-    //route cmd
-
-    // for each cmd:
-
-    // request_blocking or
-
-    request_async(webview.clone(), id, async move {
-        let response = gio::spawn_blocking( move|| {
-                            let five_seconds = Duration::from_secs(5);
-                            thread::sleep(five_seconds);
-            
-                process_request(&cmd, &json)
-            })
-            .await
-            .expect("Task needs to finish successfully.");
-            
-//             thread::spawn(|| {
-//                 let five_seconds = Duration::from_secs(5);
-//                 thread::sleep(five_seconds);
-//                 // MainContext::default().spawn_local(async move {
-//                 //     webview.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
-//                 // });
-//             });
-        response
-    });
-    true
-}
