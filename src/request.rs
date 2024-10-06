@@ -1,3 +1,6 @@
+#[cfg(target_os = "linux")]
+use gtk::gio;
+
 use serde::{Deserialize, Serialize};
 
 #[cfg(target_os = "linux")]
@@ -16,20 +19,27 @@ pub fn request_async<F: std::future::Future<Output = String> + 'static>(
     webview: WebView, id: String, on_request: F) {
         use gtk::glib::spawn_future_local;
         use webkit6::prelude::*;
-
         spawn_future_local(async move {
             let response = on_request.await;
             let back: String = format!("result,{},{}", id, response);
-            //         //    MainContext::default().spawn_local(async move {
             webview.webview.webview.webview.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
     });
 } 
 
-// fn request_blocking<R: 'static, F: std::future::Future<Output = R> + 'static>(
-//     on_request: F) {
-//         spawn_future_local(async move {
-//             let response = gio::spawn_blocking( move|| {
-//                 on_request
-//     });
-// } 
+pub fn request_blocking<F: FnOnce() -> String + Send + 'static>(
+    webview: WebView, id: String, on_request: F) {
+        use gtk::glib::spawn_future_local;
+        use webkit6::prelude::*;
+
+        spawn_future_local(async move {
+            let response = gio::spawn_blocking(move|| {
+                let res = on_request();
+                res
+            }).await.expect("Task needs to finish successfully.");
+
+            let back: String = format!("result,{},{}", id, response);
+            webview.webview.webview.webview.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
+    });
+} 
+
 

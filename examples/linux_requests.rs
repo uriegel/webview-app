@@ -1,10 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 // Allows console to show up in debug build but not release build.
 
-use std::{thread, time::Duration};
-
+use gtk::glib;
 use serde::{Deserialize, Serialize};
-use gtk::{gio, glib::{spawn_future_local}};
 use include_dir::include_dir;
 use webview_app::{application::Application, request::{self, request_async}, webview::WebView};
 
@@ -52,55 +50,24 @@ fn main() {
 
 fn cmd1(webview: &WebView, id: String, json: String) {
     request_async(webview.clone(), id, async move {
-        let response = gio::spawn_blocking( move|| {
-                            let five_seconds = Duration::from_secs(5);
-                            thread::sleep(five_seconds);
-            
-                let input: Input = request::get_input(&json);
-                let res = Output {
-                    email: "uriegel@hotmail.de".to_string(),
-                    text: input.text,
-                    number: input.id + 1,
-                };
-                request::get_output(&res)
-            })
-            .await
-            .expect("Task needs to finish successfully.");
-            
-    //             thread::spawn(|| {
-    //                 let five_seconds = Duration::from_secs(5);
-    //                 thread::sleep(five_seconds);
-    //                 // MainContext::default().spawn_local(async move {
-    //                 //     webview.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
-    //                 // });
-    //             });
-        response
-    })
+        let input: Input = request::get_input(&json);
+        let res = Output {
+            email: "uriegel@hotmail.de".to_string(),
+            text: input.text,
+            number: input.id + 1,
+        };
+        request::get_output(&res)
+    });
 }
 
 fn cmd2(webview: &WebView, id: String) {
     request_async(webview.clone(), id, async move {
-        let response = gio::spawn_blocking( move|| {
-                            let five_seconds = Duration::from_secs(5);
-                            thread::sleep(five_seconds);
-
-                let res = Output {
-                    email: "uriegel@hotmail.de".to_string(),
-                    text: "Return fom cmd2".to_string(),
-                    number: 456,
-                };
-                request::get_output(&res)                
-            })
-            .await
-            .expect("Task needs to finish successfully.");
-            
-    //             thread::spawn(|| {
-    //                 let five_seconds = Duration::from_secs(5);
-    //                 thread::sleep(five_seconds);
-    //                 // MainContext::default().spawn_local(async move {
-    //                 //     webview.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
-    //                 // });
-    //             });
-        response
+        let res = Output {
+            email: "uriegel@hotmail.de".to_string(),
+            text: "Return fom cmd2".to_string(),
+            number: 456,
+        };
+        glib::timeout_future_seconds(5).await;
+        request::get_output(&res)
     })
 }

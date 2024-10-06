@@ -5,7 +5,7 @@ use std::{thread, time::Duration};
 
 use serde::{Deserialize, Serialize};
 use include_dir::include_dir;
-use webview_app::{application::Application, request::{self, request_async}, webview::WebView};
+use webview_app::{application::Application, request::{self, request_blocking}, webview::WebView};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -24,7 +24,7 @@ pub struct Output {
 
 fn on_activate(app: &Application)->WebView {
     let webview = WebView::builder(app)
-        .title("Linux requests 👍".to_string())
+        .title("Requests 👍".to_string())
         .save_bounds()
         .devtools(true)
         .webroot(include_dir!("webroots/custom_resources"))
@@ -37,7 +37,6 @@ fn on_activate(app: &Application)->WebView {
             "cmd2" => cmd2(webview, id),
             _ => {}
         }
-    
         true
     });
     webview
@@ -50,40 +49,28 @@ fn main() {
 }
 
 fn cmd1(webview: &WebView, id: String, json: String) {
-    request_async(webview.clone(), id, async move {
+    request_blocking(webview.clone(), id, move || {
         let input: Input = request::get_input(&json);
         let res = Output {
             email: "uriegel@hotmail.de".to_string(),
             text: input.text,
             number: input.id + 1,
         };
-        request::get_output(&res);
+        request::get_output(&res)
     })
 }
 
 fn cmd2(webview: &WebView, id: String) {
-    request_async(webview.clone(), id, async move {
-        let response = gio::spawn_blocking( move|| {
-                            let five_seconds = Duration::from_secs(5);
-                            thread::sleep(five_seconds);
-
-                let res = Output {
-                    email: "uriegel@hotmail.de".to_string(),
-                    text: "Return fom cmd2".to_string(),
-                    number: 456,
-                };
-                request::get_output(&res)                
-            })
-            .await
-            .expect("Task needs to finish successfully.");
-            
-    //             thread::spawn(|| {
-    //                 let five_seconds = Duration::from_secs(5);
-    //                 thread::sleep(five_seconds);
-    //                 // MainContext::default().spawn_local(async move {
-    //                 //     webview.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
-    //                 // });
-    //             });
-        response
+    request_blocking(webview.clone(), id, move || {
+    let five_seconds = Duration::from_secs(5);
+    thread::sleep(five_seconds);
+    let res = Output {
+            email: "uriegel@hotmail.de".to_string(),
+            text: "Return fom cmd2".to_string(),
+            number: 456,
+        };
+        request::get_output(&res)
     })
 }
+
+ 
