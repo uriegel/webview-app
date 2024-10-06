@@ -68,6 +68,14 @@ impl WebView {
         self.webview.can_close(val);
     }
 
+    pub fn connect_request<F: Fn(&webkit6::WebView, String, String, String) -> bool + 'static>(
+        &self,
+        on_request: F,
+    ) {
+        self.webview.connect_request(on_request);
+    }   
+
+    // TODO eliminate
     #[cfg(target_os = "linux")]
     pub fn get_webkit(&self)->webkit6::WebView {
         self.webview.webview.webview.clone()

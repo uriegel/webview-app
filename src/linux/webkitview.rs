@@ -9,7 +9,7 @@ use webkit6::{soup::MessageHeaders, LoadEvent, URISchemeRequest, URISchemeRespon
 
 use crate::content_type;
 use crate::html;
-use crate::javascript;
+use crate::javascript::{self, RequestData};
 
 #[derive(Clone)]
 pub struct WebkitView {
@@ -63,48 +63,18 @@ impl WebkitView {
         res
     }
 
-    pub fn connect_request<F: Fn() -> bool + 'static>(
+    pub fn connect_request<F: Fn(&webkit6::WebView, String, String, String) -> bool + 'static>(
         &self,
         on_request: F,
     ) {
         self.webview.connect_script_dialog(move|webview, d| {
             let txt = d.message().unwrap();
             let msg = txt.as_str().to_string();
-            // let request_data = RequestData::new(&msg);
-            // let cmd = request_data.cmd.to_string();
-            // let id = request_data.id.to_string();
-            // let json = request_data.json.to_string();
-            // spawn_future_local(clone!(
-            //     #[weak]
-            //     webview,
-            //     async move {
-            //         let msg = txt.as_str().to_string();
-    
-                    // thread::spawn(|| {
-                    //     let five_seconds = Duration::from_secs(5);
-                    //     thread::sleep(five_seconds);
-                    //     MainContext::default().spawn_local(async move {
-                    //         webview.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
-                    //     });
-                    // });
-    
-    
-    
-    //                 let response = gio::spawn_blocking( move|| {
-    //                     // let five_seconds = Duration::from_secs(5);
-    //                     // thread::sleep(five_seconds);
-    
-    //                     on_request(&cmd, &Request::new(&json))
-    //                 })
-    //                 .await
-    //                 .expect("Task needs to finish successfully.");
-    //                 let back: String = format!("result,{},{}", id, response);
-    //             //    MainContext::default().spawn_local(async move {
-    //                     webview.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
-    // //                });
-            //     }
-            // ));
-            true
+            let request_data = RequestData::new(&msg);
+            let cmd = request_data.cmd.to_string();
+            let id = request_data.id.to_string();
+            let json = request_data.json.to_string();
+            on_request(webview, id, cmd, json)
         });
     }
 

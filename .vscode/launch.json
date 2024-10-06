@@ -61,6 +61,24 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug example 'Requests'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=requests",
+                    "--package=webview_app"
+                ],
+                "filter": {
+                    "name": "requests",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug example 'Linux titlebar'",
             "cargo": {
                 "args": [

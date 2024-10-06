@@ -83,4 +83,12 @@ impl WebView {
         self.window.connect_close_request(move|_| (val() == false).into());
     }
 
+    pub fn connect_request<F: Fn(&webkit6::WebView, String, String, String) -> bool + 'static>(
+        &self,
+        on_request: F,
+    ) {
+        self.webview.connect_request(on_request);
+    }   
+
+
 }
