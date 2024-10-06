@@ -4,10 +4,9 @@ use adw::HeaderBar;
 use gtk::prelude::*;
 use gtk::{ApplicationWindow, Widget};
 
-use crate::{bounds::Bounds, params::Params};
+use crate::{bounds::Bounds, params::Params, webview::WebView as PubWebView};
 
-use super::webkitview::WebkitViewParams;
-use super::{webkitview::WebkitView};
+use super::webkitview::{WebkitViewParams, WebkitView};
 
 #[derive(Clone)]
 pub struct WebView {
@@ -83,11 +82,12 @@ impl WebView {
         self.window.connect_close_request(move|_| (val() == false).into());
     }
 
-    pub fn connect_request<F: Fn(&webkit6::WebView, String, String, String) -> bool + 'static>(
+    pub fn connect_request<F: Fn(&PubWebView, String, String, String) -> bool + 'static>(
         &self,
+        webview: &PubWebView,
         on_request: F,
     ) {
-        self.webview.connect_request(on_request);
+        self.webview.connect_request(webview, on_request);
     }   
 
 

@@ -16,6 +16,7 @@ use crate::windows::webview::WebView as WebViewImpl;
 /// WebView is a Window running as program including a web view
 /// 
 /// WebView has to be built with the help of the ```WebView::builder``` function
+#[derive(Clone)]
 pub struct WebView {
     pub(crate) webview: WebViewImpl
 }
@@ -68,18 +69,12 @@ impl WebView {
         self.webview.can_close(val);
     }
 
-    pub fn connect_request<F: Fn(&webkit6::WebView, String, String, String) -> bool + 'static>(
+    pub fn connect_request<F: Fn(&WebView, String, String, String) -> bool + 'static>(
         &self,
         on_request: F,
     ) {
-        self.webview.connect_request(on_request);
+        self.webview.connect_request(&self, on_request);
     }   
-
-    // TODO eliminate
-    #[cfg(target_os = "linux")]
-    pub fn get_webkit(&self)->webkit6::WebView {
-        self.webview.webview.webview.clone()
-    }
 }
 
 /// Builder to construct a WebView

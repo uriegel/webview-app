@@ -4,10 +4,9 @@
 use std::{thread, time::Duration};
 
 use serde::{Deserialize, Serialize};
-use gtk::{gio, glib::{self, clone, spawn_future_local, MainContext}};
+use gtk::{gio, glib::{spawn_future_local}};
 use include_dir::include_dir;
-use webview_app::{application::Application, webview::WebView};
-use webkit6::prelude::*;
+use webview_app::{application::Application, request::{self, request_async}, webview::WebView};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -33,14 +32,13 @@ fn on_activate(app: &Application)->WebView {
         .default_contextmenu_disabled()
         .build();
     
-    webview.get_webkit().connect_script_dialog(move|webview, d| {
-        let txt = d.message().unwrap();
-        let msg = txt.as_str().to_string();
-        let request_data = RequestData::new(&msg);
-        let cmd = request_data.cmd.to_string();
-        let id = request_data.id.to_string();
-        let json = request_data.json.to_string();
-        on_request(webview, id, cmd, json);     
+    webview.connect_request(|webview: &WebView, id, cmd: String, json| {
+        match cmd.as_str() {
+            "cmd1" => cmd1(webview, id, json),
+            "cmd2" => cmd2(webview, id),
+            _ => {}
+        }
+    
         true
     });
     webview
@@ -52,117 +50,57 @@ fn main() {
     .run();
 }
 
-fn process_request(cmd: &str, input: &str)->String {
-    match cmd {
-        "cmd1" => {
-            let input: Input = Request::get_input(input);
-            let res = Output {
-                email: "uriegel@hotmail.de".to_string(),
-                text: input.text,
-                number: input.id + 1,
-            };
-            Request::get_output(&res)
-        },
-        "cmd2" => {
-            let res = Output {
-                email: "uriegel@hotmail.de".to_string(),
-                text: "Return fom cmd2".to_string(),
-                number: 456,
-            };
-            Request::get_output(&res)
-        },
-        _ => {
-            let res = Output {
-                email: "uriegel@hotmail.de".to_string(),
-                text: "Unknown request".to_string(),
-                number: 0,
-            };
-            Request::get_output(&res)
-        }
-    }
-}
-
-pub struct RequestData<'a> {
-    pub cmd: &'a str,
-    pub id: &'a str,
-    pub json: &'a str
-}
-
-impl <'a>RequestData<'a> {
-    pub fn new(msg: &'a str)->RequestData<'a> {
-        let msg = &msg[8..];
-        let idx = msg.find(',').unwrap();
-        let 
-        cmd = &msg[..idx];
-        let msg= &msg[idx+1..];
-        let idx = msg.find(',').unwrap();
-        let id = &msg[..idx];
-        let json = &msg[idx+1..];
-        let _ = &json[1..2];
-        RequestData {
-            cmd,
-            id,
-            json
-        }
-    }
-}
-
-pub struct Request {}
-
-impl Request {
-    pub fn get_input<'a, T>(data: &'a str)->T where T: Deserialize<'a> {
-        serde_json::from_str(data).unwrap()
-    }
-
-    pub fn get_output<T>(result: &T)->String where T: Serialize {
-        serde_json::to_string(result).unwrap()
-    }
-}
-
-fn request_async<F: std::future::Future<Output = String> + 'static>(
-    webview: webkit6::WebView, id: String, on_request: F) {
-        spawn_future_local(async move {
-            let response = on_request.await;
-            let back: String = format!("result,{},{}", id, response);
-            //         //    MainContext::default().spawn_local(async move {
-            webview.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
-    });
-} 
-
-// fn request_blocking<R: 'static, F: std::future::Future<Output = R> + 'static>(
-//     on_request: F) {
-//         spawn_future_local(async move {
-//             let response = gio::spawn_blocking( move|| {
-//                 on_request
-//     });
-// } 
-
-fn on_request(webview: &webkit6::WebView, id: String, cmd: String, json: String) {
-
-
-    //route cmd
-
-    // for each cmd:
-
-    // request_blocking or
-
+fn cmd1(webview: &WebView, id: String, json: String) {
     request_async(webview.clone(), id, async move {
         let response = gio::spawn_blocking( move|| {
                             let five_seconds = Duration::from_secs(5);
                             thread::sleep(five_seconds);
             
-                process_request(&cmd, &json)
+                let input: Input = request::get_input(&json);
+                let res = Output {
+                    email: "uriegel@hotmail.de".to_string(),
+                    text: input.text,
+                    number: input.id + 1,
+                };
+                request::get_output(&res)
             })
             .await
             .expect("Task needs to finish successfully.");
             
-//             thread::spawn(|| {
-//                 let five_seconds = Duration::from_secs(5);
-//                 thread::sleep(five_seconds);
-//                 // MainContext::default().spawn_local(async move {
-//                 //     webview.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
-//                 // });
-//             });
+    //             thread::spawn(|| {
+    //                 let five_seconds = Duration::from_secs(5);
+    //                 thread::sleep(five_seconds);
+    //                 // MainContext::default().spawn_local(async move {
+    //                 //     webview.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
+    //                 // });
+    //             });
         response
-    });
+    })
+}
+
+fn cmd2(webview: &WebView, id: String) {
+    request_async(webview.clone(), id, async move {
+        let response = gio::spawn_blocking( move|| {
+                            let five_seconds = Duration::from_secs(5);
+                            thread::sleep(five_seconds);
+
+                let res = Output {
+                    email: "uriegel@hotmail.de".to_string(),
+                    text: "Return fom cmd2".to_string(),
+                    number: 456,
+                };
+                request::get_output(&res)                
+            })
+            .await
+            .expect("Task needs to finish successfully.");
+            
+    //             thread::spawn(|| {
+    //                 let five_seconds = Duration::from_secs(5);
+    //                 thread::sleep(five_seconds);
+    //                 // MainContext::default().spawn_local(async move {
+    //                 //     webview.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
+    //                 // });
+    //             });
+        response
+    })
 }

@@ -1,8 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use gtk::gio::MemoryInputStream;
-use gtk::glib;
-use gtk::glib::{clone, spawn_future_local, Bytes, MainContext};
+use gtk::glib::{Bytes, MainContext};
 use include_dir::Dir;
 use webkit6::prelude::*;
 use webkit6::{soup::MessageHeaders, LoadEvent, URISchemeRequest, URISchemeResponse, WebView};
@@ -10,6 +9,7 @@ use webkit6::{soup::MessageHeaders, LoadEvent, URISchemeRequest, URISchemeRespon
 use crate::content_type;
 use crate::html;
 use crate::javascript::{self, RequestData};
+use crate::webview::WebView as PubWebView;
 
 #[derive(Clone)]
 pub struct WebkitView {
@@ -63,18 +63,20 @@ impl WebkitView {
         res
     }
 
-    pub fn connect_request<F: Fn(&webkit6::WebView, String, String, String) -> bool + 'static>(
+    pub fn connect_request<F: Fn(&PubWebView, String, String, String) -> bool + 'static>(
         &self,
+        webview: &PubWebView,
         on_request: F,
     ) {
-        self.webview.connect_script_dialog(move|webview, d| {
+        let webview = webview.clone();
+        self.webview.connect_script_dialog(move|_, d| {
             let txt = d.message().unwrap();
             let msg = txt.as_str().to_string();
             let request_data = RequestData::new(&msg);
             let cmd = request_data.cmd.to_string();
             let id = request_data.id.to_string();
             let json = request_data.json.to_string();
-            on_request(webview, id, cmd, json)
+            on_request(&webview, id, cmd, json)
         });
     }
 
