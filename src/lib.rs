@@ -12,7 +12,6 @@ mod content_type;
 mod javascript;
 mod html;
 
-// TODO runtime for windows and linux
 // TODO Windows res and req scheme
 // TODO Windows Headerbar 
 // TODO Dark backgroundcolor
