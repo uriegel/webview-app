@@ -5,6 +5,7 @@ pub type FnRun = extern fn()->u32;
 //pub type FnExecuteScript = extern fn(*const u16)->bool;
 pub type FnPostMessageAsString = extern fn(*const u16);
 pub type FnShowDevTools = extern fn();
+pub type FnSendText = extern fn(*const u8);
 
 pub struct RawFuncs {
     pub init: FnInit,
@@ -12,7 +13,8 @@ pub struct RawFuncs {
 //    pub execute_script: FnExecuteScript,
     pub postmessage: FnPostMessageAsString,
 //    pub postjson: FnPostMessageAsJson,
-    pub show_devtools: FnShowDevTools
+    pub show_devtools: FnShowDevTools,
+    pub send_text: FnSendText
 }
 
 #[repr(C)]
@@ -91,12 +93,15 @@ impl RawFuncs {
             let postmessage = std::mem::transmute::<*const usize, FnPostMessageAsString>(fnp);
             let fnp = GetProcAddress(module, b"ShowDevTools\0".as_ptr());
             let show_devtools = std::mem::transmute::<*const usize, FnShowDevTools>(fnp);
+            let fnp = GetProcAddress(module, b"SendText\0".as_ptr());
+            let send_text = std::mem::transmute::<*const usize, FnSendText>(fnp);
             RawFuncs {
                 init,
                 run,
  //               execute_script,
                 postmessage,
-                show_devtools
+                show_devtools,
+                send_text
             }
         }
     }

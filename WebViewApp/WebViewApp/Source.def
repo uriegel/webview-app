@@ -6,4 +6,5 @@ EXPORTS
 	PostMessageAsString
 	PostMessageAsJson
 	ShowDevTools
+	SendText
 	Free

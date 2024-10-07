@@ -3,7 +3,7 @@
 use include_dir::Dir;
 use std::{cell::RefCell, path::Path, rc::Rc, slice, sync::Once};
 
-use crate::{bounds::Bounds, content_type, html, javascript::{self, RequestData}, params::Params};
+use crate::{bounds::Bounds, content_type, html, javascript::{self, RequestData}, params::Params, webview::WebView as PubWebView};
 
 use super::raw_funcs::{load_raw_funcs, RequestResult, WebViewAppSettings};
 
@@ -11,6 +11,7 @@ pub fn utf_16_null_terminiated(x: &str) -> Vec<u16> {
     x.encode_utf16().chain(std::iter::once(0)).collect()
 }
 
+#[derive(Clone)]
 pub struct WebView {}
 
 impl WebView {
@@ -40,7 +41,6 @@ impl WebView {
             webroot,
             devtools: params.devtools,
             can_close: RefCell::new(Box::new(||true)),
-            on_request: RefCell::new(Box::new(||{}))
         };
         let html_ok = utf_16_null_terminiated(html::ok());
         let html_not_found = utf_16_null_terminiated(&html::not_found());
@@ -76,10 +76,13 @@ impl WebView {
         let _ = webview.can_close.replace(Box::new(val));
     }
 
-    pub fn set_on_request(&self, request: impl Fn(&str, &Request) + 'static) {
-        let webview = get_webview();
-        let _ = webview.on_request.replace(Box::new(request));
+    pub fn connect_request<F: Fn(&PubWebView, String, String, String) -> bool + 'static>(
+        &self,
+        webview: &PubWebView,
+        on_request: F,
+    ) {
     }
+
 
     // pub fn run(&self)->u32 {
     //     (load_raw_funcs("").run)()
@@ -110,7 +113,6 @@ pub struct WebViewData {
     config_dir: String,
     webroot: Option<Rc<RefCell<Dir<'static>>>>,
     can_close: RefCell<Box<dyn Fn()->bool + 'static>>,
-    on_request: RefCell<Box<dyn Fn() + 'static>>
 }
 
 impl WebViewData {
@@ -167,8 +169,8 @@ impl WebViewData {
             else if msg.starts_with("request,") {
                 let request_data = RequestData::new(&msg);
 
-                let rq = self.on_request.borrow();
-                rq();
+
+
 
                 let back = format!("result,{},{}", request_data.id, request_data.json);
                 (load_raw_funcs("").postmessage)(utf_16_null_terminiated(&back).as_ptr()) 

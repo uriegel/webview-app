@@ -19,6 +19,8 @@ struct RequestResult {
 
 bool __stdcall ExecuteScript(wchar_t* script);
 
+const auto WM_SENDSCRIPT = WM_APP + 1;
+
 using OnCloseFunc = bool(int x, int y, int w, int h, bool isMaximized);
 using OnCustomRequestFunc = void(const wchar_t* url, int urlLen, RequestResult* requestResult);
 using OnMessageFunc = void(const wchar_t* msg, int msgLen);
@@ -64,6 +66,7 @@ auto withoutNativeTitlebar = false;
 auto customResourceScheme = false;
 bool devtools;
 bool defaultContextmenu;
+HWND hWndWebView;
 
 wchar_t* SetString(const wchar_t* str) {
     auto len = wcslen(str) + 1;
@@ -97,6 +100,7 @@ void __stdcall Init(const WebViewAppSettings* settings) {
 }
 
 void CreateWebView(HWND hWnd) {
+    hWndWebView = hWnd;
     auto options = Microsoft::WRL::Make<CoreWebView2EnvironmentOptions>();
     auto scheme = Microsoft::WRL::Make<CoreWebView2CustomSchemeRegistration>(L"req");
     if (withoutNativeTitlebar)
@@ -248,6 +252,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     DestroyWindow(hWnd);
             }
             break;
+        case WM_SENDSCRIPT:
+            {
+                auto script = (wchar_t*)lParam;
+                ExecuteScript(script);
+                free(script);
+            }
+            break;
         case WM_DESTROY:
             PostQuitMessage(0);
             break;
@@ -335,6 +346,18 @@ wchar_t* __stdcall Test1(wchar_t* text_to_display) {
     auto text = new wchar_t[len + 1];
     wcscpy_s(text, len + 1, txt);
     return text;
+}
+
+void __stdcall SendText(char* text) {
+    auto len = MultiByteToWideChar(CP_UTF8, 0, text, -1, nullptr, 0);
+    if (len > 1) {
+        wchar_t* ret = (wchar_t* )malloc(len);
+        if (MultiByteToWideChar(CP_UTF8, 0, text, -1, ret, len) > 1)
+            PostMessage(hWndWebView, WM_SENDSCRIPT, 0, (LPARAM)ret);
+        else
+            free(ret);
+    } else
+        PostMessage(hWndWebView, WM_SENDSCRIPT, 0, 0);
 }
 
 void __stdcall Free(wchar_t* txt_ptr) {
