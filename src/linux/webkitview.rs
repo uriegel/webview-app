@@ -9,7 +9,7 @@ use webkit6::{soup::MessageHeaders, LoadEvent, URISchemeRequest, URISchemeRespon
 use crate::content_type;
 use crate::html;
 use crate::javascript::{self, RequestData};
-use crate::webview::WebView as PubWebView;
+use crate::request::Request;
 
 #[derive(Clone)]
 pub struct WebkitView {
@@ -63,12 +63,13 @@ impl WebkitView {
         res
     }
 
-    pub fn connect_request<F: Fn(&PubWebView, String, String, String) -> bool + 'static>(
+    pub fn connect_request<F: Fn(&Request, String, String, String) -> bool + 'static>(
         &self,
-        webview: &PubWebView,
         on_request: F,
     ) {
-        let webview = webview.clone();
+        let request = Request {
+            webview: self.webview.clone()
+        };
         self.webview.connect_script_dialog(move|_, d| {
             let txt = d.message().unwrap();
             let msg = txt.as_str().to_string();
@@ -76,7 +77,7 @@ impl WebkitView {
             let cmd = request_data.cmd.to_string();
             let id = request_data.id.to_string();
             let json = request_data.json.to_string();
-            on_request(&webview, id, cmd, json)
+            on_request(&request, id, cmd, json)
         });
     }
 

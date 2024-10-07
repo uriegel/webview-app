@@ -5,7 +5,7 @@ use std::{thread, time::Duration};
 
 use serde::{Deserialize, Serialize};
 use include_dir::include_dir;
-use webview_app::{application::Application, request::{self, request_blocking}, webview::WebView};
+use webview_app::{application::Application, request::{self, request_blocking, Request}, webview::WebView};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -31,10 +31,10 @@ fn on_activate(app: &Application)->WebView {
         .default_contextmenu_disabled()
         .build();
     
-    webview.connect_request(|webview: &WebView, id, cmd: String, json| {
+    webview.connect_request(|request, id, cmd: String, json| {
         match cmd.as_str() {
-            "cmd1" => cmd1(webview, id, json),
-            "cmd2" => cmd2(webview, id),
+            "cmd1" => cmd1(request, id, json),
+            "cmd2" => cmd2(request, id),
             _ => {}
         }
         true
@@ -48,8 +48,8 @@ fn main() {
     .run();
 }
 
-fn cmd1(webview: &WebView, id: String, json: String) {
-    request_blocking(webview.clone(), id, move || {
+fn cmd1(request: &Request, id: String, json: String) {
+    request_blocking(request, id, move || {
         let input: Input = request::get_input(&json);
         let res = Output {
             email: "uriegel@hotmail.de".to_string(),
@@ -60,8 +60,8 @@ fn cmd1(webview: &WebView, id: String, json: String) {
     })
 }
 
-fn cmd2(webview: &WebView, id: String) {
-    request_blocking(webview.clone(), id, move || {
+fn cmd2(request: &Request, id: String) {
+    request_blocking(request, id, move || {
     let five_seconds = Duration::from_secs(5);
     thread::sleep(five_seconds);
     let res = Output {
