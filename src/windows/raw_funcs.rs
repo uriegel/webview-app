@@ -3,15 +3,15 @@ use std::{ffi::CString, fs, path::Path, sync::Once};
 pub type FnInit = extern fn(settings: *const WebViewAppSettings);
 pub type FnRun = extern fn()->u32;
 //pub type FnExecuteScript = extern fn(*const u16)->bool;
-pub type FnPostMessageAsString = extern fn(*const u16);
+//pub type FnPostMessageAsString = extern fn(*const u16);
 pub type FnShowDevTools = extern fn();
-pub type FnSendText = extern fn(*const u8);
+pub type FnSendText = extern fn(*const u8, len: i32);
 
 pub struct RawFuncs {
     pub init: FnInit,
     pub run: FnRun,
 //    pub execute_script: FnExecuteScript,
-    pub postmessage: FnPostMessageAsString,
+//    pub postmessage: FnPostMessageAsString,
 //    pub postjson: FnPostMessageAsJson,
     pub show_devtools: FnShowDevTools,
     pub send_text: FnSendText
@@ -89,8 +89,8 @@ impl RawFuncs {
             let run = std::mem::transmute::<*const usize, FnRun>(fnp);
 //            let fnp = GetProcAddress(module, b"ExecuteScript\0".as_ptr());
   //          let execute_script = std::mem::transmute::<*const usize, FnExecuteScript>(fnp);
-            let fnp = GetProcAddress(module, b"PostMessageAsString\0".as_ptr());
-            let postmessage = std::mem::transmute::<*const usize, FnPostMessageAsString>(fnp);
+            // let fnp = GetProcAddress(module, b"PostMessageAsString\0".as_ptr());
+            //let postmessage = std::mem::transmute::<*const usize, FnPostMessageAsString>(fnp);
             let fnp = GetProcAddress(module, b"ShowDevTools\0".as_ptr());
             let show_devtools = std::mem::transmute::<*const usize, FnShowDevTools>(fnp);
             let fnp = GetProcAddress(module, b"SendText\0".as_ptr());
@@ -99,7 +99,7 @@ impl RawFuncs {
                 init,
                 run,
  //               execute_script,
-                postmessage,
+//                postmessage,
                 show_devtools,
                 send_text
             }

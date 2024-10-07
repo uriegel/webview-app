@@ -3,7 +3,7 @@
 use include_dir::Dir;
 use std::{cell::RefCell, path::Path, rc::Rc, slice, sync::Once};
 
-use crate::{bounds::Bounds, content_type, html, javascript::{self, RequestData}, params::Params, webview::WebView as PubWebView};
+use crate::{bounds::Bounds, content_type, html, javascript::{self, RequestData}, params::Params, request::Request};
 
 use super::raw_funcs::{load_raw_funcs, RequestResult, WebViewAppSettings};
 
@@ -38,6 +38,7 @@ impl WebView {
         let web_view_data = WebViewData { 
             should_save_bounds: params.save_bounds,
             config_dir: local_path.to_string_lossy().to_string(),
+            request: Request {},
             webroot,
             devtools: params.devtools,
             can_close: RefCell::new(Box::new(||true)),
@@ -77,9 +78,8 @@ impl WebView {
         let _ = webview.can_close.replace(Box::new(val));
     }
 
-    pub fn connect_request<F: Fn(&PubWebView, String, String, String) -> bool + 'static>(
+    pub fn connect_request<F: Fn(&Request, String, String, String) -> bool + 'static>(
         &self,
-        pub_webview: &PubWebView,
         on_request: F,
     ) {
         let webview = get_webview();
@@ -114,9 +114,10 @@ pub struct WebViewData {
     should_save_bounds: bool,
     devtools: bool,
     config_dir: String,
+    request: Request,
     webroot: Option<Rc<RefCell<Dir<'static>>>>,
     can_close: RefCell<Box<dyn Fn()->bool + 'static>>,
-    on_request: RefCell<Box<dyn Fn(&PubWebView, String, String, String) -> bool + 'static>>,
+    on_request: RefCell<Box<dyn Fn(&Request, String, String, String) -> bool + 'static>>,
 }
 
 impl WebViewData {
@@ -174,12 +175,7 @@ impl WebViewData {
                 let request_data = RequestData::new(&msg);
 
                 let on_request = self.on_request.borrow();
-                let res = on_request(, id, cmd, json);
-
-
-
-                let back = format!("result,{},{}", request_data.id, request_data.json);
-                (load_raw_funcs("").postmessage)(utf_16_null_terminiated(&back).as_ptr()) 
+                on_request(&self.request, request_data.id.to_string(), request_data.cmd.to_string(), request_data.json.to_string());
             }
         }
     }

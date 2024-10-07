@@ -17,6 +17,7 @@ struct RequestResult {
     wchar_t content_type[100];
 };
 
+void __stdcall PostMessageAsString(wchar_t* txt);
 bool __stdcall ExecuteScript(wchar_t* script);
 
 const auto WM_SENDSCRIPT = WM_APP + 1;
@@ -255,8 +256,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         case WM_SENDSCRIPT:
             {
                 auto script = (wchar_t*)lParam;
-                ExecuteScript(script);
-                free(script);
+                PostMessageAsString(script);
+                delete [] script;
             }
             break;
         case WM_DESTROY:
@@ -348,15 +349,18 @@ wchar_t* __stdcall Test1(wchar_t* text_to_display) {
     return text;
 }
 
-void __stdcall SendText(char* text) {
-    auto len = MultiByteToWideChar(CP_UTF8, 0, text, -1, nullptr, 0);
+void __stdcall SendText(char* text, int len) {
+    auto wlen = MultiByteToWideChar(CP_UTF8, 0, text, len, nullptr, 0);
     if (len > 1) {
-        wchar_t* ret = (wchar_t* )malloc(len);
-        if (MultiByteToWideChar(CP_UTF8, 0, text, -1, ret, len) > 1)
+        auto ret = new wchar_t[wlen + 1];
+        if (MultiByteToWideChar(CP_UTF8, 0, text, len, ret, wlen) > 1) {
+            ret[wlen] = 0;
             PostMessage(hWndWebView, WM_SENDSCRIPT, 0, (LPARAM)ret);
+        }
         else
-            free(ret);
-    } else
+            delete [] ret;
+    }
+    else
         PostMessage(hWndWebView, WM_SENDSCRIPT, 0, 0);
 }
 

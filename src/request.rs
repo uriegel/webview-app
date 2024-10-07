@@ -16,6 +16,9 @@ pub struct Request {
     pub(crate) webview: webkit6::WebView
 }
 
+#[cfg(target_os = "windows")]
+pub struct Request {}
+
 #[cfg(target_os = "linux")]
 pub fn request_async<F: std::future::Future<Output = String> + 'static>(
     request: &Request, id: String, on_request: F) {
@@ -51,16 +54,13 @@ pub fn request_blocking<F: FnOnce() -> String + Send + 'static>(
 
 #[cfg(target_os = "windows")]
 pub fn request_blocking<F: FnOnce() -> String + Send + 'static>(
-    _: WebView, id: String, on_request: F) {
+    _: &Request, id: String, on_request: F) {
         use std::thread;
         use crate::windows::raw_funcs::load_raw_funcs;
+
         thread::spawn(move|| {
             let response = on_request();
             let back: String = format!("result,{},{}", id, response);
-            (load_raw_funcs("").send_text)(back.as_ptr());
+            (load_raw_funcs("").send_text)(back.as_ptr(), back.len() as i32);
         });
 } 
-
-
-
-//#[cfg(target_os = "windows")]
