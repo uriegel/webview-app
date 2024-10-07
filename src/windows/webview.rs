@@ -41,6 +41,7 @@ impl WebView {
             webroot,
             devtools: params.devtools,
             can_close: RefCell::new(Box::new(||true)),
+            on_request: RefCell::new(Box::new(|_,_,_,_|false)),
         };
         let html_ok = utf_16_null_terminiated(html::ok());
         let html_not_found = utf_16_null_terminiated(&html::not_found());
@@ -78,9 +79,11 @@ impl WebView {
 
     pub fn connect_request<F: Fn(&PubWebView, String, String, String) -> bool + 'static>(
         &self,
-        webview: &PubWebView,
+        pub_webview: &PubWebView,
         on_request: F,
     ) {
+        let webview = get_webview();
+        let _ = webview.on_request.replace(Box::new(on_request));
     }
 
 
@@ -113,6 +116,7 @@ pub struct WebViewData {
     config_dir: String,
     webroot: Option<Rc<RefCell<Dir<'static>>>>,
     can_close: RefCell<Box<dyn Fn()->bool + 'static>>,
+    on_request: RefCell<Box<dyn Fn(&PubWebView, String, String, String) -> bool + 'static>>,
 }
 
 impl WebViewData {
@@ -169,6 +173,8 @@ impl WebViewData {
             else if msg.starts_with("request,") {
                 let request_data = RequestData::new(&msg);
 
+                let on_request = self.on_request.borrow();
+                let res = on_request(, id, cmd, json);
 
 
 
