@@ -32,11 +32,7 @@ fn on_activate(app: &Application)->WebView {
     let webview = WebView::builder(app)
         .title("Requests 👍".to_string())
         .save_bounds()
-        
-        
-        .devtools(false)
-
-        
+        .devtools(true)
         .webroot(include_dir!("webroots/custom_resources"))
         .default_contextmenu_disabled()
         .build();
@@ -72,19 +68,13 @@ fn cmd1(request: &Request, id: String, json: String) {
 
 fn cmd2(request: &Request, id: String) {
     request_blocking(request, id, move || {
-        // let five_seconds = Duration::from_secs(5);
-        // thread::sleep(five_seconds);
+        let five_seconds = Duration::from_secs(5);
+        thread::sleep(five_seconds);
 
-        let outputs: Vec<Output> = (0..100_000).map(|v| {
-            Output {
-                email: "uriegel@hotmail.de".to_string(),
-                text: "Return fom cmd2  sd fd fdsf dsfdsg fdg dfg dfgdfgfdgdfgdfgdffdg dfg dfg dfgdfg dfg dfgdfg dfg dfg".to_string(),
-                number: v,
-            }
-        }).collect();
-
-        let res = Outputs {
-            outputs
+        let res = Output {
+            email: "uriegel@hotmail.de".to_string(),
+            text: "Return fom cmd2  sd fd fdsf dsfdsg fdg dfg dfgdfgfdgdfgdfgdffdg dfg dfg dfgdfg dfg dfgdfg dfg dfg".to_string(),
+            number: 222,
         };
         request::get_output(&res)
     })
