@@ -8,3 +8,4 @@ WebViewApp/Tester/Tester.aps
 WebViewApp/packages
 
 examples/react-web/package-lock.json
+examples/react-web/.vite
