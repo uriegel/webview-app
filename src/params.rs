@@ -1,3 +1,4 @@
+use std::sync::{Arc, Mutex};
 #[cfg(target_os = "linux")]    
 use std::rc::Rc;
 
@@ -23,6 +24,7 @@ pub struct Params<'a> {
     pub titlebar: Option<Rc<dyn Fn(&adw::Application, &WebView)->gtk::Widget>>,
     pub devtools: bool,
     pub default_contextmenu: bool,
-    pub webroot: Option<Dir<'static>>
+    pub webroot: Option<Arc<Mutex<Dir<'static>>>>,
+    pub http_port: Option<u32>
 }
 

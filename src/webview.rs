@@ -1,6 +1,7 @@
 //! This module contains all the important structs and implementations to create, configure
 //! and run an application containing only a webview.
 
+use std::sync::{Arc, Mutex};
 #[cfg(target_os = "linux")]
 use std::rc::Rc;
 
@@ -112,6 +113,11 @@ impl WebViewBuilder {
             is_maximized: false
         };
 
+        let webroot = self.webroot.map(|webroot| Arc::new(Mutex::new(webroot)));
+
+        let http_port = self.http_server.as_ref().map(|val|val.port);
+        self.http_server.inspect(|http_server|http_server.run(webroot.clone()));
+
         let params = Params {
             title: &title,
             app: &self.app,
@@ -125,7 +131,8 @@ impl WebViewBuilder {
             titlebar: self.titlebar,
             devtools: self.devtools,
             default_contextmenu: self.default_contextmenu,
-            webroot: self.webroot,
+            webroot,
+            http_port
         };
 
         WebView { 

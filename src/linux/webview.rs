@@ -1,4 +1,4 @@
-use std::{cell::RefCell, fs, path::Path, rc::Rc};
+use std::{fs, path::Path};
 
 use adw::HeaderBar;
 use gtk::prelude::*;
@@ -29,16 +29,14 @@ impl WebView {
             {params.bounds};
 
         let debug_url = params.debug_url.map(|s|s.to_string());
-        let webroot = params.webroot.map(|webroot| {
-            Rc::new(RefCell::new(webroot))
-        });
 
         let webkitview_params = WebkitViewParams {
             url: params.url,
             debug_url: debug_url,
             default_contextmenu: params.default_contextmenu,
             devtools: params.devtools,
-            webroot: webroot
+            webroot: params.webroot,
+            http_port: params.http_port
         };
         let webview = WebkitView::new(webkitview_params);
 

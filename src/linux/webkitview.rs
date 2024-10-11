@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::sync::{Arc, Mutex};
 
 use gtk::gio::MemoryInputStream;
 use gtk::glib::{Bytes, MainContext};
@@ -21,7 +21,8 @@ pub struct WebkitViewParams<'a> {
     pub debug_url: Option<String>,
     pub devtools: bool,
     pub default_contextmenu: bool,
-    pub webroot: Option<Rc<RefCell<Dir<'static>>>>
+    pub webroot: Option<Arc<Mutex<Dir<'static>>>>,
+    pub http_port: Option<u32>
 }
 
 impl WebkitView {
@@ -41,12 +42,14 @@ impl WebkitView {
         };
 
         res.enable_request_scheme();
-        match (params.debug_url, params.webroot) {
-            (None, Some(webroot)) => {
+        match (params.debug_url, params.webroot, params.http_port) {
+            (None, Some(webroot), None) => {
                 res.webview.load_uri("res://webroot/index.html");
                 res.enable_resource_scheme(webroot)
             },
-            (Some(debug_url), _) => res.webview.load_uri(&debug_url),
+            (None, Some(_), Some(port)) 
+                => res.webview.load_uri(&format!("http://localhost:{}/webroot/index.html", port)),
+            (Some(debug_url), _, _) => res.webview.load_uri(&debug_url),
             _ => res.webview.load_uri(params.url)
         }
 
@@ -97,7 +100,7 @@ impl WebkitView {
             });
     }
 
-    fn enable_resource_scheme(&self, webroot: Rc<RefCell<Dir<'static>>>) {
+    fn enable_resource_scheme(&self, webroot: Arc<Mutex<Dir<'static>>>) {
         self.webview
             .context()
             .expect("Could not get default web context")
@@ -108,7 +111,8 @@ impl WebkitView {
                 let path = file.split_off(14);
 
                 match webroot
-                        .borrow()
+                        .lock()
+                        .unwrap()
                         .get_file(path) 
                         .map(|file| file.contents()) {
                     Some(bytes) => {
