@@ -54,7 +54,7 @@ fn handle_connection(mut stream: TcpStream, webroot: Option<Arc<Mutex<Dir<'stati
     let buf_reader = BufReader::new(&mut stream);
     let request_line = buf_reader    
         .lines()
-        .next().unwrap().unwrap();
+        .next().unwrap_or(Ok("".to_string())).unwrap();
 
     if request_line.starts_with("GET") {
         route_get(stream, request_line, webroot.clone());

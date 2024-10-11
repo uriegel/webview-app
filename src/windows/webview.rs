@@ -1,7 +1,7 @@
 // extern crate libloading;
 
 use include_dir::Dir;
-use std::{cell::RefCell, path::Path, rc::Rc, slice, sync::Once};
+use std::{cell::RefCell, path::Path, slice, sync::{Arc, Mutex, Once}};
 
 use crate::{bounds::Bounds, content_type, html, javascript::{self, RequestData}, params::Params, request::Request};
 
@@ -26,23 +26,24 @@ impl WebView {
 
         let title = utf_16_null_terminiated(params.title);
         let with_webroot = params.webroot.is_some();
-        let webroot = params.webroot.map(|webroot| {
-            Rc::new(RefCell::new(webroot))
-        });
-        let (url, custom_resource_scheme) = match (params.debug_url, with_webroot) {
-            (None, true) => (utf_16_null_terminiated("req://webroot/index.html"), true),
-            (Some(debug_url), _) => (utf_16_null_terminiated(&debug_url), false),
-            (_, _) => (utf_16_null_terminiated(params.url), false)
+       
+        let (url, custom_resource_scheme) = match (params.debug_url, with_webroot, params.http_port) {
+            (None, true, None) => (utf_16_null_terminiated("req://webroot/index.html"), true),
+            (None, true, Some(port)) => (utf_16_null_terminiated(&format!("http://localhost:{}/webroot/index.html", port)), false),
+            (Some(debug_url), _, _) => (utf_16_null_terminiated(&debug_url), false),
+            (_, _, _) => (utf_16_null_terminiated(params.url), false)
         };
+
         let user_data_path = utf_16_null_terminiated(local_path.as_os_str().to_str().expect("user data path invalid"));
         let web_view_data = WebViewData { 
             should_save_bounds: params.save_bounds,
             config_dir: local_path.to_string_lossy().to_string(),
             request: Request {},
-            webroot,
+            webroot: params.webroot,
             devtools: params.devtools,
             can_close: RefCell::new(Box::new(||true)),
             on_request: RefCell::new(Box::new(|_,_,_,_|false)),
+            _http_port: params.http_port
         };
         let html_ok = utf_16_null_terminiated(html::ok());
         let html_not_found = utf_16_null_terminiated(&html::not_found());
@@ -115,9 +116,10 @@ pub struct WebViewData {
     devtools: bool,
     config_dir: String,
     request: Request,
-    webroot: Option<Rc<RefCell<Dir<'static>>>>,
+    webroot: Option<Arc<Mutex<Dir<'static>>>>,
     can_close: RefCell<Box<dyn Fn()->bool + 'static>>,
     on_request: RefCell<Box<dyn Fn(&Request, String, String, String) -> bool + 'static>>,
+    _http_port: Option<u32>
 }
 
 impl WebViewData {
@@ -129,7 +131,7 @@ impl WebViewData {
             let mut file = url.clone();
             let path = file.split_off(14);
 
-            match self.webroot.clone().expect("Custom request without webroot").borrow().get_file(path) {
+            match self.webroot.clone().expect("Custom request without webroot").lock().unwrap().get_file(path) {
                 Some(file)  => {
                     let bytes = file.contents();
                     result.content = bytes.as_ptr();
