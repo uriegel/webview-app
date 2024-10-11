@@ -96,6 +96,7 @@ fn send_html(mut stream: TcpStream, html: &str, status_line: &str) {
     
     let response = format!("{status_line}\r\nContent-Length: {length}\r\nConnection: close\r\n\r\n{html}");
     stream.write_all(response.as_bytes()).unwrap();
+    stream.flush();
 }
 
 fn send_html_bytes(mut stream: TcpStream, html: &[u8], status_line: &str) {
@@ -104,4 +105,5 @@ fn send_html_bytes(mut stream: TcpStream, html: &[u8], status_line: &str) {
     let response = format!("{status_line}\r\nContent-Length: {length}\r\nConnection: close\r\n\r\n");
     stream.write_all(response.as_bytes()).unwrap();
     stream.write_all(html).unwrap();
+    stream.flush();
 }
