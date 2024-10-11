@@ -14,6 +14,7 @@ mod javascript;
 mod html;
 mod threadpool;
 
+// TODO http: keep alive
 // TODO Windows res and req scheme
 // TODO Windows Headerbar 
 // TODO Dark backgroundcolor

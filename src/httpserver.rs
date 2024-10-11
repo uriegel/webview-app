@@ -66,7 +66,6 @@ fn handle_connection(mut stream: TcpStream, webroot: Option<Arc<Mutex<Dir<'stati
 fn route_get(stream: TcpStream, request_line: String, webroot: Option<Arc<Mutex<Dir<'static>>>>) {
     let pos = request_line[4..].find(" ").unwrap_or(0);
     let path = request_line[4..pos + 4].to_string();
-    println!("{}", path);
 
     match (webroot, path) {
         (Some(webroot), path) if path.starts_with("/webroot") =>
