@@ -94,14 +94,14 @@ fn route_not_found(stream: TcpStream) {
 fn send_html(mut stream: TcpStream, html: &str, status_line: &str) {
     let length = html.len();
     
-    let response = format!("{status_line}\r\nContent-Length: {length}\r\nConnection: Close\r\n\r\n{html}");
+    let response = format!("{status_line}\r\nContent-Length: {length}\r\nConnection: close\r\n\r\n{html}");
     stream.write_all(response.as_bytes()).unwrap();
 }
 
 fn send_html_bytes(mut stream: TcpStream, html: &[u8], status_line: &str) {
     let length = html.len();
     
-    let response = format!("{status_line}\r\nContent-Length: {length}\r\nConnection: Close\r\n\r\n");
+    let response = format!("{status_line}\r\nContent-Length: {length}\r\nConnection: close\r\n\r\n");
     stream.write_all(response.as_bytes()).unwrap();
     stream.write_all(html).unwrap();
 }
