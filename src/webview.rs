@@ -6,7 +6,7 @@ use std::rc::Rc;
 
 use include_dir::Dir;
 
-use crate::{application::Application, bounds::Bounds, params::Params, request::Request};
+use crate::{application::Application, bounds::Bounds, httpserver::HttpServer, params::Params, request::Request};
 
 #[cfg(target_os = "linux")]
 use crate::linux::webview::WebView as WebViewImpl;
@@ -58,7 +58,8 @@ impl WebView {
             without_native_titlebar: false,
             devtools: false,
             default_contextmenu : true,
-            webroot: None
+            webroot: None,
+            http_server: None
         }
     }
 
@@ -91,7 +92,8 @@ pub struct WebViewBuilder {
     without_native_titlebar: bool,
     devtools: bool,
     default_contextmenu: bool,
-    webroot: Option<Dir<'static>>
+    webroot: Option<Dir<'static>>,
+    http_server: Option<HttpServer> 
 }
 
 impl WebViewBuilder {
@@ -251,6 +253,11 @@ impl WebViewBuilder {
     /// If you set ```default_contextmenu()```, the web view's default context menu is not being displayed when you right click the mouse.    
     pub fn default_contextmenu_disabled(mut self)->WebViewBuilder {
         self.default_contextmenu = false;
+        self
+    }
+
+    pub fn with_http_server(mut self, val: HttpServer)->Self {
+        self.http_server = Some(val);
         self
     }
 }

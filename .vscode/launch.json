@@ -115,40 +115,20 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in library 'webview_app'",
+            "name": "Debug example 'Web Server'",
             "cargo": {
                 "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
+                    "build",
+                    "--example=hello_webserver",
                     "--package=webview_app"
                 ],
                 "filter": {
-                    "name": "webview_app",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in example 'hello'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--example=hello",
-                    "--package=webview_app"
-                ],
-                "filter": {
-                    "name": "hello",
+                    "name": "hello_webserver",
                     "kind": "example"
                 }
             },
             "args": [],
             "cwd": "${workspaceFolder}"
-        }
+        },
     ]
 }

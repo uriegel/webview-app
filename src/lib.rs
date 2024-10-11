@@ -6,6 +6,7 @@ mod windows;
 pub mod application;
 pub mod webview;
 pub mod request;
+pub mod httpserver;
 mod bounds;
 mod params;
 mod content_type;
