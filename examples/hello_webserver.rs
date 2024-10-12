@@ -91,7 +91,7 @@ fn cmd2(request: &Request, id: String, json: String) {
         let input: Input = request::get_input(&json);
 
         let outputs: Vec<Output> = 
-            (1..1_000_000)
+            (1..100_000)
             .map(|i| Output {
                 email: "uriegel@hotmail.de".to_string(),
                 text: input.text.clone(),
@@ -106,7 +106,7 @@ fn cmd2(request: &Request, id: String, json: String) {
 fn cmd2_http(json: &str)->String {
     let input: Input = request::get_input(&json);
     let outputs: Vec<Output> = 
-        (1..1_000_000)
+        (1..100_000)
         .map(|i| Output {
             email: "uriegel@hotmail.de".to_string(),
             text: input.text.clone(),
