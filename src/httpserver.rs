@@ -95,22 +95,6 @@ fn route_get(writer: BufWriter<&TcpStream>, request_line: &String, webroot: Opti
     };
 }
 
-#[derive(serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Output {
-    pub text: String,
-    pub email: String,
-    pub number: i32
-}
-#[derive(serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Input {
-    pub text: String,
-    pub id: i32
-}
-
-// TODO function as callback with string method string paylod -> Json
-
 fn route_post(writer: BufWriter<&TcpStream>, mut reader: BufReader<&TcpStream>, request_line: &String, headers: &[String], on_request: Arc<Mutex<Option<RequestCallback>>>) {
     let pos = request_line[15..].find(" ").unwrap_or(0);
     let method = request_line[15..pos + 15].to_string();
@@ -123,34 +107,17 @@ fn route_post(writer: BufWriter<&TcpStream>, mut reader: BufReader<&TcpStream>, 
     }).unwrap_or(0);
 
     let mut payload: Vec<u8> =  vec![0; content_length];
-    let res = reader.read_exact(&mut payload);
+    reader.read_exact(&mut payload).unwrap();
     let payload= str::from_utf8(payload.as_slice()).unwrap_or("");
-
 
     let mut on_request = on_request.lock().unwrap();
     if let Some(on_request) = on_request.take() {
         let res = on_request(&method, payload);
-        println!("Req:  {}", res);
+        let json = crate::request::get_output(&res);
+        send_json(writer, &json, "HTTP/1.1 200 OK");
+    } else {
+        route_not_found(writer);
     }
-
-
-    
-
-
-    //let input: Input = crate::request::get_input(payload);
-
-    let res = Output {
-        email: "uriegel@hotmail.de".to_string(),
-        text: "Return fom cmd2  sd fd fdsf dsfdsg fdg dfg dfgdfgfdgdfgdfgdffdg dfg dfg dfgdfg dfg dfgdfg dfg dfg".to_string(),
-        number: 222,
-    };
-    let json = crate::request::get_output(&res);
-    send_json(writer, &json, "HTTP/1.1 200 OK");
-    // match (webroot, path) {
-    //     (Some(webroot), path) if path.starts_with("/webroot") =>
-    //         route_get_webroot(stream, &path[9..], webroot),
-    //     (_, _) => route_not_found(stream)
-    // };
 }
 
 fn route_get_webroot(writer: BufWriter<&TcpStream>, path: &str, webroot: Arc<Mutex<Dir<'static>>>) {
