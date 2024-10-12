@@ -14,8 +14,11 @@ mod javascript;
 mod html;
 mod threadpool;
 
-// TODO http: keep alive
+// TODO http requests
+// TODO CORS (react)
 // TODO Windows res and req scheme
+// TODO fs_extra::copy_items_with_progress
+// TODO Trash: https://docs.rs/trash/latest/trash/
 // TODO Windows Headerbar 
 // TODO Dark backgroundcolor
 // TODO DragDrop
