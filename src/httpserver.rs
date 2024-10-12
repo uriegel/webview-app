@@ -1,11 +1,13 @@
-use std::{io::{BufRead, BufReader, Write}, net::{TcpListener, TcpStream}, sync::{Arc, Mutex}, thread};
+use core::str;
+use std::{io::{BufRead, BufReader, Read, Write}, net::{TcpListener, TcpStream}, sync::{Arc, Mutex}, thread};
 
 use include_dir::Dir;
 
-use crate::{html, threadpool::ThreadPool};
+use crate::{html, threadpool::{RequestCallback, ThreadPool}};
 
+#[derive(Clone)]
 pub struct HttpServer {
-    pub port: u32,
+    pub port: u32
 }
 
 pub struct HttpServerBuilder {
@@ -30,19 +32,19 @@ impl HttpServerBuilder {
 }
 
 impl HttpServer {
-    pub fn run(&self, webroot: Option<Arc<Mutex<Dir<'static>>>>) {
-        run(self.port, webroot);
+    pub fn run(&self, webroot: Option<Arc<Mutex<Dir<'static>>>>, on_request: Option<RequestCallback>) {
+        run(self.port, webroot, on_request);
     }    
 }
 
-fn run(port: u32, webroot: Option<Arc<Mutex<Dir<'static>>>>) {
+fn run(port: u32, webroot: Option<Arc<Mutex<Dir<'static>>>>, on_request: Option<RequestCallback>) {
     let listener = TcpListener::bind(format!("127.0.0.1:{}", port)).unwrap();
-    let pool = ThreadPool::new(8);
+    let pool = ThreadPool::new(8, Arc::new(Mutex::new(on_request)));
     thread::spawn(move || for stream in listener.incoming() {
         let webroot = webroot.clone();
         if let Ok(stream) = stream {
-            pool.execute(move|| {
-                handle_connection(stream, webroot);     
+            pool.execute(move|on_request| {
+                handle_connection(stream, webroot, on_request);     
             });
         } else {
             break;
@@ -50,7 +52,7 @@ fn run(port: u32, webroot: Option<Arc<Mutex<Dir<'static>>>>) {
     });
 }
 
-fn handle_connection(mut stream: TcpStream, webroot: Option<Arc<Mutex<Dir<'static>>>>) {
+fn handle_connection(mut stream: TcpStream, webroot: Option<Arc<Mutex<Dir<'static>>>>, on_request: Arc<Mutex<Option<RequestCallback>>>) {
     stream.set_nodelay(true).unwrap(); // disables Nagle algorithm
     loop {
         let buf_reader = BufReader::new(&stream);
@@ -70,11 +72,11 @@ fn handle_connection(mut stream: TcpStream, webroot: Option<Arc<Mutex<Dir<'stati
             return 
         }
         let request_line = &headers[0];
-    
+
         if request_line.starts_with("GET") {
             route_get(&mut stream, request_line, webroot.clone());
-        } else if request_line.starts_with("POST") {
-            route_post(&mut stream, request_line, webroot.clone());
+        } else if request_line.starts_with("POST")  {
+            route_post(&mut stream, request_line, headers.as_slice(), on_request.clone());
         } else {
             route_not_found(&mut stream);
         }
@@ -99,10 +101,42 @@ pub struct Output {
     pub email: String,
     pub number: i32
 }
-fn route_post(stream: &mut TcpStream, request_line: &String, webroot: Option<Arc<Mutex<Dir<'static>>>>) {
-    let pos = request_line[4..].find(" ").unwrap_or(0);
-    let path = request_line[4..pos + 4].to_string();
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Input {
+    pub text: String,
+    pub id: i32
+}
 
+// TODO function as callback with string method string paylod -> Json
+
+fn route_post(stream: &mut TcpStream, request_line: &String, headers: &[String], on_request: Arc<Mutex<Option<RequestCallback>>>) {
+    let pos = request_line[15..].find(" ").unwrap_or(0);
+    let method = request_line[15..pos + 15].to_string();
+    let content_length = headers.iter().find_map(|header| {
+        if header.starts_with("Content-Length") {
+            Some(header[16..].parse::<usize>().unwrap())
+        } else {
+            None
+        }
+    }).unwrap_or(0);
+
+    let mut payload: Vec<u8> =  vec![0; content_length];
+    stream.read_exact(&mut payload).unwrap();
+    let payload= str::from_utf8(payload.as_slice()).unwrap_or("");
+
+
+    let mut on_request = on_request.lock().unwrap();
+    if let Some(on_request) = on_request.take() {
+        let res = on_request(method, payload.to_string()); // TODO Anstatt String &str!!!!!!!!!!!!!!!!!!
+        println!("Req:  {}", res);
+    }
+
+
+    
+
+
+    //let input: Input = crate::request::get_input(payload);
 
     let res = Output {
         email: "uriegel@hotmail.de".to_string(),

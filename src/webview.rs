@@ -60,7 +60,8 @@ impl WebView {
             devtools: false,
             default_contextmenu : true,
             webroot: None,
-            http_server: None
+            http_server: None,
+            on_http_request: None,
         }
     }
 
@@ -94,7 +95,9 @@ pub struct WebViewBuilder {
     devtools: bool,
     default_contextmenu: bool,
     webroot: Option<Dir<'static>>,
-    http_server: Option<HttpServer> 
+    http_server: Option<HttpServer>,
+    on_http_request: Option<Box<dyn FnOnce(String, String) -> String + Send + 'static>>
+
 }
 
 impl WebViewBuilder {
@@ -116,7 +119,7 @@ impl WebViewBuilder {
         let webroot = self.webroot.map(|webroot| Arc::new(Mutex::new(webroot)));
 
         let http_port = self.http_server.as_ref().map(|val|val.port);
-        self.http_server.inspect(|http_server|http_server.run(webroot.clone()));
+        self.http_server.inspect(|http_server|http_server.run(webroot.clone(), self.on_http_request));
 
         let params = Params {
             title: &title,
@@ -132,7 +135,7 @@ impl WebViewBuilder {
             devtools: self.devtools,
             default_contextmenu: self.default_contextmenu,
             webroot,
-            http_port
+            http_port,
         };
 
         WebView { 
@@ -267,5 +270,15 @@ impl WebViewBuilder {
         self.http_server = Some(val);
         self
     }
+
+    pub fn on_http_request<F: FnOnce(String, String) -> String + Send + 'static>(
+        mut self,
+        on_request: F,
+    )->Self {
+        self.on_http_request.replace(Box::new(on_request));
+        self
+    }   
+
+
 }
 
