@@ -41,14 +41,16 @@ fn on_activate(app: &Application)->WebView {
         .on_http_request(|cmd, json|{
             match cmd {
                 "cmd1" => cmd1_http(json),
+                "cmd2" => cmd2_http(json),
                 _ => "{}".to_string()
                 }
         })
         .build();
     
-    webview.connect_request(|request, id, cmd: String, json| {
+    webview.connect_request(move|request, id, cmd: String, json| {
         match cmd.as_str() {
             "cmd1" => cmd1(request, id, json),
+            "cmd2" => cmd2(request, id, json),
             _ => {}
         }
         true
@@ -84,5 +86,35 @@ fn cmd1_http(json: &str)->String {
     request::get_output(&res)
 }
 
+fn cmd2(request: &Request, id: String, json: String) {
+    request_blocking(request, id, move || {
+        let input: Input = request::get_input(&json);
+
+        let outputs: Vec<Output> = 
+            (1..1_000_000)
+            .map(|i| Output {
+                email: "uriegel@hotmail.de".to_string(),
+                text: input.text.clone(),
+                number: input.id + i,
+            })
+            .collect();
+        let res = Outputs { outputs };
+        request::get_output(&res)
+    })
+}
+
+fn cmd2_http(json: &str)->String {
+    let input: Input = request::get_input(&json);
+    let outputs: Vec<Output> = 
+        (1..1_000_000)
+        .map(|i| Output {
+            email: "uriegel@hotmail.de".to_string(),
+            text: input.text.clone(),
+            number: input.id + i,
+        })
+        .collect();
+    let res = Outputs { outputs };
+    request::get_output(&res)
+}
 
  
