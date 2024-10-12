@@ -97,7 +97,6 @@ pub struct WebViewBuilder {
     webroot: Option<Dir<'static>>,
     http_server: Option<HttpServer>,
     on_http_request: Option<RequestCallback>
-
 }
 
 impl WebViewBuilder {
@@ -271,11 +270,8 @@ impl WebViewBuilder {
         self
     }
 
-    pub fn on_http_request<F: FnOnce(&str, &str) -> String + Send + 'static>(
-        mut self,
-        on_request: F,
-    )->Self {
-        self.on_http_request.replace(Box::new(on_request));
+    pub fn on_http_request(mut self, on_request: RequestCallback)->Self {
+        self.on_http_request.replace(on_request);
         self
     }   
 

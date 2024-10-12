@@ -1,24 +1,24 @@
 use std::{sync::{mpsc::{channel, Receiver, Sender}, Arc, Mutex}, thread::{self, JoinHandle}};
 
 
-pub type RequestCallback = Box<dyn FnOnce(&str, &str) -> String + Send + 'static>;
+pub type RequestCallback = fn(&str, &str) -> String;
 
 pub struct ThreadPool {
     workers: Vec<Worker>,
     sender: Option<Sender<Job>>
 }
 
-type Job = Box<dyn FnOnce(Arc<Mutex<Option<RequestCallback>>>) + Send + 'static>;
+type Job = Box<dyn FnOnce() + Send + 'static>;
 
 impl ThreadPool {
-    pub fn new(size: usize, on_request: Arc<Mutex<Option<RequestCallback>>>)->ThreadPool {
+    pub fn new(size: usize)->ThreadPool {
         assert!(size > 0);
 
         let (sender, receiver) = channel();
         let receiver = Arc::new(Mutex::new(receiver));
         let workers: Vec<_> =
             (0..size)
-                .map(|_| Worker::new(Arc::clone(&receiver), Arc::clone(&on_request)))
+                .map(|_| Worker::new(Arc::clone(&receiver)))
                 .collect();
 
         ThreadPool { workers, sender: Some(sender) }
@@ -26,7 +26,7 @@ impl ThreadPool {
 
     pub fn execute<F>(&self, f: F)
     where
-        F: FnOnce(Arc<Mutex<Option<RequestCallback>>>) + Send + 'static,
+        F: FnOnce() + Send + 'static,
     {
         let job = Box::new(f);
         self.sender.as_ref().unwrap().send(job).unwrap();
@@ -50,11 +50,11 @@ struct Worker {
 }
 
 impl Worker {
-    fn new(receiver: Arc<Mutex<Receiver<Job>>>, on_request: Arc<Mutex<Option<RequestCallback>>>) -> Worker {
+    fn new(receiver: Arc<Mutex<Receiver<Job>>>) -> Worker {
         let thread = thread::spawn(move || loop {
             let message = receiver.lock().unwrap().recv();
             match message {
-                Ok(job) =>  { job(on_request.clone()); }
+                Ok(job) =>  { job(); }
                 Err(_) => { break; }
             }
 

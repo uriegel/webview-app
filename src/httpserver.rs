@@ -39,11 +39,11 @@ impl HttpServer {
 
 fn run(port: u32, webroot: Option<Arc<Mutex<Dir<'static>>>>, on_request: Option<RequestCallback>) {
     let listener = TcpListener::bind(format!("127.0.0.1:{}", port)).unwrap();
-    let pool = ThreadPool::new(8, Arc::new(Mutex::new(on_request)));
+    let pool = ThreadPool::new(8);
     thread::spawn(move || for stream in listener.incoming() {
         let webroot = webroot.clone();
         if let Ok(stream) = stream {
-            pool.execute(move|on_request| {
+            pool.execute(move|| {
                 handle_connection(stream, webroot, on_request);     
             });
         } else {
@@ -52,7 +52,7 @@ fn run(port: u32, webroot: Option<Arc<Mutex<Dir<'static>>>>, on_request: Option<
     });
 }
 
-fn handle_connection(stream: TcpStream, webroot: Option<Arc<Mutex<Dir<'static>>>>, on_request: Arc<Mutex<Option<RequestCallback>>>) {
+fn handle_connection(stream: TcpStream, webroot: Option<Arc<Mutex<Dir<'static>>>>, on_request: Option<RequestCallback>) {
     stream.set_nodelay(true).unwrap(); // disables Nagle algorithm
     loop {
         let mut buf_reader = BufReader::new(&stream);
@@ -74,13 +74,15 @@ fn handle_connection(stream: TcpStream, webroot: Option<Arc<Mutex<Dir<'static>>>
         }
         let request_line = &headers[0];
 
-        if request_line.starts_with("GET") {
-            route_get(buf_writer, request_line, webroot.clone());
-        } else if request_line.starts_with("POST")  {
-            route_post(buf_writer, buf_reader, request_line, headers.as_slice(), on_request.clone());
-        } else {
-            route_not_found(buf_writer);
-        }
+        match (request_line, on_request) {
+            (request_line, _) if request_line.starts_with("GET") => {
+                route_get(buf_writer, request_line, webroot.clone());    
+            },
+            (request_line, Some(on_request)) if request_line.starts_with("POST") => {
+                route_post(buf_writer, buf_reader, request_line, headers.as_slice(), on_request);    
+            },
+            (_, _) => route_not_found(buf_writer)
+        };
     }
 }    
 
@@ -95,7 +97,7 @@ fn route_get(writer: BufWriter<&TcpStream>, request_line: &String, webroot: Opti
     };
 }
 
-fn route_post(writer: BufWriter<&TcpStream>, mut reader: BufReader<&TcpStream>, request_line: &String, headers: &[String], on_request: Arc<Mutex<Option<RequestCallback>>>) {
+fn route_post(writer: BufWriter<&TcpStream>, mut reader: BufReader<&TcpStream>, request_line: &String, headers: &[String], on_request: RequestCallback) {
     let pos = request_line[15..].find(" ").unwrap_or(0);
     let method = request_line[15..pos + 15].to_string();
     let content_length = headers.iter().find_map(|header| {
@@ -110,14 +112,9 @@ fn route_post(writer: BufWriter<&TcpStream>, mut reader: BufReader<&TcpStream>, 
     reader.read_exact(&mut payload).unwrap();
     let payload= str::from_utf8(payload.as_slice()).unwrap_or("");
 
-    let mut on_request = on_request.lock().unwrap();
-    if let Some(on_request) = on_request.take() {
-        let res = on_request(&method, payload);
-        let json = crate::request::get_output(&res);
-        send_json(writer, &json, "HTTP/1.1 200 OK");
-    } else {
-        route_not_found(writer);
-    }
+    let res = on_request(&method, payload);
+    let json = crate::request::get_output(&res);
+    send_json(writer, &json, "HTTP/1.1 200 OK");
 }
 
 fn route_get_webroot(writer: BufWriter<&TcpStream>, path: &str, webroot: Arc<Mutex<Dir<'static>>>) {
