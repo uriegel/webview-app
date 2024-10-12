@@ -52,9 +52,26 @@ fn run(port: u32, webroot: Option<Arc<Mutex<Dir<'static>>>>) {
 
 fn handle_connection(mut stream: TcpStream, webroot: Option<Arc<Mutex<Dir<'static>>>>) {
     let buf_reader = BufReader::new(&mut stream);
-    let request_line = buf_reader    
+    let headers: Vec<_> = buf_reader    
         .lines()
-        .next().unwrap_or(Ok("".to_string())).unwrap();
+        .take_while(|line| 
+            if let Ok(line) = line {
+                //println!("line: {}", line);
+                line.len() > 0
+            } else { 
+                println!("zuende");
+                false 
+            }
+        )
+        .map(|line| line.unwrap() )
+        .collect();
+
+    //println!("headers: {}", headers.join("\n"));
+
+    if headers.len() == 0  { 
+        return 
+    }
+    let request_line = &headers[0];
 
     if request_line.starts_with("GET") {
         route_get(stream, request_line, webroot.clone());
@@ -63,7 +80,7 @@ fn handle_connection(mut stream: TcpStream, webroot: Option<Arc<Mutex<Dir<'stati
     }
 }    
 
-fn route_get(stream: TcpStream, request_line: String, webroot: Option<Arc<Mutex<Dir<'static>>>>) {
+fn route_get(stream: TcpStream, request_line: &String, webroot: Option<Arc<Mutex<Dir<'static>>>>) {
     let pos = request_line[4..].find(" ").unwrap_or(0);
     let path = request_line[4..pos + 4].to_string();
 
@@ -97,6 +114,7 @@ fn send_html(mut stream: TcpStream, html: &str, status_line: &str) {
     let response = format!("{status_line}\r\nContent-Length: {length}\r\nConnection: close\r\n\r\n{html}");
     stream.write_all(response.as_bytes()).unwrap();
     stream.flush();
+    drop(stream);
 }
 
 fn send_html_bytes(mut stream: TcpStream, html: &[u8], status_line: &str) {
@@ -106,4 +124,5 @@ fn send_html_bytes(mut stream: TcpStream, html: &[u8], status_line: &str) {
     stream.write_all(response.as_bytes()).unwrap();
     stream.write_all(html).unwrap();
     stream.flush();
+    drop(stream);
 }
