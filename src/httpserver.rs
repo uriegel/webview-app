@@ -51,36 +51,34 @@ fn run(port: u32, webroot: Option<Arc<Mutex<Dir<'static>>>>) {
 }
 
 fn handle_connection(mut stream: TcpStream, webroot: Option<Arc<Mutex<Dir<'static>>>>) {
-    let buf_reader = BufReader::new(&mut stream);
-    let headers: Vec<_> = buf_reader    
-        .lines()
-        .take_while(|line| 
-            if let Ok(line) = line {
-                //println!("line: {}", line);
-                line.len() > 0
-            } else { 
-                println!("zuende");
-                false 
-            }
-        )
-        .map(|line| line.unwrap() )
-        .collect();
-
-    //println!("headers: {}", headers.join("\n"));
-
-    if headers.len() == 0  { 
-        return 
-    }
-    let request_line = &headers[0];
-
-    if request_line.starts_with("GET") {
-        route_get(stream, request_line, webroot.clone());
-    } else {
-        route_not_found(stream);
+    loop {
+        let buf_reader = BufReader::new(&stream);
+        let headers: Vec<_> = buf_reader    
+            .lines()
+            .take_while(|line| 
+                if let Ok(line) = line {
+                    line.len() > 0
+                } else { 
+                    false 
+                }
+            )
+            .map(|line| line.unwrap() )
+            .collect();
+    
+        if headers.len() == 0  { 
+            return 
+        }
+        let request_line = &headers[0];
+    
+        if request_line.starts_with("GET") {
+            route_get(&mut stream, request_line, webroot.clone());
+        } else {
+            route_not_found(&mut stream);
+        }
     }
 }    
 
-fn route_get(stream: TcpStream, request_line: &String, webroot: Option<Arc<Mutex<Dir<'static>>>>) {
+fn route_get(stream: &mut TcpStream, request_line: &String, webroot: Option<Arc<Mutex<Dir<'static>>>>) {
     let pos = request_line[4..].find(" ").unwrap_or(0);
     let path = request_line[4..pos + 4].to_string();
 
@@ -91,7 +89,7 @@ fn route_get(stream: TcpStream, request_line: &String, webroot: Option<Arc<Mutex
     };
 }
 
-fn route_get_webroot(stream: TcpStream, path: &str, webroot: Arc<Mutex<Dir<'static>>>) {
+fn route_get_webroot(stream: &mut TcpStream, path: &str, webroot: Arc<Mutex<Dir<'static>>>) {
     match webroot
             .lock()
             .unwrap()
@@ -104,25 +102,21 @@ fn route_get_webroot(stream: TcpStream, path: &str, webroot: Arc<Mutex<Dir<'stat
     };    
 }
 
-fn route_not_found(stream: TcpStream) {
+fn route_not_found(stream: &TcpStream) {
     send_html(stream, &html::not_found(), "HTTP/1.1 404 NOT FOUND"); 
 }
 
-fn send_html(mut stream: TcpStream, html: &str, status_line: &str) {
+fn send_html(mut stream: &TcpStream, html: &str, status_line: &str) {
     let length = html.len();
     
-    let response = format!("{status_line}\r\nContent-Length: {length}\r\nConnection: close\r\n\r\n{html}");
+    let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{html}");
     stream.write_all(response.as_bytes()).unwrap();
-    stream.flush();
-    drop(stream);
 }
 
-fn send_html_bytes(mut stream: TcpStream, html: &[u8], status_line: &str) {
+fn send_html_bytes(stream: &mut TcpStream, html: &[u8], status_line: &str) {
     let length = html.len();
     
-    let response = format!("{status_line}\r\nContent-Length: {length}\r\nConnection: close\r\n\r\n");
+    let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n");
     stream.write_all(response.as_bytes()).unwrap();
     stream.write_all(html).unwrap();
-    stream.flush();
-    drop(stream);
 }
