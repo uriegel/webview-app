@@ -33,7 +33,7 @@ fn on_activate(app: &Application)->WebView {
         .title("Hello Web Server👍".to_string())
         .save_bounds()
         .devtools(true)
-        .webroot(include_dir!("webroots/custom_resources"))
+        .webroot(include_dir!("webroots/hello_webserver"))
         .default_contextmenu_disabled()
         .with_http_server(
             HttpServerBuilder::new()

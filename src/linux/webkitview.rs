@@ -53,11 +53,12 @@ impl WebkitView {
             _ => res.webview.load_uri(params.url)
         }
 
-        res.webview.connect_load_changed(|webview, evt| {
+        let http_port = params.http_port.clone();
+        res.webview.connect_load_changed(move|webview, evt| {
             let webview = webview.clone();
             if evt == LoadEvent::Committed {
                 MainContext::default().spawn_local(async move {
-                    let script = javascript::get(false, "", false, false);
+                    let script = javascript::get(false, "", false, false, http_port.unwrap_or(0));
                     webview.evaluate_javascript_future(&script, None, None).await.expect("error in initial running script");
                 });
             }

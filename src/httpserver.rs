@@ -73,6 +73,8 @@ fn handle_connection(mut stream: TcpStream, webroot: Option<Arc<Mutex<Dir<'stati
     
         if request_line.starts_with("GET") {
             route_get(&mut stream, request_line, webroot.clone());
+        } else if request_line.starts_with("POST") {
+            route_post(&mut stream, request_line, webroot.clone());
         } else {
             route_not_found(&mut stream);
         }
@@ -80,6 +82,17 @@ fn handle_connection(mut stream: TcpStream, webroot: Option<Arc<Mutex<Dir<'stati
 }    
 
 fn route_get(stream: &mut TcpStream, request_line: &String, webroot: Option<Arc<Mutex<Dir<'static>>>>) {
+    let pos = request_line[4..].find(" ").unwrap_or(0);
+    let path = request_line[4..pos + 4].to_string();
+
+    match (webroot, path) {
+        (Some(webroot), path) if path.starts_with("/webroot") =>
+            route_get_webroot(stream, &path[9..], webroot),
+        (_, _) => route_not_found(stream)
+    };
+}
+
+fn route_post(stream: &mut TcpStream, request_line: &String, webroot: Option<Arc<Mutex<Dir<'static>>>>) {
     let pos = request_line[4..].find(" ").unwrap_or(0);
     let path = request_line[4..pos + 4].to_string();
 
