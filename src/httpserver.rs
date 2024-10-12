@@ -1,5 +1,5 @@
 use core::str;
-use std::{io::{BufRead, BufReader, Read, Write}, net::{TcpListener, TcpStream}, sync::{Arc, Mutex}, thread};
+use std::{io::{BufRead, BufReader, BufWriter, Read, Write}, net::{TcpListener, TcpStream}, sync::{Arc, Mutex}, thread};
 
 use include_dir::Dir;
 
@@ -52,45 +52,46 @@ fn run(port: u32, webroot: Option<Arc<Mutex<Dir<'static>>>>, on_request: Option<
     });
 }
 
-fn handle_connection(mut stream: TcpStream, webroot: Option<Arc<Mutex<Dir<'static>>>>, on_request: Arc<Mutex<Option<RequestCallback>>>) {
+fn handle_connection(stream: TcpStream, webroot: Option<Arc<Mutex<Dir<'static>>>>, on_request: Arc<Mutex<Option<RequestCallback>>>) {
     stream.set_nodelay(true).unwrap(); // disables Nagle algorithm
     loop {
-        let buf_reader = BufReader::new(&stream);
-        let headers: Vec<_> = buf_reader    
-            .lines()
-            .take_while(|line| 
-                if let Ok(line) = line {
-                    line.len() > 0
-                } else { 
-                    false 
-                }
-            )
-            .map(|line| line.unwrap() )
-            .collect();
-    
+        let mut buf_reader = BufReader::new(&stream);
+        let buf_writer = BufWriter::new(&stream);
+        
+        let mut headers: Vec<String> = Vec::new();
+        loop {
+            let mut str = String::new();
+            buf_reader.read_line(&mut str).unwrap();
+            str = str.trim().to_string();
+            if str.len() == 0 {
+                break;
+            }
+            headers.push(str);
+        }
+
         if headers.len() == 0  { 
             return 
         }
         let request_line = &headers[0];
 
         if request_line.starts_with("GET") {
-            route_get(&mut stream, request_line, webroot.clone());
+            route_get(buf_writer, request_line, webroot.clone());
         } else if request_line.starts_with("POST")  {
-            route_post(&mut stream, request_line, headers.as_slice(), on_request.clone());
+            route_post(buf_writer, buf_reader, request_line, headers.as_slice(), on_request.clone());
         } else {
-            route_not_found(&mut stream);
+            route_not_found(buf_writer);
         }
     }
 }    
 
-fn route_get(stream: &mut TcpStream, request_line: &String, webroot: Option<Arc<Mutex<Dir<'static>>>>) {
+fn route_get(writer: BufWriter<&TcpStream>, request_line: &String, webroot: Option<Arc<Mutex<Dir<'static>>>>) {
     let pos = request_line[4..].find(" ").unwrap_or(0);
     let path = request_line[4..pos + 4].to_string();
 
     match (webroot, path) {
         (Some(webroot), path) if path.starts_with("/webroot") =>
-            route_get_webroot(stream, &path[9..], webroot),
-        (_, _) => route_not_found(stream)
+            route_get_webroot(writer, &path[9..], webroot),
+        (_, _) => route_not_found(writer)
     };
 }
 
@@ -110,7 +111,7 @@ pub struct Input {
 
 // TODO function as callback with string method string paylod -> Json
 
-fn route_post(stream: &mut TcpStream, request_line: &String, headers: &[String], on_request: Arc<Mutex<Option<RequestCallback>>>) {
+fn route_post(writer: BufWriter<&TcpStream>, mut reader: BufReader<&TcpStream>, request_line: &String, headers: &[String], on_request: Arc<Mutex<Option<RequestCallback>>>) {
     let pos = request_line[15..].find(" ").unwrap_or(0);
     let method = request_line[15..pos + 15].to_string();
     let content_length = headers.iter().find_map(|header| {
@@ -122,7 +123,7 @@ fn route_post(stream: &mut TcpStream, request_line: &String, headers: &[String],
     }).unwrap_or(0);
 
     let mut payload: Vec<u8> =  vec![0; content_length];
-    stream.read_exact(&mut payload).unwrap();
+    let res = reader.read_exact(&mut payload);
     let payload= str::from_utf8(payload.as_slice()).unwrap_or("");
 
 
@@ -144,7 +145,7 @@ fn route_post(stream: &mut TcpStream, request_line: &String, headers: &[String],
         number: 222,
     };
     let json = crate::request::get_output(&res);
-    send_json(stream, &json, "HTTP/1.1 200 OK");
+    send_json(writer, &json, "HTTP/1.1 200 OK");
     // match (webroot, path) {
     //     (Some(webroot), path) if path.starts_with("/webroot") =>
     //         route_get_webroot(stream, &path[9..], webroot),
@@ -152,41 +153,44 @@ fn route_post(stream: &mut TcpStream, request_line: &String, headers: &[String],
     // };
 }
 
-fn route_get_webroot(stream: &mut TcpStream, path: &str, webroot: Arc<Mutex<Dir<'static>>>) {
+fn route_get_webroot(writer: BufWriter<&TcpStream>, path: &str, webroot: Arc<Mutex<Dir<'static>>>) {
     match webroot
             .lock()
             .unwrap()
             .get_file(path) 
             .map(|file| file.contents()) {
         Some(bytes) => {
-            send_html_bytes(stream, bytes, "HTTP/1.1 200 OK");
+            send_html_bytes(writer, bytes, "HTTP/1.1 200 OK");
         },
-        None => route_not_found(stream)
+        None => route_not_found(writer)
     };    
 }
 
-fn route_not_found(stream: &TcpStream) {
-    send_html(stream, &html::not_found(), "HTTP/1.1 404 NOT FOUND"); 
+fn route_not_found(writer: BufWriter<&TcpStream>) {
+    send_html(writer, &html::not_found(), "HTTP/1.1 404 NOT FOUND"); 
 }
 
-fn send_html(mut stream: &TcpStream, html: &str, status_line: &str) {
+fn send_html(mut writer: BufWriter<&TcpStream>, html: &str, status_line: &str) {
     let length = html.len();
     
     let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{html}");
-    stream.write_all(response.as_bytes()).unwrap();
+    writer.write_all(response.as_bytes()).unwrap();
+    writer.flush().unwrap();
 }
 
-fn send_json(mut stream: &TcpStream, json: &str, status_line: &str) {
+fn send_json(mut writer: BufWriter<&TcpStream>, json: &str, status_line: &str) {
     let length = json.len();
     
     let response = format!("{status_line}\r\nContent-Length: {length}\r\nContent-Type: application/json\r\n\r\n{json}");
-    stream.write_all(response.as_bytes()).unwrap();
+    writer.write_all(response.as_bytes()).unwrap();
+    writer.flush().unwrap();
 }
 
-fn send_html_bytes(stream: &mut TcpStream, html: &[u8], status_line: &str) {
+fn send_html_bytes(mut writer: BufWriter<&TcpStream>, html: &[u8], status_line: &str) {
     let length = html.len();
     
     let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n");
-    stream.write_all(response.as_bytes()).unwrap();
-    stream.write_all(html).unwrap();
+    writer.write_all(response.as_bytes()).unwrap();
+    writer.write_all(html).unwrap();
+    writer.flush().unwrap();
 }
