@@ -1,7 +1,7 @@
 use std::{sync::{mpsc::{channel, Receiver, Sender}, Arc, Mutex}, thread::{self, JoinHandle}};
 
 
-pub type RequestCallback = Box<dyn FnOnce(String, String) -> String + Send + 'static>;
+pub type RequestCallback = Box<dyn FnOnce(&str, &str) -> String + Send + 'static>;
 
 pub struct ThreadPool {
     workers: Vec<Worker>,

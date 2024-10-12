@@ -7,7 +7,7 @@ use std::rc::Rc;
 
 use include_dir::Dir;
 
-use crate::{application::Application, bounds::Bounds, httpserver::HttpServer, params::Params, request::Request};
+use crate::{application::Application, bounds::Bounds, httpserver::HttpServer, params::Params, request::Request, threadpool::RequestCallback};
 
 #[cfg(target_os = "linux")]
 use crate::linux::webview::WebView as WebViewImpl;
@@ -96,7 +96,7 @@ pub struct WebViewBuilder {
     default_contextmenu: bool,
     webroot: Option<Dir<'static>>,
     http_server: Option<HttpServer>,
-    on_http_request: Option<Box<dyn FnOnce(String, String) -> String + Send + 'static>>
+    on_http_request: Option<RequestCallback>
 
 }
 
@@ -271,7 +271,7 @@ impl WebViewBuilder {
         self
     }
 
-    pub fn on_http_request<F: FnOnce(String, String) -> String + Send + 'static>(
+    pub fn on_http_request<F: FnOnce(&str, &str) -> String + Send + 'static>(
         mut self,
         on_request: F,
     )->Self {

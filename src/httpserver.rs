@@ -128,7 +128,7 @@ fn route_post(stream: &mut TcpStream, request_line: &String, headers: &[String],
 
     let mut on_request = on_request.lock().unwrap();
     if let Some(on_request) = on_request.take() {
-        let res = on_request(method, payload.to_string()); // TODO Anstatt String &str!!!!!!!!!!!!!!!!!!
+        let res = on_request(&method, payload);
         println!("Req:  {}", res);
     }
 

@@ -38,8 +38,8 @@ fn on_activate(app: &Application)->WebView {
                 .port(8888)
                 .build()
         )
-        .on_http_request(|cmd: String, json|{
-            match cmd.as_str() {
+        .on_http_request(|cmd, json|{
+            match cmd {
                 "cmd1" => cmd1_http(json),
                 _ => "{}".to_string()
                 }
@@ -74,7 +74,7 @@ fn cmd1(request: &Request, id: String, json: String) {
     })
 }
 
-fn cmd1_http(json: String)->String {
+fn cmd1_http(json: &str)->String {
     let input: Input = request::get_input(&json);
     let res = Output {
         email: "uriegel@hotmail.de".to_string(),
