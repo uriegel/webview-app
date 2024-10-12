@@ -92,15 +92,30 @@ fn route_get(stream: &mut TcpStream, request_line: &String, webroot: Option<Arc<
     };
 }
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Output {
+    pub text: String,
+    pub email: String,
+    pub number: i32
+}
 fn route_post(stream: &mut TcpStream, request_line: &String, webroot: Option<Arc<Mutex<Dir<'static>>>>) {
     let pos = request_line[4..].find(" ").unwrap_or(0);
     let path = request_line[4..pos + 4].to_string();
 
-    match (webroot, path) {
-        (Some(webroot), path) if path.starts_with("/webroot") =>
-            route_get_webroot(stream, &path[9..], webroot),
-        (_, _) => route_not_found(stream)
+
+    let res = Output {
+        email: "uriegel@hotmail.de".to_string(),
+        text: "Return fom cmd2  sd fd fdsf dsfdsg fdg dfg dfgdfgfdgdfgdfgdffdg dfg dfg dfgdfg dfg dfgdfg dfg dfg".to_string(),
+        number: 222,
     };
+    let json = crate::request::get_output(&res);
+    send_json(stream, &json, "HTTP/1.1 200 OK");
+    // match (webroot, path) {
+    //     (Some(webroot), path) if path.starts_with("/webroot") =>
+    //         route_get_webroot(stream, &path[9..], webroot),
+    //     (_, _) => route_not_found(stream)
+    // };
 }
 
 fn route_get_webroot(stream: &mut TcpStream, path: &str, webroot: Arc<Mutex<Dir<'static>>>) {
@@ -124,6 +139,13 @@ fn send_html(mut stream: &TcpStream, html: &str, status_line: &str) {
     let length = html.len();
     
     let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{html}");
+    stream.write_all(response.as_bytes()).unwrap();
+}
+
+fn send_json(mut stream: &TcpStream, json: &str, status_line: &str) {
+    let length = json.len();
+    
+    let response = format!("{status_line}\r\nContent-Length: {length}\r\nContent-Type: application/json\r\n\r\n{json}");
     stream.write_all(response.as_bytes()).unwrap();
 }
 
