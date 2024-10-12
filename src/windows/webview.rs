@@ -47,7 +47,7 @@ impl WebView {
         };
         let html_ok = utf_16_null_terminiated(html::ok());
         let html_not_found = utf_16_null_terminiated(&html::not_found());
-        let script = javascript::get(params.without_native_titlebar, params.title, true, false);
+        let script = javascript::get(params.without_native_titlebar, params.title, true, false, params.http_port.unwrap_or(0));
         let init_script = utf_16_null_terminiated(&script);
         let settings = WebViewAppSettings { 
             title: title.as_ptr(),
