@@ -51,6 +51,7 @@ fn run(port: u32, webroot: Option<Arc<Mutex<Dir<'static>>>>) {
 }
 
 fn handle_connection(mut stream: TcpStream, webroot: Option<Arc<Mutex<Dir<'static>>>>) {
+    stream.set_nodelay(true).unwrap(); // disables Nagle algorithm
     loop {
         let buf_reader = BufReader::new(&stream);
         let headers: Vec<_> = buf_reader    
