@@ -5,7 +5,7 @@ use gtk::glib::{Bytes, MainContext};
 use gtk::Builder;
 use include_dir::Dir;
 use webkit6::prelude::*;
-use webkit6::{soup::MessageHeaders, Settings, LoadEvent, URISchemeRequest, URISchemeResponse, WebView};
+use webkit6::{soup::MessageHeaders, LoadEvent, URISchemeRequest, URISchemeResponse, WebView};
 
 use crate::content_type;
 use crate::html;
@@ -30,8 +30,8 @@ impl WebkitView {
 
         let webview: WebView = builder.object("webview").expect("There must be a child with id 'webview' in the window.ui");
         if params.devtools {
-            let settings: Settings = builder.object("webkit_settings").expect("There must be settings by the id of 'webkit_settings' as properties to 'webview' in the window.ui");
-            settings.set_enable_developer_extras(true);
+            let settings = webkit6::prelude::WebViewExt::settings(&webview);
+            settings.unwrap().set_enable_developer_extras(true);
         }
         if !params.default_contextmenu {
             webview.connect_context_menu(|_,_,_|true);

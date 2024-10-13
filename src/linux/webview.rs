@@ -93,7 +93,7 @@ r##"
         <child>
             <object class="WebKitWebView" type-func="webkit_web_view_get_type" id="webview">
                 <property name="settings">
-                    <object class="WebKitSettings" id="webkit_settings"/>
+                    <object class="WebKitSettings" id="webkit_settings" />
                 </property>
             </object>
        </child>
@@ -101,3 +101,4 @@ r##"
 </interface>
 "##.to_string()
 }
+
