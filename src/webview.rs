@@ -104,7 +104,7 @@ impl WebViewBuilder {
     /// 
     /// Call this function when all settings are set.
     pub fn build(self)->WebView {
-        let title = self.title.clone().unwrap_or_else(||{"Webview App".to_string()});
+        let title = self.title;
         let url = self.url.clone().unwrap_or_else(||{"about:blank".to_string()});
 
         let bounds = Bounds {
@@ -118,7 +118,7 @@ impl WebViewBuilder {
         let webroot = self.webroot.map(|webroot| Arc::new(Mutex::new(webroot)));
 
         let params = Params {
-            title: &title,
+            title,
             app: &self.app,
             bounds,
             save_bounds: self.save_bounds,

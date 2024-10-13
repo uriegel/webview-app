@@ -47,7 +47,7 @@ impl WebView {
         let webview = WebkitView::new(&builder, webkitview_params);
 
         let window: ApplicationWindow = builder.object("window").unwrap();
-        window.set_title(Some(params.title));
+        params.title.inspect(|t| window.set_title(Some(t)));
         window.set_application(Some(&params.app.app.app));
         window.set_default_width(bounds.width.unwrap_or(800));
         window.set_default_height(bounds.height.unwrap_or(800));
@@ -73,7 +73,7 @@ impl WebView {
         window.present();           
         Self {
             window,
-            webview
+            webview 
         }
     }
 

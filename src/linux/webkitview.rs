@@ -1,7 +1,8 @@
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 use gtk::gio::MemoryInputStream;
-use gtk::glib::{Bytes, MainContext};
+use gtk::glib::{self, clone, spawn_future_local, timeout_future_with_priority, Bytes, MainContext, Priority};
 use gtk::Builder;
 use include_dir::Dir;
 use webkit6::prelude::*;
@@ -29,6 +30,7 @@ impl WebkitView {
     pub fn new(builder: &Builder, params: WebkitViewParams) -> Self {
 
         let webview: WebView = builder.object("webview").expect("There must be a child with id 'webview' in the window.ui");
+        webview.set_visible(false);
         if params.devtools {
             let settings = webkit6::prelude::WebViewExt::settings(&webview);
             settings.unwrap().set_enable_developer_extras(true);
@@ -52,12 +54,22 @@ impl WebkitView {
         }
 
         res.webview.connect_load_changed(move|webview, evt| {
-            let webview = webview.clone();
             if evt == LoadEvent::Committed {
-                MainContext::default().spawn_local(async move {
+                MainContext::default().spawn_local(clone!(
+                    #[weak]
+                    webview,
+                    async move {
                     let script = javascript::get(false, "", false, false);
                     webview.evaluate_javascript_future(&script, None, None).await.expect("error in initial running script");
-                });
+                }));
+                spawn_future_local(clone!(
+                    #[weak]
+                    webview,
+                    async move {
+                        timeout_future_with_priority(Priority::DEFAULT, Duration::from_millis(20)).await;
+                        webview.set_visible(true);
+                    }
+                ));                
             }
         });
 

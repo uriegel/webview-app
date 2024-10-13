@@ -4,10 +4,11 @@
     <requires lib="libadwaita" version="1.0"/>
     <requires lib="webkitgtk" version="6.0"/>
     <object class="GtkApplicationWindow" id="window">
+        <property name="title">Linux Titlebar 👍</property>
         <property name="titlebar">
             <object class="AdwHeaderBar">
                 <child>
-                <object class="GtkButton">
+                <object class="GtkButton" id="button">
                     <property name="label">Devtools</property>
                 </object>
                 </child>
@@ -18,6 +19,7 @@
                 <property name="settings">
                     <object class="WebKitSettings" id="webkit_settings" />
                 </property>
+                <property name="visible">False</property>
             </object>
        </child>
     </object>
