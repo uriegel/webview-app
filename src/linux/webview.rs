@@ -51,7 +51,6 @@ impl WebView {
         window.set_application(Some(&params.app.app.app));
         window.set_default_width(bounds.width.unwrap_or(800));
         window.set_default_height(bounds.height.unwrap_or(800));
-        window.present();           
 
         if params.save_bounds {
             let gtkwindow = window.clone();
@@ -70,6 +69,8 @@ impl WebView {
         if let Some(with_builder) = params.with_builder {
             with_builder(&builder);
         }
+
+        window.present();           
         Self {
             window,
             webview
