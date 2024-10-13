@@ -9,6 +9,10 @@ body {
     height: 100px;
 }
 
+.hidden {
+    display: none;
+}
+
 @media (prefers-color-scheme: dark) {
     body {
         background-color: rgb(56, 56, 56);
