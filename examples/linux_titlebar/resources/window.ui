@@ -7,10 +7,10 @@
         <property name="title">Linux Titlebar 👍</property>
         <property name="titlebar">
             <object class="AdwHeaderBar">
-                <child>
-                <object class="GtkButton" id="button">
-                    <property name="label">Devtools</property>
-                </object>
+                <child type="end">
+                    <object class="GtkButton" id="button">
+                        <property name="label">Devtools</property>
+                    </object>
                 </child>
             </object>
         </property>
