@@ -13,6 +13,7 @@ mod javascript;
 mod html;
 
 // TODO Windows res and req scheme
+// TODO Windows Example without titlebar
 // TODO fs_extra::copy_items_with_progress
 // TODO Trash: https://docs.rs/trash/latest/trash/
 // TODO Windows Headerbar 

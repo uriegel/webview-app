@@ -24,7 +24,8 @@ impl WebView {
             else
                 { params.bounds};
 
-        let title = utf_16_null_terminiated(params.title);
+        let title = params.title.unwrap_or("Webview App".to_string());
+        let title16 = utf_16_null_terminiated(&title);
         let with_webroot = params.webroot.is_some();
        
         let (url, custom_resource_scheme) = match (params.debug_url, with_webroot) {
@@ -45,10 +46,10 @@ impl WebView {
         };
         let html_ok = utf_16_null_terminiated(html::ok());
         let html_not_found = utf_16_null_terminiated(&html::not_found());
-        let script = javascript::get(params.without_native_titlebar, params.title, true, false);
+        let script = javascript::get(params.without_native_titlebar, &title, true, false);
         let init_script = utf_16_null_terminiated(&script);
         let settings = WebViewAppSettings { 
-            title: title.as_ptr(),
+            title: title16.as_ptr(),
             user_data_path: user_data_path.as_ptr(),
             html_ok: html_ok.as_ptr(),
             html_not_found: html_not_found.as_ptr(),
