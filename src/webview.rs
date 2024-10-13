@@ -122,8 +122,6 @@ impl WebViewBuilder {
             debug_url: self.debug_url.clone(),
             #[cfg(target_os = "windows")]
             without_native_titlebar: self.without_native_titlebar,
-            #[cfg(target_os = "linux")]    
-            titlebar: self.titlebar,
             devtools: self.devtools,
             default_contextmenu: self.default_contextmenu,
             webroot,

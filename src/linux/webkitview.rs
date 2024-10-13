@@ -25,9 +25,7 @@ pub struct WebkitViewParams<'a> {
 }
 
 impl WebkitView {
-    pub fn new(params: WebkitViewParams) -> Self {
-        let webview = WebView::builder()
-            .build();
+    pub fn new(webview: WebView, params: WebkitViewParams) -> Self {
         if params.devtools {
             let settings = webkit6::prelude::WebViewExt::settings(&webview);
             settings.unwrap().set_enable_developer_extras(true);

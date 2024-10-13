@@ -1,8 +1,7 @@
 use std::{fs, path::Path};
 
-use adw::HeaderBar;
 use gtk::prelude::*;
-use gtk::{ApplicationWindow, Widget};
+use gtk::{ApplicationWindow};
 
 use crate::request::Request;
 use crate::{bounds::Bounds, params::Params};
@@ -37,27 +36,20 @@ impl WebView {
             devtools: params.devtools,
             webroot: params.webroot,
         };
-        let webview = WebkitView::new(webkitview_params);
 
-        let window = ApplicationWindow::builder()
-            .title(params.title)
-            .application(&params.app.app.app)
-            .default_width(bounds.width.unwrap_or(800))
-            .default_height(bounds.height.unwrap_or(600))
-            .build();
+        let builder = gtk::Builder::from_string(get_resource_ui().as_str()); // todo &str
+        let gtkwebview: webkit6::WebView = builder.object("webview").expect("There must be a child with id 'webview' in the window.ui");
+        let webview = WebkitView::new(gtkwebview, webkitview_params);
 
-        let headerbar: Widget = 
-            match params.titlebar {
-                Some(titlebar) => (*titlebar)(&params.app.app.app, &webview.webview),
-                None => HeaderBar::new().upcast::<Widget>()
-            };
-        window.set_child(Some(&webview.webview));
-        window.set_titlebar(Some(&headerbar));
+        let window: ApplicationWindow = builder.object("window").unwrap();
+        window.set_title(Some(params.title));
+        window.set_application(Some(&params.app.app.app));
+        window.set_default_width(bounds.width.unwrap_or(800));
+        window.set_default_height(bounds.height.unwrap_or(800));
         window.present();           
 
         if params.save_bounds {
             let gtkwindow = window.clone();
-            //let config_dir = config_dir.to_string();
             window.connect_close_request(move|_| {
                 let bounds = Bounds {
                     x: None,
@@ -86,6 +78,23 @@ impl WebView {
     ) {
         self.webview.connect_request(on_request);
     }   
+}
 
-
+fn get_resource_ui()->String {
+r##"
+<?xml version='1.0' encoding='UTF-8'?>
+<interface>
+    <requires lib="gtk" version="4.12"/>
+    <requires lib="libadwaita" version="1.0"/>
+    <requires lib="webkitgtk" version="6.0"/>
+    <object class="GtkApplicationWindow" id="window">
+        <property name="titlebar">
+            <object class="AdwHeaderBar"/>
+        </property>
+        <child>
+            <object class="WebKitWebView" type-func="webkit_web_view_get_type" id="webview"/>
+        </child>
+    </object>
+</interface>
+"##.to_string()
 }
