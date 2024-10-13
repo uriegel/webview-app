@@ -129,7 +129,9 @@ impl WebViewBuilder {
             devtools: self.devtools,
             default_contextmenu: self.default_contextmenu,
             webroot,
+            #[cfg(target_os = "linux")]
             builder_path: self.builder_path,
+            #[cfg(target_os = "linux")]#[cfg(target_os = "linux")]
             with_builder: self.with_builder
         };
 

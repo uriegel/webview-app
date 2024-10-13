@@ -27,11 +27,10 @@ impl WebView {
         let title = utf_16_null_terminiated(params.title);
         let with_webroot = params.webroot.is_some();
        
-        let (url, custom_resource_scheme) = match (params.debug_url, with_webroot, params.http_port) {
-            (None, true, None) => (utf_16_null_terminiated("req://webroot/index.html"), true),
-            (None, true, Some(port)) => (utf_16_null_terminiated(&format!("http://localhost:{}/webroot/index.html", port)), false),
-            (Some(debug_url), _, _) => (utf_16_null_terminiated(&debug_url), false),
-            (_, _, _) => (utf_16_null_terminiated(params.url), false)
+        let (url, custom_resource_scheme) = match (params.debug_url, with_webroot) {
+            (None, true) => (utf_16_null_terminiated("req://webroot/index.html"), true),
+            (Some(debug_url), _) => (utf_16_null_terminiated(&debug_url), false),
+            (_, _) => (utf_16_null_terminiated(params.url), false)
         };
 
         let user_data_path = utf_16_null_terminiated(local_path.as_os_str().to_str().expect("user data path invalid"));
@@ -43,11 +42,10 @@ impl WebView {
             devtools: params.devtools,
             can_close: RefCell::new(Box::new(||true)),
             on_request: RefCell::new(Box::new(|_,_,_,_|false)),
-            _http_port: params.http_port
         };
         let html_ok = utf_16_null_terminiated(html::ok());
         let html_not_found = utf_16_null_terminiated(&html::not_found());
-        let script = javascript::get(params.without_native_titlebar, params.title, true, false, params.http_port.unwrap_or(0));
+        let script = javascript::get(params.without_native_titlebar, params.title, true, false);
         let init_script = utf_16_null_terminiated(&script);
         let settings = WebViewAppSettings { 
             title: title.as_ptr(),
@@ -119,7 +117,6 @@ pub struct WebViewData {
     webroot: Option<Arc<Mutex<Dir<'static>>>>,
     can_close: RefCell<Box<dyn Fn()->bool + 'static>>,
     on_request: RefCell<Box<dyn Fn(&Request, String, String, String) -> bool + 'static>>,
-    _http_port: Option<u32>
 }
 
 impl WebViewData {

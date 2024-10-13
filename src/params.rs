@@ -1,9 +1,9 @@
-use std::{rc::Rc, sync::{Arc, Mutex}};
+use std::sync::{Arc, Mutex};
+
+#[cfg(target_os = "linux")]    
+use std::rc::Rc;
 
 use include_dir::Dir;
-
-// #[cfg(target_os = "linux")]    
-// use adw::Application;
 
 use crate::{application::Application, bounds::Bounds};
 
