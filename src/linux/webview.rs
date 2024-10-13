@@ -38,8 +38,7 @@ impl WebView {
         };
 
         let builder = gtk::Builder::from_string(get_resource_ui().as_str()); // todo &str
-        let gtkwebview: webkit6::WebView = builder.object("webview").expect("There must be a child with id 'webview' in the window.ui");
-        let webview = WebkitView::new(gtkwebview, webkitview_params);
+        let webview = WebkitView::new(&builder, webkitview_params);
 
         let window: ApplicationWindow = builder.object("window").unwrap();
         window.set_title(Some(params.title));
@@ -92,8 +91,12 @@ r##"
             <object class="AdwHeaderBar"/>
         </property>
         <child>
-            <object class="WebKitWebView" type-func="webkit_web_view_get_type" id="webview"/>
-        </child>
+            <object class="WebKitWebView" type-func="webkit_web_view_get_type" id="webview">
+                <property name="settings">
+                    <object class="WebKitSettings" id="webkit_settings"/>
+                </property>
+            </object>
+       </child>
     </object>
 </interface>
 "##.to_string()
