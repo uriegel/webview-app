@@ -22,7 +22,6 @@ pub struct WebkitViewParams<'a> {
     pub devtools: bool,
     pub default_contextmenu: bool,
     pub webroot: Option<Arc<Mutex<Dir<'static>>>>,
-    pub http_port: Option<u32>
 }
 
 impl WebkitView {
@@ -42,23 +41,20 @@ impl WebkitView {
         };
 
         res.enable_request_scheme();
-        match (params.debug_url, params.webroot, params.http_port) {
-            (None, Some(webroot), None) => {
+        match (params.debug_url, params.webroot) {
+            (None, Some(webroot)) => {
                 res.webview.load_uri("res://webroot/index.html");
                 res.enable_resource_scheme(webroot)
             },
-            (None, Some(_), Some(port)) 
-                => res.webview.load_uri(&format!("http://localhost:{}/webroot/index.html", port)),
-            (Some(debug_url), _, _) => res.webview.load_uri(&debug_url),
+            (Some(debug_url), _) => res.webview.load_uri(&debug_url),
             _ => res.webview.load_uri(params.url)
         }
 
-        let http_port = params.http_port.clone();
         res.webview.connect_load_changed(move|webview, evt| {
             let webview = webview.clone();
             if evt == LoadEvent::Committed {
                 MainContext::default().spawn_local(async move {
-                    let script = javascript::get(false, "", false, false, http_port.unwrap_or(0));
+                    let script = javascript::get(false, "", false, false);
                     webview.evaluate_javascript_future(&script, None, None).await.expect("error in initial running script");
                 });
             }

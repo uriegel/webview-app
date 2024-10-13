@@ -25,6 +25,5 @@ pub struct Params<'a> {
     pub devtools: bool,
     pub default_contextmenu: bool,
     pub webroot: Option<Arc<Mutex<Dir<'static>>>>,
-    pub http_port: Option<u32>
 }
 

@@ -7,7 +7,7 @@ use std::rc::Rc;
 
 use include_dir::Dir;
 
-use crate::{application::Application, bounds::Bounds, httpserver::HttpServer, params::Params, request::Request, threadpool::RequestCallback};
+use crate::{application::Application, bounds::Bounds, params::Params, request::Request};
 
 #[cfg(target_os = "linux")]
 use crate::linux::webview::WebView as WebViewImpl;
@@ -60,8 +60,6 @@ impl WebView {
             devtools: false,
             default_contextmenu : true,
             webroot: None,
-            http_server: None,
-            on_http_request: None,
         }
     }
 
@@ -95,8 +93,6 @@ pub struct WebViewBuilder {
     devtools: bool,
     default_contextmenu: bool,
     webroot: Option<Dir<'static>>,
-    http_server: Option<HttpServer>,
-    on_http_request: Option<RequestCallback>
 }
 
 impl WebViewBuilder {
@@ -117,9 +113,6 @@ impl WebViewBuilder {
 
         let webroot = self.webroot.map(|webroot| Arc::new(Mutex::new(webroot)));
 
-        let http_port = self.http_server.as_ref().map(|val|val.port);
-        self.http_server.inspect(|http_server|http_server.run(webroot.clone(), self.on_http_request));
-
         let params = Params {
             title: &title,
             app: &self.app,
@@ -134,7 +127,6 @@ impl WebViewBuilder {
             devtools: self.devtools,
             default_contextmenu: self.default_contextmenu,
             webroot,
-            http_port,
         };
 
         WebView { 
@@ -264,16 +256,6 @@ impl WebViewBuilder {
         self.default_contextmenu = false;
         self
     }
-
-    pub fn with_http_server(mut self, val: HttpServer)->Self {
-        self.http_server = Some(val);
-        self
-    }
-
-    pub fn on_http_request(mut self, on_request: RequestCallback)->Self {
-        self.on_http_request.replace(on_request);
-        self
-    }   
 
 
 }

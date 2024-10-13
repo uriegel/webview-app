@@ -112,23 +112,5 @@
             "args": [],
             "cwd": "${workspaceFolder}"
         },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug example 'Web Server'",
-            "cargo": {
-                "args": [
-                    "build",
-                    "--example=hello_webserver",
-                    "--package=webview_app"
-                ],
-                "filter": {
-                    "name": "hello_webserver",
-                    "kind": "example"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-    ]
+     ]
 }

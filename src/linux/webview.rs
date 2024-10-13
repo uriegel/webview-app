@@ -36,7 +36,6 @@ impl WebView {
             default_contextmenu: params.default_contextmenu,
             devtools: params.devtools,
             webroot: params.webroot,
-            http_port: params.http_port
         };
         let webview = WebkitView::new(webkitview_params);
 

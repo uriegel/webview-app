@@ -23,7 +23,7 @@ impl <'a>RequestData<'a> {
     }
 }
 
-pub fn get(no_native_titlebar: bool, title: &str, windows: bool, files_drop: bool, port: u32)->String {
+pub fn get(no_native_titlebar: bool, title: &str, windows: bool, files_drop: bool)->String {
     format!(
 r##"
 {}
@@ -42,15 +42,6 @@ var WebView = (() => {{
         onEventsCreated(id)
     }}
 
-    const httpRequest = async (method, data) => {{
-        const res = await fetch(`http://localhost:{port}/requests/${{method}}`, {{
-            method: 'POST',
-            headers: {{ 'Content-Type': 'application/json' }},
-            body: JSON.stringify(data)
-        }})
-        return await res.json()
-    }}
-
     let evtHandler = () => {{ }}
     const setDroppedFilesEventHandler = eh => evtHandler = eh
 
@@ -65,7 +56,6 @@ var WebView = (() => {{
         showDevTools,
         startDragFiles,
         request,
-        httpRequest,
         registerEvents,
         dropFiles,
         setDroppedFilesEventHandler,
