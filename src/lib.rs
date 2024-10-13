@@ -19,5 +19,5 @@ mod html;
 // TODO Dark backgroundcolor
 // TODO DragDrop
 // TODO Windows ICON: build.rs: make resource file with icon 1, version 
-// TODO Simple webserver with range for videos
+
 

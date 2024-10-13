@@ -37,9 +37,13 @@ impl WebView {
             webroot: params.webroot,
         };
 
-//        let builder = gtk::Builder::from_string(get_resource_ui().as_str()); // TODO &str
-        // TODO ORG/GTK
-        let builder = gtk::Builder::from_resource("/org/gtk_rs/example/gtk.ui");
+        let builder = 
+            match params.builder_path {
+                Some(builder_path) if params.with_builder.is_some() => 
+                    gtk::Builder::from_resource(&builder_path),
+                _ => 
+                    gtk::Builder::from_string(get_resource_ui()) 
+            };
         let webview = WebkitView::new(&builder, webkitview_params);
 
         let window: ApplicationWindow = builder.object("window").unwrap();
@@ -62,7 +66,10 @@ impl WebView {
                 bounds.save(&config_dir);
                 false.into()
             });
-        }      
+        }   
+        if let Some(with_builder) = params.with_builder {
+            with_builder(&builder);
+        }
         Self {
             window,
             webview
@@ -81,7 +88,7 @@ impl WebView {
     }   
 }
 
-fn get_resource_ui()->String {
+fn get_resource_ui()->&'static str {
 r##"
 <?xml version='1.0' encoding='UTF-8'?>
 <interface>
@@ -101,6 +108,6 @@ r##"
        </child>
     </object>
 </interface>
-"##.to_string()
+"##
 }
 

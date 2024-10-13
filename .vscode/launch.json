@@ -94,23 +94,5 @@
             "args": [],
             "cwd": "${workspaceFolder}"
         },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug example 'Linux titlebar'",
-            "cargo": {
-                "args": [
-                    "build",
-                    "--example=linux_titlebar",
-                    "--package=webview_app"
-                ],
-                "filter": {
-                    "name": "linux_titlebar",
-                    "kind": "example"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
      ]
 }

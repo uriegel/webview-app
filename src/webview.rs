@@ -55,7 +55,9 @@ impl WebView {
             height: None,
             save_bounds: false,
             #[cfg(target_os = "linux")]
-            titlebar: None,
+            builder_path: None,
+            #[cfg(target_os = "linux")]
+            with_builder: None,
             without_native_titlebar: false,
             devtools: false,
             default_contextmenu : true,
@@ -88,7 +90,9 @@ pub struct WebViewBuilder {
     height: Option<i32>,
     save_bounds: bool,
     #[cfg(target_os = "linux")]    
-    titlebar: Option<Rc<dyn Fn(&adw::Application, &webkit6::WebView)->gtk::Widget>>,
+    with_builder: Option<Rc<dyn Fn(&gtk::Builder)>>,
+    #[cfg(target_os = "linux")]    
+    builder_path: Option<String>,
     without_native_titlebar: bool,
     devtools: bool,
     default_contextmenu: bool,
@@ -125,6 +129,8 @@ impl WebViewBuilder {
             devtools: self.devtools,
             default_contextmenu: self.default_contextmenu,
             webroot,
+            builder_path: self.builder_path,
+            with_builder: self.with_builder
         };
 
         WebView { 
@@ -176,9 +182,10 @@ impl WebViewBuilder {
     }
 
     #[cfg(target_os = "linux")]
-    /// Callback to set a custom HeaderBar in Linux WebView app
-    pub fn titlebar(mut self, val: impl Fn(&adw::Application, &webkit6::WebView)->gtk::Widget + 'static)->WebViewBuilder {
-        self.titlebar = Some(Rc::new(val));
+    /// Callback to create the app via a ui resource
+    pub fn with_builder(mut self, builder_path: String, on_build: impl Fn(&gtk::Builder) + 'static)->WebViewBuilder {
+        self.builder_path = Some(builder_path);
+        self.with_builder = Some(Rc::new(on_build));
         self
     }        
 
