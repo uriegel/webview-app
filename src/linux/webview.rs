@@ -37,7 +37,9 @@ impl WebView {
             webroot: params.webroot,
         };
 
-        let builder = gtk::Builder::from_string(get_resource_ui().as_str()); // todo &str
+//        let builder = gtk::Builder::from_string(get_resource_ui().as_str()); // TODO &str
+        // TODO ORG/GTK
+        let builder = gtk::Builder::from_resource("/org/gtk_rs/example/gtk.ui");
         let webview = WebkitView::new(&builder, webkitview_params);
 
         let window: ApplicationWindow = builder.object("window").unwrap();

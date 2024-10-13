@@ -1,0 +1,13 @@
+[package]
+name = "linux_titlebar"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+webview_app = { path = "../../../webview-app" }
+
+
+gtk = { version = "0.9.1", package = "gtk4", features = ["v4_14"]}
+
+[build-dependencies]
+glib-build-tools = "0.20.0"
