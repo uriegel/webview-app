@@ -1,7 +1,7 @@
 use std::{fs, path::Path};
 
 use gtk::prelude::*;
-use gtk::{ApplicationWindow};
+use gtk::ApplicationWindow;
 
 use crate::request::Request;
 use crate::{bounds::Bounds, params::Params};
