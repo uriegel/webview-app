@@ -132,10 +132,6 @@ const WEBVIEWNoNativeTitlebarInitialize = () => {{
         restore.onclick = () => window.chrome.webview.postMessage("RestoreWindow")
         restore.style.display = 'none'
     }}
-    const hamburger = document.getElementById('$HAMBURGER$')
-    if (hamburger) 
-        hamburger.onclick = () => callback.OnHamburger(hamburger.offsetLeft / document.body.offsetWidth, (hamburger.offsetTop + hamburger.offsetHeight) / document.body.offsetHeight)
-        
 }}
 WEBVIEWNoNativeTitlebarInitialize()
         "##, title).to_string()
