@@ -30,9 +30,9 @@ impl WebView {
        
         let (url, custom_resource_scheme) = match (params.url, params.debug_url, with_webroot) {
             (None, None, true) => (utf_16_null_terminiated("req://webroot/index.html"), true),
-            (Some(url), None, true) => (utf_16_null_terminiated("req://webroot/index.html"), true),
-            (Some(debug_url), _) => (utf_16_null_terminiated(&debug_url), false),
-            (_, _) => (utf_16_null_terminiated(params.url), false)
+            (Some(url), None, _) => (utf_16_null_terminiated(&url), true),
+            (_, Some(debug_url), _) => (utf_16_null_terminiated(&debug_url), false),
+            (_, _, _) => (utf_16_null_terminiated("about:plain"), false)
         };
 
         let user_data_path = utf_16_null_terminiated(local_path.as_os_str().to_str().expect("user data path invalid"));
