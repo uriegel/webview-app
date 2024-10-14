@@ -28,8 +28,9 @@ impl WebView {
         let title16 = utf_16_null_terminiated(&title);
         let with_webroot = params.webroot.is_some();
        
-        let (url, custom_resource_scheme) = match (params.debug_url, with_webroot) {
-            (None, true) => (utf_16_null_terminiated("req://webroot/index.html"), true),
+        let (url, custom_resource_scheme) = match (params.url, params.debug_url, with_webroot) {
+            (None, None, true) => (utf_16_null_terminiated("req://webroot/index.html"), true),
+            (Some(url), None, true) => (utf_16_null_terminiated("req://webroot/index.html"), true),
             (Some(debug_url), _) => (utf_16_null_terminiated(&debug_url), false),
             (_, _) => (utf_16_null_terminiated(params.url), false)
         };

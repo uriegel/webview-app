@@ -137,6 +137,7 @@ const WEBVIEWNoNativeTitlebarInitialize = () => {{
             window.chrome.webview.postMessage("RestoreWindow")
             WEBVIEWsetMaximized(false)
         }}
+        restore.style.display = 'none'
     }}
 }}
 WEBVIEWNoNativeTitlebarInitialize()

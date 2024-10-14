@@ -105,7 +105,6 @@ impl WebViewBuilder {
     /// Call this function when all settings are set.
     pub fn build(self)->WebView {
         let title = self.title;
-        let url = self.url.clone().unwrap_or_else(||{"about:blank".to_string()});
 
         let bounds = Bounds {
             x: None,
@@ -122,7 +121,7 @@ impl WebViewBuilder {
             app: &self.app,
             bounds,
             save_bounds: self.save_bounds,
-            url: &url,
+            url: self.url.clone(),
             debug_url: self.debug_url.clone(),
             #[cfg(target_os = "windows")]
             without_native_titlebar: self.without_native_titlebar,

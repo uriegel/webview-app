@@ -30,7 +30,7 @@ impl WebView {
         let debug_url = params.debug_url.map(|s|s.to_string());
 
         let webkitview_params = WebkitViewParams {
-            url: params.url,
+            url: &params.url.unwrap_or("about:plain".to_string()),
             debug_url: debug_url,
             default_contextmenu: params.default_contextmenu,
             devtools: params.devtools,
