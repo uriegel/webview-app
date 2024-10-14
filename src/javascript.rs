@@ -120,16 +120,16 @@ const WEBVIEWNoNativeTitlebarInitialize = () => {{
         title.innerText = '{}'
     const close = document.getElementById('$CLOSE$')
     if (close)
-        close.onclick = () => window.close()
+        close.onclick = () => window.chrome.webview.postMessage("CloseWindow")
     const maximize = document.getElementById('$MAXIMIZE$')
     if (maximize) 
-        maximize.onclick = () => callback.MaximizeWindow()
+        maximize.onclick = () => window.chrome.webview.postMessage("MaximizeWindow")
     const minimize = document.getElementById('$MINIMIZE$')
     if (minimize)
-        minimize.onclick = () => callback.MinimizeWindow()
+        minimize.onclick = () => window.chrome.webview.postMessage("MinimizeWindow")
     const restore = document.getElementById('$RESTORE$')
     if (restore) {{
-        restore.onclick = () => callback.RestoreWindow()
+        restore.onclick = () => window.chrome.webview.postMessage("RestoreWindow")
         restore.style.display = 'none'
     }}
     const hamburger = document.getElementById('$HAMBURGER$')

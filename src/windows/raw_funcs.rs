@@ -1,11 +1,20 @@
 use std::{ffi::CString, fs, path::Path, sync::Once};
 
+#[repr(i32)] 
+pub enum ShowWindow {
+    Restore = 0,
+    Maximize = 1,
+    Minimize = 2
+}
+
 pub type FnInit = extern fn(settings: *const WebViewAppSettings);
 pub type FnRun = extern fn()->u32;
 //pub type FnExecuteScript = extern fn(*const u16)->bool;
 //pub type FnPostMessageAsString = extern fn(*const u16);
 pub type FnShowDevTools = extern fn();
 pub type FnSendText = extern fn(*const u8, len: i32);
+pub type FnShowWnd = extern fn(ShowWindow);
+pub type FnCloseWnd = extern fn();
 
 pub struct RawFuncs {
     pub init: FnInit,
@@ -14,7 +23,9 @@ pub struct RawFuncs {
 //    pub postmessage: FnPostMessageAsString,
 //    pub postjson: FnPostMessageAsJson,
     pub show_devtools: FnShowDevTools,
-    pub send_text: FnSendText
+    pub send_text: FnSendText,
+    pub show_wnd: FnShowWnd,
+    pub close_wnd: FnCloseWnd
 }
 
 #[repr(C)]
@@ -95,13 +106,18 @@ impl RawFuncs {
             let show_devtools = std::mem::transmute::<*const usize, FnShowDevTools>(fnp);
             let fnp = GetProcAddress(module, b"SendText\0".as_ptr());
             let send_text = std::mem::transmute::<*const usize, FnSendText>(fnp);
+            let fnp = GetProcAddress(module, b"ShowWnd\0".as_ptr());
+            let show_wnd = std::mem::transmute::<*const usize, FnShowWnd>(fnp);
+            let close_wnd = std::mem::transmute::<*const usize, FnCloseWnd>(fnp);
             RawFuncs {
                 init,
                 run,
  //               execute_script,
 //                postmessage,
                 show_devtools,
-                send_text
+                send_text,
+                show_wnd,
+                close_wnd,
             }
         }
     }

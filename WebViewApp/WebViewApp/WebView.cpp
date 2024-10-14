@@ -22,6 +22,12 @@ bool __stdcall ExecuteScript(wchar_t* script);
 
 const auto WM_SENDSCRIPT = WM_APP + 1;
 
+enum ShowWndType {
+    ShowWndType_Restore,
+    ShowWndType_Maximize,
+    ShowWndType_Minimize
+};
+
 using OnCloseFunc = bool(int x, int y, int w, int h, bool isMaximized);
 using OnCustomRequestFunc = void(const wchar_t* url, int urlLen, RequestResult* requestResult);
 using OnMessageFunc = void(const wchar_t* msg, int msgLen);
@@ -366,4 +372,23 @@ void __stdcall SendText(char* text, int len) {
 
 void __stdcall Free(wchar_t* txt_ptr) {
     delete[] txt_ptr;
+}
+
+int matchShowWindowType(ShowWndType type) {
+    switch (type) {
+    case ShowWndType_Minimize:
+        return 6;
+    case ShowWndType_Maximize:
+        return 3;
+    default:
+        return 9;
+    }
+}
+
+void __stdcall ShowWnd(ShowWndType type) {
+    ShowWindow(hWndWebView, matchShowWindowType(type));
+}
+
+void __stdcall CloseWnd() {
+    CloseWindow(hWndWebView);
 }

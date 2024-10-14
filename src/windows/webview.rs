@@ -5,7 +5,7 @@ use std::{cell::RefCell, path::Path, slice, sync::{Arc, Mutex, Once}};
 
 use crate::{bounds::Bounds, content_type, html, javascript::{self, RequestData}, params::Params, request::Request};
 
-use super::raw_funcs::{load_raw_funcs, RequestResult, WebViewAppSettings};
+use super::raw_funcs::{load_raw_funcs, RequestResult, ShowWindow, WebViewAppSettings};
 
 pub fn utf_16_null_terminiated(x: &str) -> Vec<u16> {
     x.encode_utf16().chain(std::iter::once(0)).collect()
@@ -171,6 +171,14 @@ impl WebViewData {
             let msg = String::from_utf16_lossy(&bytes);
             if self.devtools && msg == "devtools" 
                 { (load_raw_funcs("").show_devtools)() }
+            else if msg == "MaximizeWindow"
+                { (load_raw_funcs("").show_wnd)(ShowWindow::Maximize) }
+            else if msg == "MinimizeWindow"
+                { (load_raw_funcs("").show_wnd)(ShowWindow::Minimize) }
+            else if msg == "RestoreWindow"
+                { (load_raw_funcs("").show_wnd)(ShowWindow::Restore) }
+            else if msg == "CloseWindow"
+                { (load_raw_funcs("").close_wnd)() }
             else if msg.starts_with("request,") {
                 let request_data = RequestData::new(&msg);
 

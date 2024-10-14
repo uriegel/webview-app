@@ -5,7 +5,6 @@ edition = "2021"
 
 [dependencies]
 webview_app = { path = "../../../webview-app" }
-
 gtk = { version = "0.9.1", package = "gtk4", features = ["v4_14"]}
 webkit6 = "0.4.0"
 

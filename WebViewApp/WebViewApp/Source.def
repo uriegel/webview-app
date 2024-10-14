@@ -8,3 +8,5 @@ EXPORTS
 	ShowDevTools
 	SendText
 	Free
+	ShowWnd
+	CloseWnd
