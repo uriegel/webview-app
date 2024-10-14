@@ -62,6 +62,7 @@ impl WebView {
             on_close,
             on_custom_request,
             on_message,
+            on_maximize,
             url: url.as_ptr(),
             without_native_titlebar: params.without_native_titlebar,
             devtools: params.devtools,
@@ -199,6 +200,13 @@ extern fn on_message(msg: *const u16, msg_len: u32) {
 
 extern fn on_close(x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool { 
     get_webview().on_close(x, y, w, h, is_maximized)
+}
+
+extern fn on_maximize(is_maximized: bool) { 
+    let is_max = if is_maximized { "true" } else { "false " };
+    let script = format!("WEBVIEWsetMaximized({is_max})");   
+    let script16 = utf_16_null_terminiated(&script);    
+    (load_raw_funcs("").execute_script)(script16.as_ptr());
 }
 
 fn set_webview(params: WebViewData) {

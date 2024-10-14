@@ -29,6 +29,7 @@ enum ShowWndType {
 };
 
 using OnCloseFunc = bool(int x, int y, int w, int h, bool isMaximized);
+using OnMaximizeFunc = void(bool isMaximized);
 using OnCustomRequestFunc = void(const wchar_t* url, int urlLen, RequestResult* requestResult);
 using OnMessageFunc = void(const wchar_t* msg, int msgLen);
 wil::com_ptr<ICoreWebView2> webview;
@@ -48,6 +49,7 @@ struct WebViewAppSettings {
     OnCloseFunc* OnClose;
     OnCustomRequestFunc* OnCustomRequest;
     OnMessageFunc* OnMessage;
+    OnMaximizeFunc* OnMaximize;
     const wchar_t* url;
     bool withoutNativeTitlebar;
     bool customResourceScheme;
@@ -68,12 +70,14 @@ bool isMaximized;
 OnCloseFunc* OnClose;
 OnCustomRequestFunc* OnCustomRequest;
 OnMessageFunc* OnMessage;
+OnMaximizeFunc* OnMaximize;
 wchar_t* url { nullptr };
 auto withoutNativeTitlebar = false;
 auto customResourceScheme = false;
 bool devtools;
 bool defaultContextmenu;
 HWND hWndWebView;
+bool windowIsMaximized = false;
 
 wchar_t* SetString(const wchar_t* str) {
     auto len = wcslen(str) + 1;
@@ -97,6 +101,7 @@ void __stdcall Init(const WebViewAppSettings* settings) {
     height = settings->height;
     isMaximized = settings->isMaximized;
     OnClose = settings->OnClose;
+    OnMaximize = settings->OnMaximize;
     OnCustomRequest = settings->OnCustomRequest;
     OnMessage = settings->OnMessage;
     userDataPath = SetString(settings->userDataPath);
@@ -249,6 +254,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 RECT bounds;
                 GetClientRect(hWnd, &bounds);
                 webviewController->put_Bounds(bounds);
+                if (wParam == SIZE_MAXIMIZED && !windowIsMaximized) {
+                    OnMaximize(true);
+                    windowIsMaximized = true;
+                }
+                if (wParam == SIZE_RESTORED && windowIsMaximized) {
+                    OnMaximize(false);
+                    windowIsMaximized = false;
+                }
             }
         break;
         case WM_CLOSE:
@@ -390,5 +403,5 @@ void __stdcall ShowWnd(ShowWndType type) {
 }
 
 void __stdcall CloseWnd() {
-    CloseWindow(hWndWebView);
+    SendMessage(hWndWebView, WM_CLOSE, 0, 0);
 }

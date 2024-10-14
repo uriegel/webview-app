@@ -122,15 +122,21 @@ const WEBVIEWNoNativeTitlebarInitialize = () => {{
     if (close)
         close.onclick = () => window.chrome.webview.postMessage("CloseWindow")
     const maximize = document.getElementById('$MAXIMIZE$')
-    if (maximize) 
-        maximize.onclick = () => window.chrome.webview.postMessage("MaximizeWindow")
+    if (maximize) {{
+        maximize.onclick = () => {{
+            window.chrome.webview.postMessage("MaximizeWindow")
+            WEBVIEWsetMaximized(true)
+        }}
+    }}
     const minimize = document.getElementById('$MINIMIZE$')
     if (minimize)
         minimize.onclick = () => window.chrome.webview.postMessage("MinimizeWindow")
     const restore = document.getElementById('$RESTORE$')
     if (restore) {{
-        restore.onclick = () => window.chrome.webview.postMessage("RestoreWindow")
-        restore.style.display = 'none'
+        restore.onclick = () => {{
+            window.chrome.webview.postMessage("RestoreWindow")
+            WEBVIEWsetMaximized(false)
+        }}
     }}
 }}
 WEBVIEWNoNativeTitlebarInitialize()

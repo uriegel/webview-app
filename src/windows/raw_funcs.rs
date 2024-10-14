@@ -9,7 +9,7 @@ pub enum ShowWindow {
 
 pub type FnInit = extern fn(settings: *const WebViewAppSettings);
 pub type FnRun = extern fn()->u32;
-//pub type FnExecuteScript = extern fn(*const u16)->bool;
+pub type FnExecuteScript = extern fn(*const u16)->bool;
 //pub type FnPostMessageAsString = extern fn(*const u16);
 pub type FnShowDevTools = extern fn();
 pub type FnSendText = extern fn(*const u8, len: i32);
@@ -19,7 +19,7 @@ pub type FnCloseWnd = extern fn();
 pub struct RawFuncs {
     pub init: FnInit,
     pub run: FnRun,
-//    pub execute_script: FnExecuteScript,
+    pub execute_script: FnExecuteScript,
 //    pub postmessage: FnPostMessageAsString,
 //    pub postjson: FnPostMessageAsJson,
     pub show_devtools: FnShowDevTools,
@@ -51,6 +51,7 @@ pub struct WebViewAppSettings {
     pub on_close: extern fn(x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool,
     pub on_custom_request: extern fn(url: *const u16, url_len: u32, &mut RequestResult),
     pub on_message: extern fn(msg: *const u16, msg_len: u32),
+    pub on_maximize: extern fn(is_maximized: bool),
     pub url: *const u16,
     pub without_native_titlebar: bool,
     pub custom_resource_scheme: bool,
@@ -98,8 +99,8 @@ impl RawFuncs {
             let init = std::mem::transmute::<*const usize, FnInit>(fnp);
             let fnp = GetProcAddress(module, b"Run\0".as_ptr());
             let run = std::mem::transmute::<*const usize, FnRun>(fnp);
-//            let fnp = GetProcAddress(module, b"ExecuteScript\0".as_ptr());
-  //          let execute_script = std::mem::transmute::<*const usize, FnExecuteScript>(fnp);
+            let fnp = GetProcAddress(module, b"ExecuteScript\0".as_ptr());
+            let execute_script = std::mem::transmute::<*const usize, FnExecuteScript>(fnp);
             // let fnp = GetProcAddress(module, b"PostMessageAsString\0".as_ptr());
             //let postmessage = std::mem::transmute::<*const usize, FnPostMessageAsString>(fnp);
             let fnp = GetProcAddress(module, b"ShowDevTools\0".as_ptr());
@@ -108,11 +109,12 @@ impl RawFuncs {
             let send_text = std::mem::transmute::<*const usize, FnSendText>(fnp);
             let fnp = GetProcAddress(module, b"ShowWnd\0".as_ptr());
             let show_wnd = std::mem::transmute::<*const usize, FnShowWnd>(fnp);
+            let fnp = GetProcAddress(module, b"CloseWnd\0".as_ptr());
             let close_wnd = std::mem::transmute::<*const usize, FnCloseWnd>(fnp);
             RawFuncs {
                 init,
                 run,
- //               execute_script,
+                execute_script,
 //                postmessage,
                 show_devtools,
                 send_text,
