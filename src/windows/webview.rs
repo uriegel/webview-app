@@ -1,10 +1,10 @@
-use std::{cell::RefCell, collections::HashMap, mem, ptr, rc::Rc, sync::mpsc};
+use std::{cell::RefCell, collections::HashMap, mem, path::Path, ptr, rc::Rc, sync::mpsc};
 
 use serde::Deserialize;
 use serde_json::Value;
 use webview2_com::{
-    AddScriptToExecuteOnDocumentCreatedCompletedHandler, CoTaskMemPWSTR, CoreWebView2EnvironmentOptions, CreateCoreWebView2ControllerCompletedHandler, CreateCoreWebView2EnvironmentCompletedHandler, ExecuteScriptCompletedHandler, Microsoft::Web::WebView2::Win32::{
-        CreateCoreWebView2EnvironmentWithOptions, ICoreWebView2, ICoreWebView2Controller, ICoreWebView2EnvironmentOptions, ICoreWebView2Settings6
+    AddScriptToExecuteOnDocumentCreatedCompletedHandler, CoTaskMemPWSTR, CoreWebView2CustomSchemeRegistration, CoreWebView2EnvironmentOptions, CreateCoreWebView2ControllerCompletedHandler, CreateCoreWebView2EnvironmentCompletedHandler, ExecuteScriptCompletedHandler, Microsoft::Web::WebView2::Win32::{
+        CreateCoreWebView2EnvironmentWithOptions, ICoreWebView2, ICoreWebView2Controller, ICoreWebView2CustomSchemeRegistration, ICoreWebView2EnvironmentOptions, ICoreWebView2Settings6
     }, NavigationCompletedEventHandler, WebMessageReceivedEventHandler
 };
 
@@ -68,24 +68,27 @@ struct InvokeMessage {
 }
 
 impl WebView {
-    pub fn new(_params: Params)->WebView {
-        let frame = FrameWindow::new();
+    pub fn new(params: Params)->WebView {
+        let frame = FrameWindow::new(params.title.unwrap_or_else(||"Webview App".to_string()).as_str());
         let parent = *frame.window;
+        let app_data = std::env::var("LOCALAPPDATA").expect("No APP_DATA directory");
+        let local_path = Path::new(&app_data).join(params.app.get_appid());
 
         let environment = {
             let (tx, rx) = mpsc::channel();
 
             let options = CoreWebView2EnvironmentOptions::default();
-            unsafe { options.set_additional_browser_arguments("--enable-features=msWebView2EnableDraggableRegions".to_string()) };
-            
+            if params.without_native_titlebar {
+                unsafe { options.set_additional_browser_arguments("--enable-features=msWebView2EnableDraggableRegions".to_string()) };
+            }
+            let scheme_registration = CoreWebView2CustomSchemeRegistration::new("req".to_string());
+            unsafe { options.set_scheme_registrations(vec![Some(ICoreWebView2CustomSchemeRegistration::from(scheme_registration))]); }
 
             CreateCoreWebView2EnvironmentCompletedHandler::wait_for_async_operation(
-                Box::new(|environmentcreatedhandler| unsafe {
-                    //CreateCoreWebView2Environment(&environmentcreatedhandler) // TODO with options
-
+                Box::new(move |environmentcreatedhandler| unsafe {
                     let options: ICoreWebView2EnvironmentOptions = ICoreWebView2EnvironmentOptions::from(options);
-                    let url = CoTaskMemPWSTR::from("c:\\test");
-                    CreateCoreWebView2EnvironmentWithOptions(None, *url.as_ref().as_pcwstr(), &options,  &environmentcreatedhandler) // TODO with options
+                    let user_data_path = CoTaskMemPWSTR::from(local_path.as_os_str().to_str().unwrap());
+                    CreateCoreWebView2EnvironmentWithOptions(None, *user_data_path.as_ref().as_pcwstr(), &options,  &environmentcreatedhandler) // TODO with options
                         .map_err(webview2_com::Error::WindowsError)
                 }),
                 Box::new(move |error_code, environment| {
@@ -139,8 +142,8 @@ impl WebView {
         unsafe {
             let settings = webview.Settings().unwrap();
 
-            settings.SetAreDefaultContextMenusEnabled(false).unwrap();
-            settings.SetAreDevToolsEnabled(false).unwrap();
+            settings.SetAreDefaultContextMenusEnabled(params.default_contextmenu).unwrap();
+            settings.SetAreDevToolsEnabled(params.devtools).unwrap();
 
             settings.SetIsScriptEnabled(true).unwrap();
             settings.SetAreDefaultScriptDialogsEnabled(    true).unwrap();
@@ -206,6 +209,16 @@ impl WebView {
             ).unwrap();
         }
 
+        let with_webroot = params.webroot.is_some();
+        let (url, _custom_resource_scheme) = match (params.url, params.debug_url, with_webroot) {
+            (None, None, true) => ("req://webroot/index.html".to_string(), true),
+            (Some(url), None, _) => (url, true),
+            (_, Some(debug_url), _) => (debug_url, false),
+            (_, _, _) => ("about:plain".to_string(), false)
+        };
+
+        let url = CoTaskMemPWSTR::from(url.as_str());
+        unsafe { webview.webview.Navigate(*url.as_ref().as_pcwstr()).unwrap() };
         WebView::set_window_webview(parent, Some(Box::new(webview.clone())));
         webview
     }
@@ -234,8 +247,6 @@ impl WebView {
             let mut token = EventRegistrationToken::default();
             unsafe {
                 webview.add_NavigationCompleted(&handler, &mut token).unwrap();
-                let url = CoTaskMemPWSTR::from(url.as_str());
-                webview.Navigate(*url.as_ref().as_pcwstr()).unwrap();
                 let result = webview2_com::wait_with_pump(rx);
                 webview.remove_NavigationCompleted(token).unwrap();
                 result.unwrap();

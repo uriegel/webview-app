@@ -12,14 +12,10 @@ mod content_type;
 mod javascript;
 mod html;
 
-// TODO Windows new: hello initial userdata folder and WINDOW classe ...
-// TODO Windows new: hello title
-// TODO Windows new: hello url
-// TODO Windows new: hello contextmenu
-// TODO Windows new: hello can close
-// TODO Windows new: hello developer tools
 // TODO Windows new: hello initial bounds
 // TODO Windows new: hello save bounds
+// TODO Windows new: hello can close
+
 // TODO Windows new: custom_resources
 // TODO Windows new: window-titlebar
 

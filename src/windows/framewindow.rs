@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
+use webview2_com::CoTaskMemPWSTR;
 use windows::Win32::{
     Foundation::{
         HWND, LPARAM, LRESULT, RECT, SIZE, WPARAM
@@ -19,21 +20,21 @@ pub struct FrameWindow {
 }
 
 impl FrameWindow {
-    pub fn new() -> Self {
+    pub fn new(title: &str) -> Self {
         let hwnd = {
             let window_class = WNDCLASSW {
                 lpfnWndProc: Some(window_proc),
-                lpszClassName: w!("WebView"),
+                lpszClassName: w!("$$WebView_APP$$"),
                 ..Default::default()
             };
 
             unsafe {
                 RegisterClassW(&window_class);
-
+                let title = CoTaskMemPWSTR::from(title);
                 CreateWindowExW(
                     Default::default(),
-                    w!("WebView"),
-                    w!("WebView"),
+                    w!("$$WebView_APP$$"),
+                    *title.as_ref().as_pcwstr(),
                     WS_OVERLAPPEDWINDOW, // TODO
                     CW_USEDEFAULT,
                     CW_USEDEFAULT,
