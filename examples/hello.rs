@@ -8,6 +8,7 @@ fn on_activate(app: &Application)->WebView {
 
     let webview = WebView::builder(app)
         .title("Rust Web View 👍".to_string())
+        .initial_bounds(300, 500)
         .save_bounds()
         .debug_url("https://crates.io/crates/webview_app".to_string())
         .url("https://crates.io/crates".to_string())

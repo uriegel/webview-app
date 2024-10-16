@@ -11,6 +11,8 @@ use windows::Win32::{
 };
 use windows_core::w;
 
+use crate::bounds::Bounds;
+
 use super::webview::WebView;
 
 #[derive(Clone)]
@@ -20,7 +22,7 @@ pub struct FrameWindow {
 }
 
 impl FrameWindow {
-    pub fn new(title: &str) -> Self {
+    pub fn new(title: &str, bounds: Bounds) -> Self {
         let hwnd = {
             let window_class = WNDCLASSW {
                 lpfnWndProc: Some(window_proc),
@@ -36,10 +38,10 @@ impl FrameWindow {
                     w!("$$WebView_APP$$"),
                     *title.as_ref().as_pcwstr(),
                     WS_OVERLAPPEDWINDOW, // TODO
-                    CW_USEDEFAULT,
-                    CW_USEDEFAULT,
-                    CW_USEDEFAULT,
-                    CW_USEDEFAULT,
+                    bounds.x.unwrap_or(CW_USEDEFAULT),
+                    bounds.y.unwrap_or(CW_USEDEFAULT),
+                    bounds.width.unwrap_or(CW_USEDEFAULT),
+                    bounds.height.unwrap_or(CW_USEDEFAULT),
                     None,
                     None,
                     LibraryLoader::GetModuleHandleW(None).unwrap_or_default(),

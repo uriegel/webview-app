@@ -69,7 +69,7 @@ struct InvokeMessage {
 
 impl WebView {
     pub fn new(params: Params)->WebView {
-        let frame = FrameWindow::new(params.title.unwrap_or_else(||"Webview App".to_string()).as_str());
+        let frame = FrameWindow::new(params.title.unwrap_or_else(||"Webview App".to_string()).as_str(), params.bounds);
         let parent = *frame.window;
         let app_data = std::env::var("LOCALAPPDATA").expect("No APP_DATA directory");
         let local_path = Path::new(&app_data).join(params.app.get_appid());
