@@ -186,7 +186,7 @@ void CreateWebView(HWND hWnd) {
                         webview->add_WindowCloseRequested(
                             Callback<ICoreWebView2WindowCloseRequestedEventHandler>(
                                 [hWnd](ICoreWebView2* _, IUnknown* args) -> HRESULT {
-                                    CloseWindow(hWnd);
+                                    SendMessage(hWndWebView, WM_CLOSE, 0, 0);
                                     return S_OK;
                                 }).Get(), nullptr);
                         RECT bounds;
@@ -402,6 +402,3 @@ void __stdcall ShowWnd(ShowWndType type) {
     ShowWindow(hWndWebView, matchShowWindowType(type));
 }
 
-void __stdcall CloseWnd() {
-    SendMessage(hWndWebView, WM_CLOSE, 0, 0);
-}

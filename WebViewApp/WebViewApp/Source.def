@@ -9,4 +9,3 @@ EXPORTS
 	SendText
 	Free
 	ShowWnd
-	CloseWnd

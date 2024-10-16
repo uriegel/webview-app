@@ -14,7 +14,6 @@ pub type FnExecuteScript = extern fn(*const u16)->bool;
 pub type FnShowDevTools = extern fn();
 pub type FnSendText = extern fn(*const u8, len: i32);
 pub type FnShowWnd = extern fn(ShowWindow);
-pub type FnCloseWnd = extern fn();
 
 pub struct RawFuncs {
     pub init: FnInit,
@@ -25,7 +24,6 @@ pub struct RawFuncs {
     pub show_devtools: FnShowDevTools,
     pub send_text: FnSendText,
     pub show_wnd: FnShowWnd,
-    pub close_wnd: FnCloseWnd
 }
 
 #[repr(C)]
@@ -109,8 +107,6 @@ impl RawFuncs {
             let send_text = std::mem::transmute::<*const usize, FnSendText>(fnp);
             let fnp = GetProcAddress(module, b"ShowWnd\0".as_ptr());
             let show_wnd = std::mem::transmute::<*const usize, FnShowWnd>(fnp);
-            let fnp = GetProcAddress(module, b"CloseWnd\0".as_ptr());
-            let close_wnd = std::mem::transmute::<*const usize, FnCloseWnd>(fnp);
             RawFuncs {
                 init,
                 run,
@@ -119,7 +115,6 @@ impl RawFuncs {
                 show_devtools,
                 send_text,
                 show_wnd,
-                close_wnd,
             }
         }
     }

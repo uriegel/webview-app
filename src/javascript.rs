@@ -120,7 +120,7 @@ const WEBVIEWNoNativeTitlebarInitialize = () => {{
         title.innerText = '{}'
     const close = document.getElementById('$CLOSE$')
     if (close)
-        close.onclick = () => window.chrome.webview.postMessage("CloseWindow")
+        close.onclick = () => window.close()
     const maximize = document.getElementById('$MAXIMIZE$')
     if (maximize) {{
         maximize.onclick = () => {{

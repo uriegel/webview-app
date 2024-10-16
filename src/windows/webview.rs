@@ -179,8 +179,6 @@ impl WebViewData {
                 { (load_raw_funcs("").show_wnd)(ShowWindow::Minimize) }
             else if msg == "RestoreWindow"
                 { (load_raw_funcs("").show_wnd)(ShowWindow::Restore) }
-            else if msg == "CloseWindow"
-                { (load_raw_funcs("").close_wnd)() }
             else if msg.starts_with("request,") {
                 let request_data = RequestData::new(&msg);
 
