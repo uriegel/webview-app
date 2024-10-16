@@ -16,13 +16,28 @@ include = [
 
 [dependencies]
 include_dir = "0.7.4"
-serde = { version = "1.0.210", features = ["derive"] }
-serde_json = "1.0.128"
-
-[target.'cfg(target_os="windows")'.dependencies]
-libloading = "0.8"  
+serde = { version = "1.0", features = [ "derive" ] }
+serde_json = "1.0"
 
 [target.'cfg(target_os="linux")'.dependencies]
 gtk = { version = "0.9.1", package = "gtk4", features = ["v4_14"]}
 adw = { version = "0.7.0", package = "libadwaita", features = ["v1_5"] }
 webkit6 = "0.4.0"
+
+[target.'cfg(target_os="windows")'.dependencies]
+webview2-com = "0.33.0"
+windows-implement = "0.58"
+windows-interface = "0.58"
+windows-core = "0.58.0"
+
+[target.'cfg(target_os="windows")'.dependencies.windows]
+version = "0.58"
+features = [
+    "Win32_Graphics_Gdi",
+    "Win32_System_LibraryLoader",
+    "Win32_System_Threading",
+    "Win32_UI_HiDpi",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_WindowsAndMessaging",
+]
+

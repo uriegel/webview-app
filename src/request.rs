@@ -52,15 +52,15 @@ pub fn request_blocking<F: FnOnce() -> String + Send + 'static>(
 } 
 
 
-#[cfg(target_os = "windows")]
-pub fn request_blocking<F: FnOnce() -> String + Send + 'static>(
-    _: &Request, id: String, on_request: F) {
-        use std::thread;
-        use crate::windows::raw_funcs::load_raw_funcs;
+// #[cfg(target_os = "windows")]
+// pub fn request_blocking<F: FnOnce() -> String + Send + 'static>(
+//     _: &Request, id: String, on_request: F) {
+//         use std::thread;
+//         use crate::windows_old::raw_funcs::load_raw_funcs;
 
-        thread::spawn(move|| {
-            let response = on_request();
-            let back: String = format!("result,{},{}", id, response);
-            (load_raw_funcs("").send_text)(back.as_ptr(), back.len() as i32);
-        });
-} 
+//         thread::spawn(move|| {
+//             let response = on_request();
+//             let back: String = format!("result,{},{}", id, response);
+//             (load_raw_funcs("").send_text)(back.as_ptr(), back.len() as i32);
+//         });
+// } 

@@ -1,222 +1,427 @@
-// extern crate libloading;
+use std::{cell::RefCell, collections::HashMap, mem, ptr, rc::Rc, sync::mpsc};
 
-use include_dir::Dir;
-use std::{cell::RefCell, path::Path, slice, sync::{Arc, Mutex, Once}};
+use serde::Deserialize;
+use serde_json::Value;
+use webview2_com::{
+    AddScriptToExecuteOnDocumentCreatedCompletedHandler, CoTaskMemPWSTR, CoreWebView2EnvironmentOptions, CreateCoreWebView2ControllerCompletedHandler, CreateCoreWebView2EnvironmentCompletedHandler, ExecuteScriptCompletedHandler, Microsoft::Web::WebView2::Win32::{
+        CreateCoreWebView2EnvironmentWithOptions, ICoreWebView2, ICoreWebView2Controller, ICoreWebView2EnvironmentOptions, ICoreWebView2Settings6
+    }, NavigationCompletedEventHandler, WebMessageReceivedEventHandler
+};
 
-use crate::{bounds::Bounds, content_type, html, javascript::{self, RequestData}, params::Params, request::Request};
+use windows::Win32::{
+    Foundation::{E_POINTER, HWND, LPARAM, RECT, SIZE, WPARAM}, Graphics::Gdi::UpdateWindow, System::{
+        Threading, WinRT::EventRegistrationToken
+    }, UI::{Input::KeyboardAndMouse, WindowsAndMessaging::{
+        DispatchMessageW, GetClientRect, GetMessageW, GetWindowLongPtrW, PostQuitMessage, PostThreadMessageW, SetWindowLongPtrW, ShowWindow, TranslateMessage, GWLP_USERDATA, MSG, SW_SHOW, WINDOW_LONG_PTR_INDEX, WM_APP 
+    }}
+};
+use windows_core::{Interface, PWSTR};
 
-use super::raw_funcs::{load_raw_funcs, RequestResult, ShowWindow, WebViewAppSettings};
 
-pub fn utf_16_null_terminiated(x: &str) -> Vec<u16> {
-    x.encode_utf16().chain(std::iter::once(0)).collect()
+use crate::{params::Params, request::Request};
+
+use super::framewindow::FrameWindow;
+
+struct WebViewController(ICoreWebView2Controller);
+
+#[derive(Debug)]
+pub enum Error {
+    WebView2Error(webview2_com::Error),
+    WindowsError(windows::core::Error),
+    JsonError(serde_json::Error),
+    LockError,
 }
 
+
+type Result<T> = std::result::Result<T, Error>;
+
+type WebViewSender = mpsc::Sender<Box<dyn FnOnce(WebView) + Send>>;
+type WebViewReceiver = mpsc::Receiver<Box<dyn FnOnce(WebView) + Send>>;
+type BindingCallback = Box<dyn FnMut(Vec<Value>) -> Result<Value>>;
+type BindingsMap = HashMap<String, BindingCallback>;
+
 #[derive(Clone)]
-pub struct WebView {}
+pub struct WebView {
+    controller: Rc<WebViewController>,
+    webview: Rc<ICoreWebView2>,
+    tx: WebViewSender,
+    rx: Rc<WebViewReceiver>,
+    thread_id: u32,
+    bindings: Rc<RefCell<BindingsMap>>,
+    pub frame: FrameWindow,
+    parent: Rc<HWND>,
+    url: Rc<RefCell<String>>,    
+}
+
+
+impl Drop for WebViewController {
+    fn drop(&mut self) {
+        unsafe { self.0.Close() }.unwrap();
+    }
+}
+
+#[derive(Debug, Deserialize)]
+struct InvokeMessage {
+    id: u64,
+    method: String,
+    params: Vec<Value>,
+}
 
 impl WebView {
-    pub fn new(params: Params)->WebView {
-        let app_data = std::env::var("LOCALAPPDATA").expect("No APP_DATA directory");
-        let local_path = Path::new(&app_data).join(params.app.get_appid());
-        let bounds = 
-            if params.save_bounds
-                { Bounds::restore(&local_path.to_string_lossy()).unwrap_or(params.bounds) } 
-            else
-                { params.bounds};
+    pub fn new(_params: Params)->WebView {
+        let frame = FrameWindow::new();
+        let parent = *frame.window;
 
-        let title = params.title.unwrap_or("Webview App".to_string());
-        let title16 = utf_16_null_terminiated(&title);
-        let with_webroot = params.webroot.is_some();
-       
-        let (url, custom_resource_scheme) = match (params.url, params.debug_url, with_webroot) {
-            (None, None, true) => (utf_16_null_terminiated("req://webroot/index.html"), true),
-            (Some(url), None, _) => (utf_16_null_terminiated(&url), true),
-            (_, Some(debug_url), _) => (utf_16_null_terminiated(&debug_url), false),
-            (_, _, _) => (utf_16_null_terminiated("about:plain"), false)
+        let environment = {
+            let (tx, rx) = mpsc::channel();
+
+            let options = CoreWebView2EnvironmentOptions::default();
+            unsafe { options.set_additional_browser_arguments("--enable-features=msWebView2EnableDraggableRegions".to_string()) };
+            
+
+            CreateCoreWebView2EnvironmentCompletedHandler::wait_for_async_operation(
+                Box::new(|environmentcreatedhandler| unsafe {
+                    //CreateCoreWebView2Environment(&environmentcreatedhandler) // TODO with options
+
+                    let options: ICoreWebView2EnvironmentOptions = ICoreWebView2EnvironmentOptions::from(options);
+                    let url = CoTaskMemPWSTR::from("c:\\test");
+                    CreateCoreWebView2EnvironmentWithOptions(None, *url.as_ref().as_pcwstr(), &options,  &environmentcreatedhandler) // TODO with options
+                        .map_err(webview2_com::Error::WindowsError)
+                }),
+                Box::new(move |error_code, environment| {
+                    error_code?;
+                    tx.send(environment.ok_or_else(|| windows::core::Error::from(E_POINTER)))
+                        .expect("send over mpsc channel");
+                    Ok(())
+                }),
+            ).unwrap();
+
+            rx.recv()
+                .map_err(|_| Error::WebView2Error(webview2_com::Error::SendError)).unwrap()
+        }.unwrap();
+
+        let controller = {
+            let (tx, rx) = mpsc::channel();
+
+            CreateCoreWebView2ControllerCompletedHandler::wait_for_async_operation(
+                Box::new(move |handler| unsafe {
+                    environment
+                        .CreateCoreWebView2Controller(parent, &handler)
+                        .map_err(webview2_com::Error::WindowsError)
+                }),
+                Box::new(move |error_code, controller| {
+                    error_code?;
+                    tx.send(controller.ok_or_else(|| windows::core::Error::from(E_POINTER)))
+                        .expect("send over mpsc channel");
+                    Ok(())
+                }),
+            ).unwrap();
+
+            rx.recv()
+                .map_err(|_| Error::WebView2Error(webview2_com::Error::SendError)).unwrap()
+        }.unwrap();
+
+        let size = get_window_size(parent);
+        let mut client_rect = RECT::default();
+        unsafe {
+            let _ = GetClientRect(parent, &mut client_rect);
+            controller.SetBounds(RECT {
+                left: 0,
+                top: 0,
+                right: size.cx,
+                bottom: size.cy,
+            }).unwrap();
+            controller.SetIsVisible(true).unwrap();
+        }
+
+        let webview = unsafe { controller.CoreWebView2().unwrap() };
+
+        unsafe {
+            let settings = webview.Settings().unwrap();
+
+            settings.SetAreDefaultContextMenusEnabled(false).unwrap();
+            settings.SetAreDevToolsEnabled(false).unwrap();
+
+            settings.SetIsScriptEnabled(true).unwrap();
+            settings.SetAreDefaultScriptDialogsEnabled(    true).unwrap();
+            settings.SetIsWebMessageEnabled(true).unwrap();
+            let settings6: ICoreWebView2Settings6 = settings.cast().unwrap();
+            settings6.SetAreBrowserAcceleratorKeysEnabled(false).unwrap();
+            settings6.SetIsPasswordAutosaveEnabled(true).unwrap();
+        }
+
+        *frame.size.borrow_mut() = size;
+
+        let (tx, rx) = mpsc::channel();
+        let rx = Rc::new(rx);
+        let thread_id = unsafe { Threading::GetCurrentThreadId() };
+
+        let webview = WebView {
+            controller: Rc::new(WebViewController(controller)),
+            webview: Rc::new(webview),
+            tx,
+            rx,
+            thread_id,
+            bindings: Rc::new(RefCell::new(HashMap::new())),
+            frame,
+            parent: Rc::new(parent),
+            url: Rc::new(RefCell::new(String::new())),
         };
 
-        let user_data_path = utf_16_null_terminiated(local_path.as_os_str().to_str().expect("user data path invalid"));
-        let web_view_data = WebViewData { 
-            should_save_bounds: params.save_bounds,
-            config_dir: local_path.to_string_lossy().to_string(),
-            request: Request {},
-            webroot: params.webroot,
-            devtools: params.devtools,
-            can_close: RefCell::new(Box::new(||true)),
-            on_request: RefCell::new(Box::new(|_,_,_,_|false)),
-        };
-        let html_ok = utf_16_null_terminiated(html::ok());
-        let html_not_found = utf_16_null_terminiated(&html::not_found());
-        let script = javascript::get(params.without_native_titlebar, &title, true, false);
-        let init_script = utf_16_null_terminiated(&script);
-        let settings = WebViewAppSettings { 
-            title: title16.as_ptr(),
-            user_data_path: user_data_path.as_ptr(),
-            html_ok: html_ok.as_ptr(),
-            html_not_found: html_not_found.as_ptr(),
-            init_script: init_script.as_ptr(),
-            x: bounds.x.unwrap_or(-1),
-            y: bounds.y.unwrap_or(-1),
-            width: bounds.width.unwrap_or(-1),
-            height: bounds.height.unwrap_or(-1),
-            is_maximized: bounds.is_maximized,
-            on_close,
-            on_custom_request,
-            on_message,
-            on_maximize,
-            url: url.as_ptr(),
-            without_native_titlebar: params.without_native_titlebar,
-            devtools: params.devtools,
-            custom_resource_scheme, 
-            default_contextmenu: params.default_contextmenu
-        };            
-        (load_raw_funcs(&params.app.get_appid()).init)(&settings);
-        set_webview(web_view_data);
-        WebView {}
+        // Inject the invoke handler.
+        webview
+            .init(r#"window.external = { invoke: s => window.chrome.webview.postMessage(s) };"#).unwrap();
+
+        let bindings = webview.bindings.clone();
+        let bound = webview.clone();
+        unsafe {
+            let mut _token = EventRegistrationToken::default();
+            webview.webview.add_WebMessageReceived(
+                &WebMessageReceivedEventHandler::create(Box::new(move |_webview, args| {
+                    if let Some(args) = args {
+                        let mut message = PWSTR(ptr::null_mut());
+                        if args.WebMessageAsJson(&mut message).is_ok() {
+                            let message = CoTaskMemPWSTR::from(message);
+                            if let Ok(value) =
+                                serde_json::from_str::<InvokeMessage>(&message.to_string())
+                            {
+                                let mut bindings = bindings.borrow_mut();
+                                if let Some(f) = bindings.get_mut(&value.method) {
+                                    match (*f)(value.params) {
+                                        Ok(result) => bound.resolve(value.id, 0, result),
+                                        Err(err) => bound.resolve(
+                                            value.id,
+                                            1,
+                                            Value::String(format!("{err:#?}")),
+                                        ),
+                                    }
+                                    .unwrap();
+                                }
+                            }
+                        }
+                    }
+                    Ok(())
+                })),
+                &mut _token,
+            ).unwrap();
+        }
+
+        WebView::set_window_webview(parent, Some(Box::new(webview.clone())));
+        webview
     }
 
     pub fn can_close(&self, val: impl Fn()->bool + 'static) {
-        let webview = get_webview();
-        let _ = webview.can_close.replace(Box::new(val));
     }
 
     pub fn connect_request<F: Fn(&Request, String, String, String) -> bool + 'static>(
         &self,
         on_request: F,
     ) {
-        let webview = get_webview();
-        let _ = webview.on_request.replace(Box::new(on_request));
     }
 
+    pub fn run(self) {
+        let webview = self.webview.as_ref();
+        let url = self.url.borrow().clone();
+        let url = "https://google.de".to_string();
+        let (tx, rx) = mpsc::channel();
 
-    // pub fn run(&self)->u32 {
-    //     (load_raw_funcs("").run)()
+        if !url.is_empty() {
+            let handler =
+                NavigationCompletedEventHandler::create(Box::new(move |_sender, _args| {
+                    tx.send(()).expect("send over mpsc channel");
+                    Ok(())
+                }));
+            let mut token = EventRegistrationToken::default();
+            unsafe {
+                webview.add_NavigationCompleted(&handler, &mut token).unwrap();
+                let url = CoTaskMemPWSTR::from(url.as_str());
+                webview.Navigate(*url.as_ref().as_pcwstr()).unwrap();
+                let result = webview2_com::wait_with_pump(rx);
+                webview.remove_NavigationCompleted(token).unwrap();
+                result.unwrap();
+            }
+        }
 
-
-    //     // let run: &'static fn()->u32 = get_function::<fn()->u32>(&self.appid, "Run");
-    //     // let res = run();
-
-    //     // let func: Symbol<unsafe extern fn(*const u16) -> *const u16> =
-    //     //     self.lib.get(b"Test1").expect("Failed to load function");
-        
-    //     // let wc = utf_16_null_terminiated("Das ist ein sehr schöner Messagebox-Text");
-    //     // let text_ptr = func(wc.as_ptr());
-    //     // let bytes = slice::from_raw_parts(text_ptr, strlen(text_ptr));
-    //     // let bytes: Vec<u16> = Vec::from(bytes);
-    //     // let text = String::from_utf16_lossy(&bytes);
-    //     // let wc = utf_16_null_terminiated(&text);
-    //     // func(wc.as_ptr());
-    //     // let free: Symbol<unsafe extern fn(*const u16) -> ()> =
-    //     //     self.lib.get(b"Free").expect("Failed to load function");
-    //     // free(text_ptr);
-    // }
-}
-
-pub struct WebViewData {
-    should_save_bounds: bool,
-    devtools: bool,
-    config_dir: String,
-    request: Request,
-    webroot: Option<Arc<Mutex<Dir<'static>>>>,
-    can_close: RefCell<Box<dyn Fn()->bool + 'static>>,
-    on_request: RefCell<Box<dyn Fn(&Request, String, String, String) -> bool + 'static>>,
-}
-
-impl WebViewData {
-    fn on_custom_request(&self, url: *const u16, url_len: u32, result: &mut RequestResult) {
         unsafe {
-            let bytes = slice::from_raw_parts(url, url_len as usize);
-            let bytes: Vec<u16> = Vec::from(bytes);
-            let url = String::from_utf16_lossy(&bytes);
-            let mut file = url.clone();
-            let path = file.split_off(14);
+            let _ = ShowWindow(*self.frame.window, SW_SHOW);
+            let _ = UpdateWindow(*self.frame.window);
+            let _ = KeyboardAndMouse::SetFocus(*self.frame.window);
+        }
 
-            match self.webroot.clone().expect("Custom request without webroot").lock().unwrap().get_file(path) {
-                Some(file)  => {
-                    let bytes = file.contents();
-                    result.content = bytes.as_ptr();
-                    result.len = bytes.len();
-                    result.status = 200;
-                    let content_type = utf_16_null_terminiated(&content_type::get(&url));
-                    let content_type = content_type.as_slice();
-                    let mut idx = 0;
-                    content_type.iter().for_each(|i|{
-                        result.content_type[idx] = *i;
-                        idx = idx + 1;
-                    });
-                },
-                None => result.status = 404
+        let mut msg = MSG::default();
+        let h_wnd = HWND::default();
+
+        loop {
+            while let Ok(f) = self.rx.try_recv() {
+                (f)(self.clone());
+            }
+
+            unsafe {
+                let result = GetMessageW(&mut msg, h_wnd, 0, 0).0;
+
+                match result {
+                    -1 => break, // Err(windows::core::Error::from_win32().into()),
+                    0 => break, // Ok(()),
+                    _ => match msg.message {
+                        WM_APP => (),
+                        _ => {
+                            let _ = TranslateMessage(&msg);
+                            DispatchMessageW(&msg);
+                        }
+                    },
+                }
             }
         }
     }
 
-    fn on_close(&self, x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool {
-        let can_close = self.can_close.borrow();
-        let res = can_close();
-        if res && self.should_save_bounds {
-            let bounds = Bounds {
-                x: Some(x),
-                y: Some(y),
-                width: Some(w),
-                height: Some(h),
-                is_maximized 
+    pub fn terminate(self) {
+        self.dispatch(|_webview| unsafe {
+            PostQuitMessage(0);
+        }).unwrap();
+    }
+
+    pub fn init(&self, js: &str) -> Result<&Self> {
+        let webview = self.webview.clone();
+        let js = String::from(js);
+        AddScriptToExecuteOnDocumentCreatedCompletedHandler::wait_for_async_operation(
+            Box::new(move |handler| unsafe {
+                let js = CoTaskMemPWSTR::from(js.as_str());
+                webview
+                    .AddScriptToExecuteOnDocumentCreated(*js.as_ref().as_pcwstr(), &handler)
+                    .map_err(webview2_com::Error::WindowsError)
+            }),
+            Box::new(|error_code, _id| error_code),
+        ).unwrap();
+        Ok(self)
+    }
+
+    pub fn resolve(&self, id: u64, status: i32, result: Value) -> Result<&Self> {
+        let result = result.to_string();
+
+        self.dispatch(move |webview| {
+            let method = match status {
+                0 => "resolve",
+                _ => "reject",
             };
-            bounds.save(&self.config_dir);
-        }
-        res
+            let js = format!(
+                r#"
+                window._rpc[{id}].{method}({result});
+                window._rpc[{id}] = undefined;"#
+            );
+
+            webview.eval(&js).expect("eval return script");
+        })
     }
 
-    fn on_message(&self, msg: *const u16, msg_len: u32) {
-        unsafe {
-            let bytes = slice::from_raw_parts(msg, msg_len as usize);
-            let bytes: Vec<u16> = Vec::from(bytes);
-            let msg = String::from_utf16_lossy(&bytes);
-            if self.devtools && msg == "devtools" 
-                { (load_raw_funcs("").show_devtools)() }
-            else if msg == "MaximizeWindow"
-                { (load_raw_funcs("").show_wnd)(ShowWindow::Maximize) }
-            else if msg == "MinimizeWindow"
-                { (load_raw_funcs("").show_wnd)(ShowWindow::Minimize) }
-            else if msg == "RestoreWindow"
-                { (load_raw_funcs("").show_wnd)(ShowWindow::Restore) }
-            else if msg.starts_with("request,") {
-                let request_data = RequestData::new(&msg);
+    pub fn eval(&self, js: &str) -> Result<&Self> {
+        let webview = self.webview.clone();
+        let js = String::from(js);
+        ExecuteScriptCompletedHandler::wait_for_async_operation(
+            Box::new(move |handler| unsafe {
+                let js = CoTaskMemPWSTR::from(js.as_str());
+                webview
+                    .ExecuteScript(*js.as_ref().as_pcwstr(), &handler)
+                    .map_err(webview2_com::Error::WindowsError)
+            }),
+            Box::new(|error_code, _result| error_code),
+        ).unwrap();
+        Ok(self)
+    }
 
-                let on_request = self.on_request.borrow();
-                on_request(&self.request, request_data.id.to_string(), request_data.cmd.to_string(), request_data.json.to_string());
+    pub fn set_size(&self, x: i32, y: i32) {
+        unsafe {
+            self.controller
+                .0
+                .SetBounds(RECT {
+                    left: 0,
+                    top: 0,
+                    right: x,
+                    bottom: y,
+                }).unwrap();
+        };
+    }
+
+    fn set_window_webview(hwnd: HWND, webview: Option<Box<WebView>>) -> Option<Box<WebView>> {
+        unsafe {
+            match SetWindowLong(
+                hwnd,
+                GWLP_USERDATA,
+                match webview {
+                    Some(webview) => Box::into_raw(webview) as _,
+                    None => 0_isize,
+                },
+            ) {
+                0 => None,
+                ptr => Some(Box::from_raw(ptr as *mut _)),
             }
         }
     }
-}
 
-extern fn on_custom_request(url: *const u16, url_len: u32, result: &mut RequestResult) {
-    get_webview().on_custom_request(url, url_len, result);
-}
+    pub fn get_window_webview(hwnd: HWND) -> Option<Box<WebView>> {
+        unsafe {
+            let data = GetWindowLong(hwnd, GWLP_USERDATA);
 
-extern fn on_message(msg: *const u16, msg_len: u32) { 
-    get_webview().on_message(msg, msg_len);
-}
+            match data {
+                0 => None,
+                _ => {
+                    let webview_ptr = data as *mut WebView;
+                    let raw = Box::from_raw(webview_ptr);
+                    let webview = raw.clone();
+                    mem::forget(raw);
 
-extern fn on_close(x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool { 
-    get_webview().on_close(x, y, w, h, is_maximized)
-}
+                    Some(webview)
+                }
+            }
+        }
+    }
 
-extern fn on_maximize(is_maximized: bool) { 
-    let is_max = if is_maximized { "true" } else { "false " };
-    let script = format!("WEBVIEWsetMaximized({is_max})");   
-    let script16 = utf_16_null_terminiated(&script);    
-    (load_raw_funcs("").execute_script)(script16.as_ptr());
-}
+    pub fn dispatch<F>(&self, f: F) -> Result<&Self>
+    where
+        F: FnOnce(WebView) + Send + 'static,
+    {
+        self.tx.send(Box::new(f)).expect("send the fn");
 
-fn set_webview(params: WebViewData) {
-    unsafe {
-        INIT_WEBVIEW.call_once(|| {
-            WEBVIEW = Some(params);
-        });
+        unsafe {
+            let _ = PostThreadMessageW(
+                self.thread_id,
+                WM_APP,
+                WPARAM::default(),
+                LPARAM::default(),
+            );
+        }
+        Ok(self)
     }
 }
-fn get_webview()->& 'static WebViewData {
-    unsafe { WEBVIEW.as_ref().unwrap() }
+
+fn get_window_size(hwnd: HWND) -> SIZE {
+    let mut client_rect = RECT::default();
+    let _ = unsafe { GetClientRect(hwnd, &mut client_rect) };
+    SIZE {
+        cx: client_rect.right - client_rect.left,
+        cy: client_rect.bottom - client_rect.top,
+    }
 }
-static INIT_WEBVIEW: Once = Once::new();
-static mut WEBVIEW: Option<WebViewData> = None;
+
+#[allow(non_snake_case)]
+#[cfg(target_pointer_width = "32")]
+unsafe fn SetWindowLong(window: HWND, index: WINDOW_LONG_PTR_INDEX, value: isize) -> isize {
+    SetWindowLongW(window, index, value as _) as _
+}
+
+#[allow(non_snake_case)]
+#[cfg(target_pointer_width = "64")]
+unsafe fn SetWindowLong(window: HWND, index: WINDOW_LONG_PTR_INDEX, value: isize) -> isize {
+    SetWindowLongPtrW(window, index, value)
+}
+
+#[allow(non_snake_case)]
+#[cfg(target_pointer_width = "32")]
+unsafe fn GetWindowLong(window: HWND, index: WINDOW_LONG_PTR_INDEX) -> isize {
+    GetWindowLongW(window, index) as _
+}
+
+#[allow(non_snake_case)]
+#[cfg(target_pointer_width = "64")]
+unsafe fn GetWindowLong(window: HWND, index: WINDOW_LONG_PTR_INDEX) -> isize {
+    GetWindowLongPtrW(window, index)
+}
