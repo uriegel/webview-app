@@ -4,7 +4,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use webview2_com::{
     AddScriptToExecuteOnDocumentCreatedCompletedHandler, CoTaskMemPWSTR, CoreWebView2CustomSchemeRegistration, CoreWebView2EnvironmentOptions, CreateCoreWebView2ControllerCompletedHandler, CreateCoreWebView2EnvironmentCompletedHandler, ExecuteScriptCompletedHandler, Microsoft::Web::WebView2::Win32::{
-        CreateCoreWebView2EnvironmentWithOptions, ICoreWebView2, ICoreWebView2Controller, ICoreWebView2CustomSchemeRegistration, ICoreWebView2EnvironmentOptions, ICoreWebView2Settings6
+        CreateCoreWebView2EnvironmentWithOptions, ICoreWebView2, ICoreWebView2Controller, ICoreWebView2CustomSchemeRegistration, ICoreWebView2EnvironmentOptions, ICoreWebView2Settings6, ICoreWebView2WebResourceRequestedEventHandler, COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL
     }, NavigationCompletedEventHandler, WebMessageReceivedEventHandler
 };
 
@@ -53,7 +53,7 @@ pub struct WebView {
     url: Rc<RefCell<String>>,    
     should_save_bounds: bool,
     config_dir: String,
-    can_close: Rc<RefCell<Box<dyn Fn()->bool + 'static>>>,
+    can_close: Rc<RefCell<Box<dyn Fn()->bool + 'static>>>
 }
 
 
@@ -222,12 +222,20 @@ impl WebView {
         }
 
         let with_webroot = params.webroot.is_some();
-        let (url, _custom_resource_scheme) = match (params.url, params.debug_url, with_webroot) {
+        let (url, custom_resource_scheme) = match (params.url, params.debug_url, with_webroot) {
             (None, None, true) => ("req://webroot/index.html".to_string(), true),
             (Some(url), None, _) => (url, true),
             (_, Some(debug_url), _) => (debug_url, false),
             (_, _, _) => ("about:plain".to_string(), false)
         };
+
+        if custom_resource_scheme || params.without_native_titlebar {
+            unsafe {
+                webview.webview.AddWebResourceRequestedFilter(uri, COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL);
+                webview.webview.add_WebResourceRequested(
+                    &ICoreWebView2WebResourceRequestedEventHandler, token)
+            }
+        }
 
         let url = CoTaskMemPWSTR::from(url.as_str());
         unsafe { webview.webview.Navigate(*url.as_ref().as_pcwstr()).unwrap() };
