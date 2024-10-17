@@ -1,38 +1,42 @@
-use std::{cell::RefCell, collections::HashMap, ffi::OsString, io::Cursor, mem, os::windows::ffi::OsStringExt, path::Path, ptr, rc::Rc, sync::{mpsc, Arc, Mutex}};
+use std::{cell::RefCell, collections::HashMap, mem, path::Path, ptr, rc::Rc, sync::mpsc};
 
-use include_dir::Dir;
 use serde::Deserialize;
 use serde_json::Value;
 use webview2_com::{
-    AddScriptToExecuteOnDocumentCreatedCompletedHandler, CoTaskMemPWSTR, CoreWebView2CustomSchemeRegistration, CoreWebView2EnvironmentOptions, CreateCoreWebView2ControllerCompletedHandler, CreateCoreWebView2EnvironmentCompletedHandler, ExecuteScriptCompletedHandler, Microsoft::Web::WebView2::Win32::{
-        CreateCoreWebView2EnvironmentWithOptions, ICoreWebView2, ICoreWebView2Controller, ICoreWebView2CustomSchemeRegistration, ICoreWebView2EnvironmentOptions, ICoreWebView2Settings6, ICoreWebView2WebResourceRequestedEventHandler, COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL
+    AddScriptToExecuteOnDocumentCreatedCompletedHandler, CoTaskMemPWSTR, CoreWebView2CustomSchemeRegistration, CoreWebView2EnvironmentOptions, 
+    CreateCoreWebView2ControllerCompletedHandler, CreateCoreWebView2EnvironmentCompletedHandler, ExecuteScriptCompletedHandler, 
+    Microsoft::Web::WebView2::Win32::{
+        CreateCoreWebView2EnvironmentWithOptions, ICoreWebView2, ICoreWebView2Controller, ICoreWebView2CustomSchemeRegistration, 
+        ICoreWebView2Environment, ICoreWebView2EnvironmentOptions, ICoreWebView2Settings6, ICoreWebView2WebResourceResponse, 
+        COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL
     }, NavigationCompletedEventHandler, WebMessageReceivedEventHandler, WebResourceRequestedEventHandler
 };
 
 use windows::Win32::{
-    Foundation::{E_POINTER, HWND, LPARAM, RECT, SIZE, WPARAM}, Graphics::Gdi::UpdateWindow, System::{
+    Foundation::{
+        E_POINTER, HWND, LPARAM, RECT, SIZE, WPARAM
+    }, Graphics::Gdi::UpdateWindow, System::{
         Com::IStream, Threading, WinRT::EventRegistrationToken
-    }, UI::{Input::KeyboardAndMouse, WindowsAndMessaging::{
-        DispatchMessageW, GetClientRect, GetMessageW, GetWindowLongPtrW, PostQuitMessage, PostThreadMessageW, SetWindowLongPtrW, ShowWindow, TranslateMessage, GWLP_USERDATA, MSG, SW_SHOW, WINDOW_LONG_PTR_INDEX, WM_APP 
-    }}
+    }, UI::{
+        Input::KeyboardAndMouse, WindowsAndMessaging::{
+            DispatchMessageW, GetClientRect, GetMessageW, PostQuitMessage, PostThreadMessageW, ShowWindow, TranslateMessage, GWLP_USERDATA, 
+            MSG, SW_SHOW, WM_APP 
+        }
+    }
 };
+use windows_sys::Win32::UI::Shell::SHCreateMemStream;
 use windows_core::{w, Interface, PWSTR};
-
 
 use crate::{bounds::Bounds, content_type, params::Params, request::Request};
 
-use super::framewindow::FrameWindow;
+use super::{framewindow::FrameWindow, GetWindowLong, SetWindowLong};
 
 struct WebViewController(ICoreWebView2Controller);
 
 #[derive(Debug)]
-pub enum Error {
-    WebView2Error(webview2_com::Error),
-    WindowsError(windows::core::Error),
-    JsonError(serde_json::Error),
-    LockError,
+enum Error {
+    Error
 }
-
 
 type Result<T> = std::result::Result<T, Error>;
 
@@ -50,8 +54,6 @@ pub struct WebView {
     thread_id: u32,
     bindings: Rc<RefCell<BindingsMap>>,
     pub frame: FrameWindow,
-    parent: Rc<HWND>,
-    url: Rc<RefCell<String>>,    
     should_save_bounds: bool,
     config_dir: String,
     can_close: Rc<RefCell<Box<dyn Fn()->bool + 'static>>>
@@ -110,7 +112,7 @@ impl WebView {
             ).unwrap();
 
             rx.recv()
-                .map_err(|_| Error::WebView2Error(webview2_com::Error::SendError)).unwrap()
+                .map_err(|_| Error::Error).unwrap()
         }.unwrap();
 
         let environment_clone = environment.clone();
@@ -132,7 +134,7 @@ impl WebView {
             ).unwrap();
 
             rx.recv()
-                .map_err(|_| Error::WebView2Error(webview2_com::Error::SendError)).unwrap()
+                .map_err(|_| Error::Error).unwrap()
         }.unwrap();
 
         let size = get_window_size(parent);
@@ -186,8 +188,6 @@ impl WebView {
             thread_id,
             bindings: Rc::new(RefCell::new(HashMap::new())),
             frame,
-            parent: Rc::new(parent),
-            url: Rc::new(RefCell::new(String::new())),
             should_save_bounds: params.save_bounds,
             config_dir: local_path.to_string_lossy().to_string(),
             can_close: Rc::new(RefCell::new(Box::new(||true))),
@@ -234,49 +234,12 @@ impl WebView {
         if custom_resource_scheme || params.without_native_titlebar {
             unsafe {
                 let url = CoTaskMemPWSTR::from(url.as_str());
+                println!("Test: {}", url);
+
+
                 //webview.webview.AddWebResourceRequestedFilter(*url.as_ref().as_pcwstr(), COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL).unwrap();
                 webview.webview.AddWebResourceRequestedFilter(w!("req:*"), COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL).unwrap();
                 let mut _token = EventRegistrationToken::default();
-
-
-                let webview_clone = webview.webview.clone();
-                // webview.webview.add_WebResourceRequested(
-                //     &WebResourceRequestedEventHandler::create(Box::new(move |_, args| {
-                //         let args = args.unwrap();
-                //     let request = args.Request().unwrap();
-                //     let mut uri = PWSTR(ptr::null_mut());
-                //     request.Uri(&mut uri).unwrap();
-                //     let mut uri = CoTaskMemPWSTR::from(uri).to_string();
-                //     if uri.starts_with("req://webroot") {
-                //         let mut uri = CoTaskMemPWSTR::from(uri).to_string();
-                //         if uri.starts_with("req://webroot") {
-                //         let path = uri.split_off(14);
-                //         match params.webroot.clone().expect("Custom request without webroot").lock().unwrap().get_file(path) {
-                //         Some(file)  => {
-                //             let response = WebResourceResponse::default();
-                //         }
-
-
-                //         let custom_html = r#"<html><body><h1>Hello from WebView2 Custom Request!</h1></body></html>"#;
-    
-                //         // Create a response with the HTML content
-                //         let stream = windows_sys::Win32::UI::S
-                //         hell::SHCreateMemStream(custom_html.as_bytes().as_ptr(), custom_html.as_bytes().len() as u32);
-                //         let stream = IStream::from_raw(stream);
-    
-                //         // Get the WebResourceResponseFactory to create a response
-                //         let response = environment_clone.CreateWebResourceResponse(
-                //             &stream,
-                //             200, // HTTP Status 200 OK
-                //             w!("OK"),
-                //             w!("Content-Type: text/html"),
-                //         ).unwrap();
-                //         args.SetResponse(&response);
-                //     }
-    
-                //     Ok(())
-                // })), &mut _token).unwrap();
-        
 
                 webview.webview.add_WebResourceRequested(
                     &WebResourceRequestedEventHandler::create(Box::new(move |_, args| {
@@ -284,23 +247,15 @@ impl WebView {
                             let request = args.Request().unwrap();
                             let mut uri = PWSTR(ptr::null_mut());
                             request.Uri(&mut uri).unwrap();
-                            
-                            let mut uri = CoTaskMemPWSTR::from(uri).to_string();
+                            let uri = CoTaskMemPWSTR::from(uri);
+                            let mut uri = uri.to_string();
                             if uri.starts_with("req://webroot") {
                                 let path = uri.split_off(14);
-                                match params.webroot.clone().expect("Custom request without webroot").lock().unwrap().get_file(path) {
+                                match params.webroot.clone().expect("Custom request without webroot").lock().unwrap().get_file(path.clone()) {
                                     Some(file)  => {
-                                        let bytes = file.contents();
-                                        let stream = windows_sys::Win32::UI::Shell::SHCreateMemStream(bytes.as_ptr(), bytes.len() as u32);
-                                        let stream = IStream::from_raw(stream);
-                                        let content_type = CoTaskMemPWSTR::from(content_type::get(&uri).as_str());
-                                        let response = environment_clone.CreateWebResourceResponse(
-                                            &stream,
-                                            200, // HTTP Status 200 OK
-                                            w!("OK"),
-                                            w!("Content-Type: text/html"), // *content_type.as_ref().as_pcwstr()
-                                        ).unwrap();
-                                        args.SetResponse(&response);
+                                        let content = file.contents();
+                                        let response = send_custom_response(&environment_clone, content, &path);
+                                        args.SetResponse(&response).unwrap();
                                     },
                                     None => {} // result.status = 404}
                                 }
@@ -314,7 +269,9 @@ impl WebView {
         }
 
         let url = CoTaskMemPWSTR::from(url.as_str());
-        unsafe { webview.webview.Navigate(*url.as_ref().as_pcwstr()).unwrap() };
+        unsafe { 
+            webview.webview.Navigate(*url.as_ref().as_pcwstr()).unwrap() 
+        };
         WebView::set_window_webview(parent, Some(Box::new(webview.clone())));
         webview
     }
@@ -331,23 +288,19 @@ impl WebView {
 
     pub fn run(self) {
         let webview = self.webview.as_ref();
-        let url = self.url.borrow().clone();
-        let url = "https://google.de".to_string();
         let (tx, rx) = mpsc::channel();
 
-        if !url.is_empty() {
-            let handler =
-                NavigationCompletedEventHandler::create(Box::new(move |_sender, _args| {
-                    tx.send(()).expect("send over mpsc channel");
-                    Ok(())
-                }));
-            let mut token = EventRegistrationToken::default();
-            unsafe {
-                webview.add_NavigationCompleted(&handler, &mut token).unwrap();
-                let result = webview2_com::wait_with_pump(rx);
-                webview.remove_NavigationCompleted(token).unwrap();
-                result.unwrap();
-            }
+        let handler =
+            NavigationCompletedEventHandler::create(Box::new(move |_sender, _args| {
+                tx.send(()).expect("send over mpsc channel");
+                Ok(())
+            }));
+        let mut token = EventRegistrationToken::default();
+        unsafe {
+            webview.add_NavigationCompleted(&handler, &mut token).unwrap();
+            let result = webview2_com::wait_with_pump(rx);
+            webview.remove_NavigationCompleted(token).unwrap();
+            result.unwrap();
         }
 
         unsafe {
@@ -388,7 +341,7 @@ impl WebView {
         }).unwrap();
     }
 
-    pub fn init(&self, js: &str) -> Result<&Self> {
+    fn init(&self, js: &str) -> Result<&Self> {
         let webview = self.webview.clone();
         let js = String::from(js);
         AddScriptToExecuteOnDocumentCreatedCompletedHandler::wait_for_async_operation(
@@ -403,7 +356,7 @@ impl WebView {
         Ok(self)
     }
 
-    pub fn resolve(&self, id: u64, status: i32, result: Value) -> Result<&Self> {
+    fn resolve(&self, id: u64, status: i32, result: Value) -> Result<&Self> {
         let result = result.to_string();
 
         self.dispatch(move |webview| {
@@ -421,7 +374,7 @@ impl WebView {
         })
     }
 
-    pub fn eval(&self, js: &str) -> Result<&Self> {
+    fn eval(&self, js: &str) -> Result<&Self> {
         let webview = self.webview.clone();
         let js = String::from(js);
         ExecuteScriptCompletedHandler::wait_for_async_operation(
@@ -499,7 +452,7 @@ impl WebView {
         }
     }
 
-    pub fn dispatch<F>(&self, f: F) -> Result<&Self>
+    fn dispatch<F>(&self, f: F) -> Result<&Self>
     where
         F: FnOnce(WebView) + Send + 'static,
     {
@@ -526,26 +479,19 @@ fn get_window_size(hwnd: HWND) -> SIZE {
     }
 }
 
-#[allow(non_snake_case)]
-#[cfg(target_pointer_width = "32")]
-unsafe fn SetWindowLong(window: HWND, index: WINDOW_LONG_PTR_INDEX, value: isize) -> isize {
-    SetWindowLongW(window, index, value as _) as _
+fn send_custom_response(environment: &ICoreWebView2Environment, content: &[u8], url: &str)-> ICoreWebView2WebResourceResponse {
+    unsafe {
+        let stream = SHCreateMemStream(content.as_ptr(), content.len() as u32);
+        let stream = IStream::from_raw(stream);    
+
+        let content_type = format!("Content-Type: {}", content_type::get(url));
+        let content_type = CoTaskMemPWSTR::from(content_type.as_str());
+        environment.CreateWebResourceResponse(
+            &stream,
+            200, // HTTP Status 200 OK
+            w!("OK"),
+            *content_type.as_ref().as_pcwstr()
+        ).unwrap()
+    }
 }
 
-#[allow(non_snake_case)]
-#[cfg(target_pointer_width = "64")]
-unsafe fn SetWindowLong(window: HWND, index: WINDOW_LONG_PTR_INDEX, value: isize) -> isize {
-    SetWindowLongPtrW(window, index, value)
-}
-
-#[allow(non_snake_case)]
-#[cfg(target_pointer_width = "32")]
-unsafe fn GetWindowLong(window: HWND, index: WINDOW_LONG_PTR_INDEX) -> isize {
-    GetWindowLongW(window, index) as _
-}
-
-#[allow(non_snake_case)]
-#[cfg(target_pointer_width = "64")]
-unsafe fn GetWindowLong(window: HWND, index: WINDOW_LONG_PTR_INDEX) -> isize {
-    GetWindowLongPtrW(window, index)
-}

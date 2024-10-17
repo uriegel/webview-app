@@ -12,7 +12,7 @@ mod content_type;
 mod javascript;
 mod html;
 
-// TODO Windows new: custom_resources
+// TODO Windows new: inject javascript
 // TODO Windows new: window-titlebar
 // TODO Windows new: requests
 // TODO Result as return instead of unwraps
