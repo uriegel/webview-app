@@ -52,7 +52,8 @@ pub struct WebView {
     parent: Rc<HWND>,
     url: Rc<RefCell<String>>,    
     should_save_bounds: bool,
-    config_dir: String
+    config_dir: String,
+    can_close: Rc<RefCell<Box<dyn Fn()->bool + 'static>>>,
 }
 
 
@@ -178,7 +179,8 @@ impl WebView {
             parent: Rc::new(parent),
             url: Rc::new(RefCell::new(String::new())),
             should_save_bounds: params.save_bounds,
-            config_dir: local_path.to_string_lossy().to_string()
+            config_dir: local_path.to_string_lossy().to_string(),
+            can_close: Rc::new(RefCell::new(Box::new(||true))),
         };
 
         // Inject the invoke handler.
@@ -234,6 +236,7 @@ impl WebView {
     }
 
     pub fn can_close(&self, val: impl Fn()->bool + 'static) {
+        let _ = self.can_close.replace(Box::new(val));
     }
 
     pub fn connect_request<F: Fn(&Request, String, String, String) -> bool + 'static>(
@@ -363,7 +366,8 @@ impl WebView {
     }
 
     pub fn on_close(&self, x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool {
-        let can_close = true;
+        let can_close_fn = self.can_close.borrow();
+        let can_close = can_close_fn();
         if can_close && self.should_save_bounds {
             let bounds = Bounds {
                 x: Some(x),
