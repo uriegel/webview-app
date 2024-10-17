@@ -234,7 +234,8 @@ impl WebView {
         if custom_resource_scheme || params.without_native_titlebar {
             unsafe {
                 let url = CoTaskMemPWSTR::from(url.as_str());
-                webview.webview.AddWebResourceRequestedFilter(*url.as_ref().as_pcwstr(), COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL).unwrap();
+                //webview.webview.AddWebResourceRequestedFilter(*url.as_ref().as_pcwstr(), COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL).unwrap();
+                webview.webview.AddWebResourceRequestedFilter(w!("req:*"), COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL).unwrap();
                 let mut _token = EventRegistrationToken::default();
 
 
