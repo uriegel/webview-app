@@ -18,7 +18,7 @@ use windows::Win32::{
 use windows_core::{Interface, PWSTR};
 
 
-use crate::{params::Params, request::Request};
+use crate::{bounds::Bounds, params::Params, request::Request};
 
 use super::framewindow::FrameWindow;
 
@@ -51,6 +51,8 @@ pub struct WebView {
     pub frame: FrameWindow,
     parent: Rc<HWND>,
     url: Rc<RefCell<String>>,    
+    should_save_bounds: bool,
+    config_dir: String
 }
 
 
@@ -69,10 +71,15 @@ struct InvokeMessage {
 
 impl WebView {
     pub fn new(params: Params)->WebView {
-        let frame = FrameWindow::new(params.title.unwrap_or_else(||"Webview App".to_string()).as_str(), params.bounds);
-        let parent = *frame.window;
         let app_data = std::env::var("LOCALAPPDATA").expect("No APP_DATA directory");
         let local_path = Path::new(&app_data).join(params.app.get_appid());
+        let bounds = 
+            if params.save_bounds
+                { Bounds::restore(&local_path.to_string_lossy()).unwrap_or(params.bounds) } 
+            else
+                { params.bounds};
+        let frame = FrameWindow::new(params.title.unwrap_or_else(||"Webview App".to_string()).as_str(), bounds);
+        let parent = *frame.window;
 
         let environment = {
             let (tx, rx) = mpsc::channel();
@@ -84,10 +91,11 @@ impl WebView {
             let scheme_registration = CoreWebView2CustomSchemeRegistration::new("req".to_string());
             unsafe { options.set_scheme_registrations(vec![Some(ICoreWebView2CustomSchemeRegistration::from(scheme_registration))]); }
 
+            let local_path_clone = local_path.clone();
             CreateCoreWebView2EnvironmentCompletedHandler::wait_for_async_operation(
                 Box::new(move |environmentcreatedhandler| unsafe {
                     let options: ICoreWebView2EnvironmentOptions = ICoreWebView2EnvironmentOptions::from(options);
-                    let user_data_path = CoTaskMemPWSTR::from(local_path.as_os_str().to_str().unwrap());
+                    let user_data_path = CoTaskMemPWSTR::from(local_path_clone.as_os_str().to_str().unwrap());
                     CreateCoreWebView2EnvironmentWithOptions(None, *user_data_path.as_ref().as_pcwstr(), &options,  &environmentcreatedhandler) // TODO with options
                         .map_err(webview2_com::Error::WindowsError)
                 }),
@@ -169,6 +177,8 @@ impl WebView {
             frame,
             parent: Rc::new(parent),
             url: Rc::new(RefCell::new(String::new())),
+            should_save_bounds: params.save_bounds,
+            config_dir: local_path.to_string_lossy().to_string()
         };
 
         // Inject the invoke handler.
@@ -350,6 +360,21 @@ impl WebView {
                     bottom: y,
                 }).unwrap();
         };
+    }
+
+    pub fn on_close(&self, x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool {
+        let can_close = true;
+        if can_close && self.should_save_bounds {
+            let bounds = Bounds {
+                x: Some(x),
+                y: Some(y),
+                width: Some(w),
+                height: Some(h),
+                is_maximized 
+            };
+            bounds.save(&self.config_dir);
+        }
+        can_close
     }
 
     fn set_window_webview(hwnd: HWND, webview: Option<Box<WebView>>) -> Option<Box<WebView>> {

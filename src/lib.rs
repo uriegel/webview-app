@@ -12,7 +12,6 @@ mod content_type;
 mod javascript;
 mod html;
 
-// TODO Windows new: hello save bounds
 // TODO Windows new: hello can close
 
 // TODO Windows new: custom_resources

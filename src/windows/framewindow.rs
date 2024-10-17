@@ -3,10 +3,9 @@ use std::{cell::RefCell, rc::Rc};
 use webview2_com::CoTaskMemPWSTR;
 use windows::Win32::{
     Foundation::{
-        HWND, LPARAM, LRESULT, RECT, SIZE, WPARAM
+        HWND, LPARAM, LRESULT, RECT, SIZE, TRUE, WPARAM
     }, System::LibraryLoader, UI::WindowsAndMessaging::{
-        CreateWindowExW, DefWindowProcW, DestroyWindow, GetClientRect, RegisterClassW, CW_USEDEFAULT, WM_SIZE, WM_CLOSE, WM_DESTROY, 
-        WNDCLASSW, WS_OVERLAPPEDWINDOW
+        CreateWindowExW, DefWindowProcW, DestroyWindow, GetClientRect, GetWindowRect, IsZoomed, RegisterClassW, CW_USEDEFAULT, WM_CLOSE, WM_DESTROY, WM_SIZE, WNDCLASSW, WS_OVERLAPPEDWINDOW
     }
 };
 use windows_core::w;
@@ -75,7 +74,11 @@ extern "system" fn window_proc(hwnd: HWND, msg: u32, w_param: WPARAM, l_param: L
     
             WM_CLOSE => {
                 unsafe {
-                    let _ = DestroyWindow(hwnd);
+                    let mut rect = RECT::default();
+                    let _ = GetWindowRect(hwnd, &mut rect);
+                    if webview.on_close(rect.left, rect.top, rect.right-rect.left, rect.bottom - rect.top, IsZoomed(hwnd) == TRUE) {
+                        let _ = DestroyWindow(hwnd);
+                    }
                 }
                 LRESULT::default()
             }
