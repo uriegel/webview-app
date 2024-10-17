@@ -16,6 +16,7 @@ mod html;
 
 // TODO Windows new: custom_resources
 // TODO Windows new: window-titlebar
+// TODO Windows new: requests
 
 // TODO Dark backgroundcolor (Windows?)
 // TODO DragDrop
