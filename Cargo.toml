@@ -41,3 +41,9 @@ features = [
     "Win32_UI_WindowsAndMessaging",
 ]
 
+[target.'cfg(target_os="windows")'.dependencies.windows-sys]
+version = "0.59"
+features = [
+    "Win32_UI_Shell",
+]
+

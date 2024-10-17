@@ -26,7 +26,7 @@ fn on_activate(app: &Application)->WebView {
         .save_bounds()
         .devtools(true)
         .webroot(include_dir!("webroots/custom_resources"))
-        .default_contextmenu_disabled()
+        //.default_contextmenu_disabled()
         .build();
 
      webview

@@ -1,5 +1,6 @@
-use std::{cell::RefCell, collections::HashMap, mem, path::Path, ptr, rc::Rc, sync::mpsc};
+use std::{cell::RefCell, collections::HashMap, ffi::OsString, io::Cursor, mem, os::windows::ffi::OsStringExt, path::Path, ptr, rc::Rc, sync::{mpsc, Arc, Mutex}};
 
+use include_dir::Dir;
 use serde::Deserialize;
 use serde_json::Value;
 use webview2_com::{
@@ -10,15 +11,15 @@ use webview2_com::{
 
 use windows::Win32::{
     Foundation::{E_POINTER, HWND, LPARAM, RECT, SIZE, WPARAM}, Graphics::Gdi::UpdateWindow, System::{
-        Threading, WinRT::EventRegistrationToken
+        Com::IStream, Threading, WinRT::EventRegistrationToken
     }, UI::{Input::KeyboardAndMouse, WindowsAndMessaging::{
         DispatchMessageW, GetClientRect, GetMessageW, GetWindowLongPtrW, PostQuitMessage, PostThreadMessageW, SetWindowLongPtrW, ShowWindow, TranslateMessage, GWLP_USERDATA, MSG, SW_SHOW, WINDOW_LONG_PTR_INDEX, WM_APP 
     }}
 };
-use windows_core::{Interface, PWSTR};
+use windows_core::{w, Interface, PWSTR};
 
 
-use crate::{bounds::Bounds, params::Params, request::Request};
+use crate::{bounds::Bounds, content_type, params::Params, request::Request};
 
 use super::framewindow::FrameWindow;
 
@@ -112,6 +113,7 @@ impl WebView {
                 .map_err(|_| Error::WebView2Error(webview2_com::Error::SendError)).unwrap()
         }.unwrap();
 
+        let environment_clone = environment.clone();
         let controller = {
             let (tx, rx) = mpsc::channel();
 
@@ -168,6 +170,14 @@ impl WebView {
         let rx = Rc::new(rx);
         let thread_id = unsafe { Threading::GetCurrentThreadId() };
 
+        let with_webroot = params.webroot.is_some();
+        let (url, custom_resource_scheme) = match (params.url, params.debug_url, with_webroot) {
+            (None, None, true) => ("req://webroot/index.html".to_string(), true),
+            (Some(url), None, _) => (url, true),
+            (_, Some(debug_url), _) => (debug_url, false),
+            (_, _, _) => ("about:plain".to_string(), false)
+        };
+
         let webview = WebView {
             controller: Rc::new(WebViewController(controller)),
             webview: Rc::new(webview),
@@ -221,22 +231,79 @@ impl WebView {
             ).unwrap();
         }
 
-        let with_webroot = params.webroot.is_some();
-        let (url, custom_resource_scheme) = match (params.url, params.debug_url, with_webroot) {
-            (None, None, true) => ("req://webroot/index.html".to_string(), true),
-            (Some(url), None, _) => (url, true),
-            (_, Some(debug_url), _) => (debug_url, false),
-            (_, _, _) => ("about:plain".to_string(), false)
-        };
-
         if custom_resource_scheme || params.without_native_titlebar {
             unsafe {
                 let url = CoTaskMemPWSTR::from(url.as_str());
                 webview.webview.AddWebResourceRequestedFilter(*url.as_ref().as_pcwstr(), COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL).unwrap();
                 let mut _token = EventRegistrationToken::default();
+
+
+                let webview_clone = webview.webview.clone();
+                // webview.webview.add_WebResourceRequested(
+                //     &WebResourceRequestedEventHandler::create(Box::new(move |_, args| {
+                //         let args = args.unwrap();
+                //     let request = args.Request().unwrap();
+                //     let mut uri = PWSTR(ptr::null_mut());
+                //     request.Uri(&mut uri).unwrap();
+                //     let mut uri = CoTaskMemPWSTR::from(uri).to_string();
+                //     if uri.starts_with("req://webroot") {
+                //         let mut uri = CoTaskMemPWSTR::from(uri).to_string();
+                //         if uri.starts_with("req://webroot") {
+                //         let path = uri.split_off(14);
+                //         match params.webroot.clone().expect("Custom request without webroot").lock().unwrap().get_file(path) {
+                //         Some(file)  => {
+                //             let response = WebResourceResponse::default();
+                //         }
+
+
+                //         let custom_html = r#"<html><body><h1>Hello from WebView2 Custom Request!</h1></body></html>"#;
+    
+                //         // Create a response with the HTML content
+                //         let stream = windows_sys::Win32::UI::S
+                //         hell::SHCreateMemStream(custom_html.as_bytes().as_ptr(), custom_html.as_bytes().len() as u32);
+                //         let stream = IStream::from_raw(stream);
+    
+                //         // Get the WebResourceResponseFactory to create a response
+                //         let response = environment_clone.CreateWebResourceResponse(
+                //             &stream,
+                //             200, // HTTP Status 200 OK
+                //             w!("OK"),
+                //             w!("Content-Type: text/html"),
+                //         ).unwrap();
+                //         args.SetResponse(&response);
+                //     }
+    
+                //     Ok(())
+                // })), &mut _token).unwrap();
+        
+
                 webview.webview.add_WebResourceRequested(
-                    &WebResourceRequestedEventHandler::create(Box::new(move |a, b| {
-                        if let Some(args) = b {
+                    &WebResourceRequestedEventHandler::create(Box::new(move |_, args| {
+                        if let Some(args) = args {
+                            let request = args.Request().unwrap();
+                            let mut uri = PWSTR(ptr::null_mut());
+                            request.Uri(&mut uri).unwrap();
+                            
+                            let mut uri = CoTaskMemPWSTR::from(uri).to_string();
+                            if uri.starts_with("req://webroot") {
+                                let path = uri.split_off(14);
+                                match params.webroot.clone().expect("Custom request without webroot").lock().unwrap().get_file(path) {
+                                    Some(file)  => {
+                                        let bytes = file.contents();
+                                        let stream = windows_sys::Win32::UI::Shell::SHCreateMemStream(bytes.as_ptr(), bytes.len() as u32);
+                                        let stream = IStream::from_raw(stream);
+                                        let content_type = CoTaskMemPWSTR::from(content_type::get(&uri).as_str());
+                                        let response = environment_clone.CreateWebResourceResponse(
+                                            &stream,
+                                            200, // HTTP Status 200 OK
+                                            w!("OK"),
+                                            w!("Content-Type: text/html"), // *content_type.as_ref().as_pcwstr()
+                                        ).unwrap();
+                                        args.SetResponse(&response);
+                                    },
+                                    None => {} // result.status = 404}
+                                }
+                            }
                             Ok(())
                         } else {
                             Ok(())
