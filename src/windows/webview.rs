@@ -5,7 +5,7 @@ use serde_json::Value;
 use webview2_com::{
     AddScriptToExecuteOnDocumentCreatedCompletedHandler, CoTaskMemPWSTR, CoreWebView2CustomSchemeRegistration, CoreWebView2EnvironmentOptions, CreateCoreWebView2ControllerCompletedHandler, CreateCoreWebView2EnvironmentCompletedHandler, ExecuteScriptCompletedHandler, Microsoft::Web::WebView2::Win32::{
         CreateCoreWebView2EnvironmentWithOptions, ICoreWebView2, ICoreWebView2Controller, ICoreWebView2CustomSchemeRegistration, ICoreWebView2EnvironmentOptions, ICoreWebView2Settings6, ICoreWebView2WebResourceRequestedEventHandler, COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL
-    }, NavigationCompletedEventHandler, WebMessageReceivedEventHandler
+    }, NavigationCompletedEventHandler, WebMessageReceivedEventHandler, WebResourceRequestedEventHandler
 };
 
 use windows::Win32::{
@@ -231,9 +231,17 @@ impl WebView {
 
         if custom_resource_scheme || params.without_native_titlebar {
             unsafe {
-                webview.webview.AddWebResourceRequestedFilter(uri, COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL);
+                let url = CoTaskMemPWSTR::from(url.as_str());
+                webview.webview.AddWebResourceRequestedFilter(*url.as_ref().as_pcwstr(), COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL).unwrap();
+                let mut _token = EventRegistrationToken::default();
                 webview.webview.add_WebResourceRequested(
-                    &ICoreWebView2WebResourceRequestedEventHandler, token)
+                    &WebResourceRequestedEventHandler::create(Box::new(move |a, b| {
+                        if let Some(args) = b {
+                            Ok(())
+                        } else {
+                            Ok(())
+                        }
+                    })), &mut _token).unwrap();
             }
         }
 
