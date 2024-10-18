@@ -1,13 +1,12 @@
-use std::{cell::RefCell, mem, path::Path, ptr, rc::Rc, sync::mpsc};
+use std::{cell::RefCell, ffi::c_void, mem, path::Path, ptr, rc::Rc, sync::mpsc};
 
 use webview2_com::{
     AddScriptToExecuteOnDocumentCreatedCompletedHandler, CoTaskMemPWSTR, CoreWebView2CustomSchemeRegistration, CoreWebView2EnvironmentOptions, 
     CreateCoreWebView2ControllerCompletedHandler, CreateCoreWebView2EnvironmentCompletedHandler, ExecuteScriptCompletedHandler, 
     Microsoft::Web::WebView2::Win32::{
-        CreateCoreWebView2EnvironmentWithOptions, ICoreWebView2, ICoreWebView2Controller, ICoreWebView2CustomSchemeRegistration, 
-        ICoreWebView2Environment, ICoreWebView2EnvironmentOptions, ICoreWebView2Settings6, ICoreWebView2WebResourceResponse, 
-        COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL
-    }, NavigationCompletedEventHandler, WebMessageReceivedEventHandler, WebResourceRequestedEventHandler
+        CreateCoreWebView2EnvironmentWithOptions, ICoreWebView2, ICoreWebView2Controller, ICoreWebView2CustomSchemeRegistration, ICoreWebView2Environment, 
+        ICoreWebView2EnvironmentOptions, ICoreWebView2Settings6, ICoreWebView2WebResourceResponse, COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL
+    }, NavigationCompletedEventHandler, WebMessageReceivedEventHandler, WebResourceRequestedEventHandler, WindowCloseRequestedEventHandler
 };
 
 use windows::Win32::{
@@ -17,8 +16,7 @@ use windows::Win32::{
         Com::{CoTaskMemFree, IStream}, Threading, WinRT::EventRegistrationToken
     }, UI::{
         Input::KeyboardAndMouse, WindowsAndMessaging::{
-            DispatchMessageW, GetClientRect, GetMessageW, PostQuitMessage, PostThreadMessageW, SetWindowPos, ShowWindow, TranslateMessage, 
-            GWLP_USERDATA, HWND_TOP, MSG, SWP_FRAMECHANGED, SWP_NOMOVE, SWP_NOSIZE, SW_SHOW, WM_APP 
+            DispatchMessageW, GetClientRect, GetMessageW, PostMessageW, PostQuitMessage, PostThreadMessageW, SendMessageW, SetWindowPos, ShowWindow, TranslateMessage, GWLP_USERDATA, HWND_TOP, MSG, SWP_FRAMECHANGED, SWP_NOMOVE, SWP_NOSIZE, SW_SHOW, SW_SHOWMAXIMIZED, SW_SHOWMINIMIZED, SW_SHOWNORMAL, WM_APP, WM_CLOSE 
         }
     }
 };
@@ -29,12 +27,13 @@ use crate::{bounds::Bounds, content_type, html, javascript::{self, RequestData},
 
 use super::{framewindow::FrameWindow, GetWindowLong, SetWindowLong};
 
-pub const WM_SENDSCRIPT: u32 = WM_APP + 1;
+pub const WM_SENDRESPONSE: u32 = WM_APP + 1;
+pub const WM_SENDSCRIPT: u32 = WM_APP + 2;
 
 struct WebViewController(ICoreWebView2Controller);
 
 #[derive(Debug)]
-enum Error {
+pub enum Error {
     Error
 }
 
@@ -56,6 +55,7 @@ pub struct WebView {
     config_dir: String,
     can_close: Rc<RefCell<Box<dyn Fn()->bool + 'static>>>,
     on_request: Rc<RefCell<Box<dyn Fn(&Request, String, String, String) -> bool + 'static>>>,
+    is_maximized: Rc<RefCell<bool>>
 }
 
 
@@ -93,7 +93,8 @@ impl WebView {
                 Box::new(move |environmentcreatedhandler| unsafe {
                     let options: ICoreWebView2EnvironmentOptions = ICoreWebView2EnvironmentOptions::from(options);
                     let user_data_path = CoTaskMemPWSTR::from(local_path_clone.as_os_str().to_str().unwrap());
-                    CreateCoreWebView2EnvironmentWithOptions(None, *user_data_path.as_ref().as_pcwstr(), &options,  &environmentcreatedhandler) // TODO with options
+                    CreateCoreWebView2EnvironmentWithOptions(None, *user_data_path.as_ref().as_pcwstr(), &options, 
+                            &environmentcreatedhandler) // TODO with options
                         .map_err(webview2_com::Error::WindowsError)
                 }),
                 Box::new(move |error_code, environment| {
@@ -185,6 +186,7 @@ impl WebView {
             config_dir: local_path.to_string_lossy().to_string(),
             can_close: Rc::new(RefCell::new(Box::new(||true))),
             on_request: Rc::new(RefCell::new(Box::new(|_,_,_,_|false))),
+            is_maximized: Rc::new(RefCell::new(false))
         };
 
         webview
@@ -192,6 +194,18 @@ impl WebView {
             .unwrap();
 
         unsafe {
+            let mut _token = EventRegistrationToken::default();
+            let hwnd = webview.frame.get_hwnd();
+            webview.webview.add_WindowCloseRequested(
+                &WindowCloseRequestedEventHandler::create(Box::new(move|_,_| {
+                    let hwnd = hwnd as *mut c_void;
+                    let hwnd = HWND(hwnd);
+                    SendMessageW(hwnd, WM_CLOSE, WPARAM(0), LPARAM(0));
+                    Ok(())
+                })),
+                &mut _token,
+            ).unwrap();
+
             let mut _token = EventRegistrationToken::default();
             let webview_clone = webview.clone();
             let hwnd = webview.frame.get_hwnd();
@@ -209,19 +223,19 @@ impl WebView {
                                 let on_request = webview_clone.on_request.borrow();
                                 let request = Request { hwnd };
                                 on_request(&request, request_data.id.to_string(), request_data.cmd.to_string(), request_data.json.to_string());
+                            } else if msg.starts_with("MaximizeWindow") {
+                                let hwnd = hwnd as *mut c_void;
+                                let hwnd = HWND(hwnd);
+                                ShowWindow(hwnd, SW_SHOWMAXIMIZED).unwrap();
+                            } else if msg.starts_with("MinimizeWindow") {
+                                let hwnd = hwnd as *mut c_void;
+                                let hwnd = HWND(hwnd);
+                                ShowWindow(hwnd, SW_SHOWMINIMIZED).unwrap();
+                            } else if msg.starts_with("RestoreWindow") {
+                                let hwnd = hwnd as *mut c_void;
+                                let hwnd = HWND(hwnd);
+                                ShowWindow(hwnd, SW_SHOWNORMAL).unwrap();
                             }
-                                // let mut bindings = bindings.borrow_mut();
-                                // if let Some(f) = bindings.get_mut(&value.method) {
-                                //     match (*f)(value.params) {
-                                //         Ok(result) => bound.resolve(value.id, 0, result),
-                                //         Err(err) => bound.resolve(
-                                //             value.id,
-                                //             1,
-                                //             Value::String(format!("{err:#?}")),
-                                //         ),
-                                //     }
-                                //     .unwrap();
-                                // }
                         }
                     }
                     Ok(())
@@ -368,7 +382,7 @@ impl WebView {
         Ok(self)
     }
 
-    fn _eval(&self, js: &str) -> Result<&Self> {
+    pub fn eval(&self, js: &str) -> Result<&Self> {
         let webview = self.webview.clone();
         let js = String::from(js);
         ExecuteScriptCompletedHandler::wait_for_async_operation(
@@ -383,7 +397,7 @@ impl WebView {
         Ok(self)
     }
 
-    pub fn set_size(&self, x: i32, y: i32) {
+    pub fn set_size(&self, x: i32, y: i32, is_maximized: bool) {
         unsafe {
             self.controller
                 .0
@@ -394,6 +408,18 @@ impl WebView {
                     bottom: y,
                 }).unwrap();
         };
+        if is_maximized != *self.is_maximized.borrow() {
+            self.is_maximized.replace(is_maximized);
+
+            let js: String = format!("WEBVIEWsetMaximized({is_maximized})");
+            let mut js = CoTaskMemPWSTR::from(js.as_str());
+            let wparam: WPARAM = WPARAM(js.take().as_ptr() as usize);
+            let lparam: LPARAM = LPARAM(0);   
+            let hwnd = self.frame.get_hwnd();
+            let hwnd = hwnd as *mut c_void;
+            let hwnd = HWND(hwnd);
+            unsafe { PostMessageW(hwnd, WM_SENDSCRIPT, wparam, lparam).unwrap() };
+        }
     }
 
     pub fn on_close(&self, x: i32, y: i32, w: i32, h: i32, is_maximized: bool)->bool {

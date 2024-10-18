@@ -31,7 +31,7 @@ unsafe fn GetWindowLong(window: HWND, index: WINDOW_LONG_PTR_INDEX) -> isize {
     GetWindowLongPtrW(window, index)
 }
 
-fn _wparam_to_string_and_free(wparam: WPARAM) -> String {
+fn wparam_to_string_and_free(wparam: WPARAM) -> String {
     unsafe {
         // Cast WPARAM (which contains the pointer to the wide string) to *mut u16 and then wrap in PWSTR
         let ptr: PWSTR = PWSTR(wparam.0 as *mut u16);

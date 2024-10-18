@@ -12,8 +12,6 @@ mod content_type;
 mod javascript;
 mod html;
 
-// TODO Windows new: window-titlebar
-
 // TODO Result as return instead of unwraps
 // TODO Dark backgroundcolor (Windows?)
 // TODO DragDrop

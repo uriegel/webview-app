@@ -5,15 +5,15 @@ use windows::Win32::{
     Foundation::{
         HWND, LPARAM, LRESULT, RECT, SIZE, TRUE, WPARAM
     }, System::LibraryLoader, UI::WindowsAndMessaging::{
-        CreateWindowExW, DefWindowProcW, DestroyWindow, GetClientRect, GetWindowRect, IsZoomed, RegisterClassW, 
-        CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, NCCALCSIZE_PARAMS, WM_CLOSE, WM_DESTROY, WM_NCCALCSIZE, WM_SIZE, WNDCLASSW, WS_OVERLAPPEDWINDOW
+        CreateWindowExW, DefWindowProcW, DestroyWindow, GetClientRect, GetWindowRect, IsZoomed, RegisterClassW, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, 
+        NCCALCSIZE_PARAMS, SIZE_MAXIMIZED, WM_CLOSE, WM_DESTROY, WM_NCCALCSIZE, WM_SIZE, WNDCLASSW, WS_OVERLAPPEDWINDOW
     }
 };
 use windows_core::w;
 
 use crate::bounds::Bounds;
 
-use super::webview::{WebView, WM_SENDSCRIPT};
+use super::{webview::{WebView, WM_SENDRESPONSE, WM_SENDSCRIPT}, wparam_to_string_and_free};
 
 #[derive(Clone)]
 pub struct FrameWindow {
@@ -73,15 +73,19 @@ extern "system" fn window_proc(hwnd: HWND, msg: u32, w_param: WPARAM, l_param: L
         match msg {
             WM_SIZE => {
                 let size = get_window_size(hwnd);
-                webview.set_size(size.cx, size.cy);
+                webview.set_size(size.cx, size.cy, w_param == WPARAM(SIZE_MAXIMIZED as usize));
                 *frame.size.borrow_mut() = size;
                    LRESULT::default()
             }
 
-            WM_SENDSCRIPT => {
-                // let response = wparam_to_string_and_free(w_param);
-                // println!("{}", response);
+            WM_SENDRESPONSE => {
                 webview.send_response(w_param);
+                LRESULT::default()
+            }
+
+            WM_SENDSCRIPT => {
+                let js = wparam_to_string_and_free(w_param);
+                webview.eval(&js).unwrap();
                 LRESULT::default()
             }
 

@@ -62,7 +62,7 @@ pub fn request_blocking<F: FnOnce() -> String + Send + 'static>(
         use windows::Win32::Foundation::{HWND, LPARAM, WPARAM};
         use windows::Win32::UI::WindowsAndMessaging::PostMessageW;
 
-        use crate::windows::webview::WM_SENDSCRIPT;
+        use crate::windows::webview::WM_SENDRESPONSE;
 
         let hwnd = request.hwnd;
 
@@ -70,10 +70,10 @@ pub fn request_blocking<F: FnOnce() -> String + Send + 'static>(
             let response = on_request();
             let back: String = format!("result,{},{}", id, response);
             let mut back = CoTaskMemPWSTR::from(back.as_str());
-            let wparam: WPARAM = WPARAM(back.take().as_ptr() as usize); // Example WPARAM (e.g., 'A' key)
+            let wparam: WPARAM = WPARAM(back.take().as_ptr() as usize);
             let lparam: LPARAM = LPARAM(0);   
             let hwnd = hwnd as *mut c_void;
             let hwnd = HWND(hwnd);
-            unsafe { PostMessageW(hwnd, WM_SENDSCRIPT, wparam, lparam).unwrap() };
+            unsafe { PostMessageW(hwnd, WM_SENDRESPONSE, wparam, lparam).unwrap() };
         });
 } 
