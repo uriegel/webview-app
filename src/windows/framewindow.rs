@@ -1,4 +1,4 @@
-use std::{cell::RefCell, mem, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 use webview2_com::CoTaskMemPWSTR;
 use windows::Win32::{
@@ -97,14 +97,16 @@ extern "system" fn window_proc(hwnd: HWND, msg: u32, w_param: WPARAM, l_param: L
                         let is_zoomed_all = if is_zoomed { 3 } else {0};
                         
                         if w_param != WPARAM(0) {
-                            let params: &mut NCCALCSIZE_PARAMS = mem::transmute(l_param);
+                            let l_param = l_param.0 as usize;
+                            let params = &mut *(l_param as *mut NCCALCSIZE_PARAMS);
                             params.rgrc[0].top += 1 + is_zoomed_top;
                             params.rgrc[0].bottom -= 5 + is_zoomed_all;
                             params.rgrc[0].left += 5 + is_zoomed_all;
                             params.rgrc[0].right -= 5 + is_zoomed_all;
                         }
                         else {
-                            let params: &mut RECT = mem::transmute(l_param);
+                            let l_param = l_param.0 as usize;
+                            let params = &mut *(l_param as *mut RECT);
                             params.top += 1 + is_zoomed_top;
                             params.bottom -= 5 + is_zoomed_all;
                             params.left += 5 + is_zoomed_all;
