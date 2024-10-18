@@ -13,7 +13,6 @@ mod javascript;
 mod html;
 
 // TODO Windows new: window-titlebar
-// TODO Windows new: requests
 
 // TODO Result as return instead of unwraps
 // TODO Dark backgroundcolor (Windows?)

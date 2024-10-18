@@ -4,15 +4,16 @@ use webview2_com::CoTaskMemPWSTR;
 use windows::Win32::{
     Foundation::{
         HWND, LPARAM, LRESULT, RECT, SIZE, TRUE, WPARAM
-    }, System::LibraryLoader, UI::WindowsAndMessaging::{
-        CreateWindowExW, DefWindowProcW, DestroyWindow, GetClientRect, GetWindowRect, IsZoomed, RegisterClassW, CW_USEDEFAULT, WM_CLOSE, WM_DESTROY, WM_SIZE, WNDCLASSW, WS_OVERLAPPEDWINDOW
+    }, System::{LibraryLoader}, UI::WindowsAndMessaging::{
+        CreateWindowExW, DefWindowProcW, DestroyWindow, GetClientRect, GetWindowRect, IsZoomed, RegisterClassW, CW_USEDEFAULT, 
+        WM_CLOSE, WM_DESTROY, WM_SIZE, WNDCLASSW, WS_OVERLAPPEDWINDOW
     }
 };
 use windows_core::w;
 
 use crate::bounds::Bounds;
 
-use super::webview::WebView;
+use super::webview::{WebView, WM_SENDSCRIPT};
 
 #[derive(Clone)]
 pub struct FrameWindow {
@@ -54,6 +55,10 @@ impl FrameWindow {
             size: Rc::new(RefCell::new(SIZE { cx: 0, cy: 0 })),
         }
     }
+
+    pub fn get_hwnd(&self)->isize {
+        self.window.0 as isize
+    }
 }
 
 extern "system" fn window_proc(hwnd: HWND, msg: u32, w_param: WPARAM, l_param: LPARAM) -> LRESULT {
@@ -70,6 +75,13 @@ extern "system" fn window_proc(hwnd: HWND, msg: u32, w_param: WPARAM, l_param: L
                 webview.set_size(size.cx, size.cy);
                 *frame.size.borrow_mut() = size;
                    LRESULT::default()
+            }
+
+            WM_SENDSCRIPT => {
+                // let response = wparam_to_string_and_free(w_param);
+                // println!("{}", response);
+                webview.send_response(w_param);
+                LRESULT::default()
             }
     
             WM_CLOSE => {
@@ -101,3 +113,4 @@ extern "system" fn window_proc(hwnd: HWND, msg: u32, w_param: WPARAM, l_param: L
         }
     }
     
+

@@ -1,7 +1,5 @@
-use std::{cell::RefCell, collections::HashMap, mem, path::Path, ptr, rc::Rc, sync::mpsc};
+use std::{cell::RefCell, mem, path::Path, ptr, rc::Rc, sync::mpsc};
 
-use serde::Deserialize;
-use serde_json::Value;
 use webview2_com::{
     AddScriptToExecuteOnDocumentCreatedCompletedHandler, CoTaskMemPWSTR, CoreWebView2CustomSchemeRegistration, CoreWebView2EnvironmentOptions, 
     CreateCoreWebView2ControllerCompletedHandler, CreateCoreWebView2EnvironmentCompletedHandler, ExecuteScriptCompletedHandler, 
@@ -16,7 +14,7 @@ use windows::Win32::{
     Foundation::{
         E_POINTER, HWND, LPARAM, RECT, SIZE, WPARAM
     }, Graphics::Gdi::UpdateWindow, System::{
-        Com::IStream, Threading, WinRT::EventRegistrationToken
+        Com::{CoTaskMemFree, IStream}, Threading, WinRT::EventRegistrationToken
     }, UI::{
         Input::KeyboardAndMouse, WindowsAndMessaging::{
             DispatchMessageW, GetClientRect, GetMessageW, PostQuitMessage, PostThreadMessageW, ShowWindow, TranslateMessage, GWLP_USERDATA, 
@@ -27,9 +25,11 @@ use windows::Win32::{
 use windows_sys::Win32::UI::Shell::SHCreateMemStream;
 use windows_core::{w, Interface, PWSTR};
 
-use crate::{bounds::Bounds, content_type, html, javascript, params::Params, request::Request};
+use crate::{bounds::Bounds, content_type, html, javascript::{self, RequestData}, params::Params, request::Request};
 
 use super::{framewindow::FrameWindow, GetWindowLong, SetWindowLong};
+
+pub const WM_SENDSCRIPT: u32 = WM_APP + 1;
 
 struct WebViewController(ICoreWebView2Controller);
 
@@ -42,8 +42,6 @@ type Result<T> = std::result::Result<T, Error>;
 
 type WebViewSender = mpsc::Sender<Box<dyn FnOnce(WebView) + Send>>;
 type WebViewReceiver = mpsc::Receiver<Box<dyn FnOnce(WebView) + Send>>;
-type BindingCallback = Box<dyn FnMut(Vec<Value>) -> Result<Value>>;
-type BindingsMap = HashMap<String, BindingCallback>;
 
 #[derive(Clone)]
 pub struct WebView {
@@ -55,7 +53,8 @@ pub struct WebView {
     pub frame: FrameWindow,
     should_save_bounds: bool,
     config_dir: String,
-    can_close: Rc<RefCell<Box<dyn Fn()->bool + 'static>>>
+    can_close: Rc<RefCell<Box<dyn Fn()->bool + 'static>>>,
+    on_request: Rc<RefCell<Box<dyn Fn(&Request, String, String, String) -> bool + 'static>>>,
 }
 
 
@@ -183,6 +182,7 @@ impl WebView {
             should_save_bounds: params.save_bounds,
             config_dir: local_path.to_string_lossy().to_string(),
             can_close: Rc::new(RefCell::new(Box::new(||true))),
+            on_request: Rc::new(RefCell::new(Box::new(|_,_,_,_|false))),
         };
 
         webview
@@ -191,6 +191,8 @@ impl WebView {
 
         unsafe {
             let mut _token = EventRegistrationToken::default();
+            let webview_clone = webview.clone();
+            let hwnd = webview.frame.get_hwnd();
             webview.webview.add_WebMessageReceived(
                 &WebMessageReceivedEventHandler::create(Box::new(move |_webview, args| {
                     if let Some(args) = args {
@@ -200,12 +202,12 @@ impl WebView {
                             let msg = &message.to_string();
                             if params.devtools && msg == "devtools" {
                                 _webview.unwrap().OpenDevToolsWindow().unwrap();
+                            } else if msg.starts_with("request,") {
+                                let request_data = RequestData::new(&msg);
+                                let on_request = webview_clone.on_request.borrow();
+                                let request = Request { hwnd };
+                                on_request(&request, request_data.id.to_string(), request_data.cmd.to_string(), request_data.json.to_string());
                             }
-            
-                            
-  //                          if let Ok(value) =
-//                                serde_json::from_str::<InvokeMessage>(&message.to_string())
-                            {
                                 // let mut bindings = bindings.borrow_mut();
                                 // if let Some(f) = bindings.get_mut(&value.method) {
                                 //     match (*f)(value.params) {
@@ -218,7 +220,6 @@ impl WebView {
                                 //     }
                                 //     .unwrap();
                                 // }
-                            }
                         }
                     }
                     Ok(())
@@ -283,6 +284,7 @@ impl WebView {
         &self,
         on_request: F,
     ) {
+        let _ = self.on_request.replace(Box::new(on_request));
     }
 
     pub fn run(self) {
@@ -340,6 +342,14 @@ impl WebView {
         }).unwrap();
     }
 
+    pub fn send_response(&self, response: WPARAM) {
+        let ptr: PWSTR = PWSTR(response.0 as *mut u16);
+        unsafe { 
+            self.webview.PostWebMessageAsString(ptr).unwrap();
+            CoTaskMemFree(Some(ptr.0 as *mut _));
+        }
+    }
+
     fn init(&self, js: &str) -> Result<&Self> {
         let webview = self.webview.clone();
         let js = String::from(js);
@@ -355,25 +365,7 @@ impl WebView {
         Ok(self)
     }
 
-    fn resolve(&self, id: u64, status: i32, result: Value) -> Result<&Self> {
-        let result = result.to_string();
-
-        self.dispatch(move |webview| {
-            let method = match status {
-                0 => "resolve",
-                _ => "reject",
-            };
-            let js = format!(
-                r#"
-                window._rpc[{id}].{method}({result});
-                window._rpc[{id}] = undefined;"#
-            );
-
-            webview.eval(&js).expect("eval return script");
-        })
-    }
-
-    fn eval(&self, js: &str) -> Result<&Self> {
+    fn _eval(&self, js: &str) -> Result<&Self> {
         let webview = self.webview.clone();
         let js = String::from(js);
         ExecuteScriptCompletedHandler::wait_for_async_operation(

@@ -17,7 +17,9 @@ pub struct Request {
 }
 
 #[cfg(target_os = "windows")]
-pub struct Request {}
+pub struct Request {
+    pub(crate) hwnd: isize
+}
 
 #[cfg(target_os = "linux")]
 pub fn request_async<F: std::future::Future<Output = String> + 'static>(
@@ -52,15 +54,26 @@ pub fn request_blocking<F: FnOnce() -> String + Send + 'static>(
 } 
 
 
-// #[cfg(target_os = "windows")]
-// pub fn request_blocking<F: FnOnce() -> String + Send + 'static>(
-//     _: &Request, id: String, on_request: F) {
-//         use std::thread;
-//         use crate::windows_old::raw_funcs::load_raw_funcs;
+#[cfg(target_os = "windows")]
+pub fn request_blocking<F: FnOnce() -> String + Send + 'static>(
+    request: &Request, id: String, on_request: F) {
+        use std::{ffi::c_void, thread};
+        use webview2_com::CoTaskMemPWSTR;
+        use windows::Win32::Foundation::{HWND, LPARAM, WPARAM};
+        use windows::Win32::UI::WindowsAndMessaging::PostMessageW;
 
-//         thread::spawn(move|| {
-//             let response = on_request();
-//             let back: String = format!("result,{},{}", id, response);
-//             (load_raw_funcs("").send_text)(back.as_ptr(), back.len() as i32);
-//         });
-// } 
+        use crate::windows::webview::WM_SENDSCRIPT;
+
+        let hwnd = request.hwnd;
+
+        thread::spawn(move|| {
+            let response = on_request();
+            let back: String = format!("result,{},{}", id, response);
+            let mut back = CoTaskMemPWSTR::from(back.as_str());
+            let wparam: WPARAM = WPARAM(back.take().as_ptr() as usize); // Example WPARAM (e.g., 'A' key)
+            let lparam: LPARAM = LPARAM(0);   
+            let hwnd = hwnd as *mut c_void;
+            let hwnd = HWND(hwnd);
+            unsafe { PostMessageW(hwnd, WM_SENDSCRIPT, wparam, lparam).unwrap() };
+        });
+} 
