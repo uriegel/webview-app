@@ -17,8 +17,8 @@ use windows::Win32::{
         Com::{CoTaskMemFree, IStream}, Threading, WinRT::EventRegistrationToken
     }, UI::{
         Input::KeyboardAndMouse, WindowsAndMessaging::{
-            DispatchMessageW, GetClientRect, GetMessageW, PostQuitMessage, PostThreadMessageW, ShowWindow, TranslateMessage, GWLP_USERDATA, 
-            MSG, SW_SHOW, WM_APP 
+            DispatchMessageW, GetClientRect, GetMessageW, PostQuitMessage, PostThreadMessageW, SetWindowPos, ShowWindow, TranslateMessage, 
+            GWLP_USERDATA, HWND_TOP, MSG, SWP_FRAMECHANGED, SWP_NOMOVE, SWP_NOSIZE, SW_SHOW, WM_APP 
         }
     }
 };
@@ -45,12 +45,13 @@ type WebViewReceiver = mpsc::Receiver<Box<dyn FnOnce(WebView) + Send>>;
 
 #[derive(Clone)]
 pub struct WebView {
+    pub frame: FrameWindow,
+    pub without_native_titlebar: bool,
     controller: Rc<WebViewController>,
     webview: Rc<ICoreWebView2>,
     tx: WebViewSender,
     rx: Rc<WebViewReceiver>,
     thread_id: u32,
-    pub frame: FrameWindow,
     should_save_bounds: bool,
     config_dir: String,
     can_close: Rc<RefCell<Box<dyn Fn()->bool + 'static>>>,
@@ -179,6 +180,7 @@ impl WebView {
             rx,
             thread_id,
             frame,
+            without_native_titlebar: params.without_native_titlebar,
             should_save_bounds: params.save_bounds,
             config_dir: local_path.to_string_lossy().to_string(),
             can_close: Rc::new(RefCell::new(Box::new(||true))),
@@ -307,6 +309,7 @@ impl WebView {
         unsafe {
             let _ = ShowWindow(*self.frame.window, SW_SHOW);
             let _ = UpdateWindow(*self.frame.window);
+            let _ = SetWindowPos(*self.frame.window, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
             let _ = KeyboardAndMouse::SetFocus(*self.frame.window);
         }
 

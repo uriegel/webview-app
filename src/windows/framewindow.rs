@@ -1,12 +1,12 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, mem, rc::Rc};
 
 use webview2_com::CoTaskMemPWSTR;
 use windows::Win32::{
     Foundation::{
         HWND, LPARAM, LRESULT, RECT, SIZE, TRUE, WPARAM
-    }, System::{LibraryLoader}, UI::WindowsAndMessaging::{
-        CreateWindowExW, DefWindowProcW, DestroyWindow, GetClientRect, GetWindowRect, IsZoomed, RegisterClassW, CW_USEDEFAULT, 
-        WM_CLOSE, WM_DESTROY, WM_SIZE, WNDCLASSW, WS_OVERLAPPEDWINDOW
+    }, System::LibraryLoader, UI::WindowsAndMessaging::{
+        CreateWindowExW, DefWindowProcW, DestroyWindow, GetClientRect, GetWindowRect, IsZoomed, RegisterClassW, 
+        CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, NCCALCSIZE_PARAMS, WM_CLOSE, WM_DESTROY, WM_NCCALCSIZE, WM_SIZE, WNDCLASSW, WS_OVERLAPPEDWINDOW
     }
 };
 use windows_core::w;
@@ -18,7 +18,7 @@ use super::webview::{WebView, WM_SENDSCRIPT};
 #[derive(Clone)]
 pub struct FrameWindow {
     pub window: Rc<HWND>,
-    pub size: Rc<RefCell<SIZE>>,
+    pub size: Rc<RefCell<SIZE>>
 }
 
 impl FrameWindow {
@@ -27,6 +27,7 @@ impl FrameWindow {
             let window_class = WNDCLASSW {
                 lpfnWndProc: Some(window_proc),
                 lpszClassName: w!("$$WebView_APP$$"),
+                style: CS_HREDRAW | CS_VREDRAW,
                 ..Default::default()
             };
 
@@ -37,7 +38,7 @@ impl FrameWindow {
                     Default::default(),
                     w!("$$WebView_APP$$"),
                     *title.as_ref().as_pcwstr(),
-                    WS_OVERLAPPEDWINDOW, // TODO
+                    WS_OVERLAPPEDWINDOW, 
                     bounds.x.unwrap_or(CW_USEDEFAULT),
                     bounds.y.unwrap_or(CW_USEDEFAULT),
                     bounds.width.unwrap_or(CW_USEDEFAULT),
@@ -82,6 +83,35 @@ extern "system" fn window_proc(hwnd: HWND, msg: u32, w_param: WPARAM, l_param: L
                 // println!("{}", response);
                 webview.send_response(w_param);
                 LRESULT::default()
+            }
+
+            WM_NCCALCSIZE => {
+                unsafe {
+                    if webview.without_native_titlebar {
+                        let is_zoomed = IsZoomed(hwnd) == TRUE;
+                        let is_zoomed_top = if is_zoomed {7} else {0};
+                        let is_zoomed_all = if is_zoomed { 3 } else {0};
+                        
+                        if w_param != WPARAM(0) {
+                            let params: &mut NCCALCSIZE_PARAMS = mem::transmute(l_param);
+                            params.rgrc[0].top += 1 + is_zoomed_top;
+                            params.rgrc[0].bottom -= 5 + is_zoomed_all;
+                            params.rgrc[0].left += 5 + is_zoomed_all;
+                            params.rgrc[0].right -= 5 + is_zoomed_all;
+                        }
+                        else {
+                            let params: &mut RECT = mem::transmute(l_param);
+                            params.top += 1 + is_zoomed_top;
+                            params.bottom -= 5 + is_zoomed_all;
+                            params.left += 5 + is_zoomed_all;
+                            params.right -= 5 + is_zoomed_all;
+                        }
+                        LRESULT::default()
+                    } 
+                    else {
+                        DefWindowProcW(hwnd, msg, w_param, l_param)
+                    }
+                }
             }
     
             WM_CLOSE => {
