@@ -119,7 +119,7 @@ impl WebkitView {
 
                 let mut file = uri.clone();
                 let mut path = file.split_off(14);
-                let path = if path.starts_with("webbroot") {
+                let path = if path.starts_with("webroot/") {
                     path.split_off(8)
                 } else {
                     path
