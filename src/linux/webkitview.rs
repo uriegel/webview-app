@@ -118,7 +118,12 @@ impl WebkitView {
                 let uri = req.uri().unwrap().to_string();
 
                 let mut file = uri.clone();
-                let path = file.split_off(14);
+                let mut path = file.split_off(14);
+                let path = if path.starts_with("webbroot") {
+                    path.split_off(9)
+                } else {
+                    path
+                };
 
                 match webroot
                         .lock()
