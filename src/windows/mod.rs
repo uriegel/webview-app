@@ -13,8 +13,6 @@ unsafe fn SetWindowLong(window: HWND, index: WINDOW_LONG_PTR_INDEX, value: isize
 #[allow(non_snake_case)]
 #[cfg(target_pointer_width = "64")]
 unsafe fn SetWindowLong(window: HWND, index: WINDOW_LONG_PTR_INDEX, value: isize) -> isize {
-    
-
     SetWindowLongPtrW(window, index, value)
 }
 

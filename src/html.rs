@@ -1,3 +1,4 @@
+#[cfg(target_os = "linux")]
 pub fn ok()->& 'static str {
 r##"<!DOCTYPE html>
 <html>

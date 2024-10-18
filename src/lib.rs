@@ -12,11 +12,10 @@ mod content_type;
 mod javascript;
 mod html;
 
-// TODO Windows new: inject javascript
 // TODO Windows new: window-titlebar
 // TODO Windows new: requests
-// TODO Result as return instead of unwraps
 
+// TODO Result as return instead of unwraps
 // TODO Dark backgroundcolor (Windows?)
 // TODO DragDrop
 // TODO Windows ICON: build.rs: make resource file with icon default ID, version, crate winresource

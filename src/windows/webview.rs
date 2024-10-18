@@ -27,7 +27,7 @@ use windows::Win32::{
 use windows_sys::Win32::UI::Shell::SHCreateMemStream;
 use windows_core::{w, Interface, PWSTR};
 
-use crate::{bounds::Bounds, content_type, params::Params, request::Request};
+use crate::{bounds::Bounds, content_type, html, javascript, params::Params, request::Request};
 
 use super::{framewindow::FrameWindow, GetWindowLong, SetWindowLong};
 
@@ -52,7 +52,6 @@ pub struct WebView {
     tx: WebViewSender,
     rx: Rc<WebViewReceiver>,
     thread_id: u32,
-    bindings: Rc<RefCell<BindingsMap>>,
     pub frame: FrameWindow,
     should_save_bounds: bool,
     config_dir: String,
@@ -66,13 +65,6 @@ impl Drop for WebViewController {
     }
 }
 
-#[derive(Debug, Deserialize)]
-struct InvokeMessage {
-    id: u64,
-    method: String,
-    params: Vec<Value>,
-}
-
 impl WebView {
     pub fn new(params: Params)->WebView {
         let app_data = std::env::var("LOCALAPPDATA").expect("No APP_DATA directory");
@@ -82,7 +74,8 @@ impl WebView {
                 { Bounds::restore(&local_path.to_string_lossy()).unwrap_or(params.bounds) } 
             else
                 { params.bounds};
-        let frame = FrameWindow::new(params.title.unwrap_or_else(||"Webview App".to_string()).as_str(), bounds);
+        let title = params.title.unwrap_or_else(||"Webview App".to_string());
+        let frame = FrameWindow::new(&title.clone(), bounds);
         let parent = *frame.window;
 
         let environment = {
@@ -186,42 +179,45 @@ impl WebView {
             tx,
             rx,
             thread_id,
-            bindings: Rc::new(RefCell::new(HashMap::new())),
             frame,
             should_save_bounds: params.save_bounds,
             config_dir: local_path.to_string_lossy().to_string(),
             can_close: Rc::new(RefCell::new(Box::new(||true))),
         };
 
-        // Inject the invoke handler.
         webview
-            .init(r#"window.external = { invoke: s => window.chrome.webview.postMessage(s) };"#).unwrap();
+            .init(&javascript::get(params.without_native_titlebar, &title, true, false))
+            .unwrap();
 
-        let bindings = webview.bindings.clone();
-        let bound = webview.clone();
         unsafe {
             let mut _token = EventRegistrationToken::default();
             webview.webview.add_WebMessageReceived(
                 &WebMessageReceivedEventHandler::create(Box::new(move |_webview, args| {
                     if let Some(args) = args {
                         let mut message = PWSTR(ptr::null_mut());
-                        if args.WebMessageAsJson(&mut message).is_ok() {
+                        if args.TryGetWebMessageAsString(&mut message).is_ok() {
                             let message = CoTaskMemPWSTR::from(message);
-                            if let Ok(value) =
-                                serde_json::from_str::<InvokeMessage>(&message.to_string())
+                            let msg = &message.to_string();
+                            if params.devtools && msg == "devtools" {
+                                _webview.unwrap().OpenDevToolsWindow().unwrap();
+                            }
+            
+                            
+  //                          if let Ok(value) =
+//                                serde_json::from_str::<InvokeMessage>(&message.to_string())
                             {
-                                let mut bindings = bindings.borrow_mut();
-                                if let Some(f) = bindings.get_mut(&value.method) {
-                                    match (*f)(value.params) {
-                                        Ok(result) => bound.resolve(value.id, 0, result),
-                                        Err(err) => bound.resolve(
-                                            value.id,
-                                            1,
-                                            Value::String(format!("{err:#?}")),
-                                        ),
-                                    }
-                                    .unwrap();
-                                }
+                                // let mut bindings = bindings.borrow_mut();
+                                // if let Some(f) = bindings.get_mut(&value.method) {
+                                //     match (*f)(value.params) {
+                                //         Ok(result) => bound.resolve(value.id, 0, result),
+                                //         Err(err) => bound.resolve(
+                                //             value.id,
+                                //             1,
+                                //             Value::String(format!("{err:#?}")),
+                                //         ),
+                                //     }
+                                //     .unwrap();
+                                // }
                             }
                         }
                     }
@@ -257,7 +253,10 @@ impl WebView {
                                         let response = send_custom_response(&environment_clone, content, &path);
                                         args.SetResponse(&response).unwrap();
                                     },
-                                    None => {} // result.status = 404}
+                                    None => {
+                                        let response = send_custom_response(&environment_clone, html::not_found().as_bytes(), ".html");
+                                        args.SetResponse(&response).unwrap();
+                                    } 
                                 }
                             }
                             Ok(())
