@@ -78,6 +78,10 @@ impl WebView {
     ) {
         self.webview.connect_request(on_request);
     }   
+
+    pub fn eval(&self, script: &str) {
+        self.webview.evaluate_script(script);
+    }
 }
 
 /// Builder to construct a WebView

@@ -2,6 +2,7 @@ console.log("script loaded")
 const btn1 = document.getElementById("button")
 const btn2 = document.getElementById("button2")
 const btn3 = document.getElementById("button3")
+const btnE = document.getElementById("buttonE")
 const btnDevTools = document.getElementById("buttonDevTools")
 const dragzone = document.getElementById("dragzone")
 
@@ -17,6 +18,10 @@ try {
 
 function onWebViewLoaded() {
     initialize()
+}
+
+function onEvent(id) {
+    console.log("Event received", id)
 }
 
 btn1.onclick = async () => {
@@ -38,6 +43,8 @@ btn2.onclick = async () => {
     const tdiff = t1 - t0
     console.log(`${tdiff}`, "cmd2", res)
 }
+
+btnE.onclick = async () => await WebView.request("cmdE", {})
 
 btn3.onclick = () => {
     const video = document.getElementById("video")

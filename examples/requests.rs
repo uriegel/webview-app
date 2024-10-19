@@ -1,7 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 // Allows console to show up in debug build but not release build.
 
-use std::{thread, time::Duration};
+use std::{cell::RefCell, thread, time::Duration};
 
 use serde::{Deserialize, Serialize};
 use include_dir::include_dir;
@@ -29,6 +29,7 @@ pub struct Outputs {
 }
 
 fn on_activate(app: &Application)->WebView {
+    let event_index = RefCell::new(0);
     let webview = WebView::builder(app)
         .title("Requests 👍".to_string())
         .save_bounds()
@@ -37,10 +38,15 @@ fn on_activate(app: &Application)->WebView {
         .default_contextmenu_disabled()
         .build();
     
-    webview.connect_request(|request, id, cmd: String, json| {
+    let webview_clone = webview.clone();
+    webview.connect_request(move|request, id, cmd: String, json| {
         match cmd.as_str() {
             "cmd1" => cmd1(request, id, json),
             "cmd2" => cmd2(request, id),
+            "cmdE" => {
+                *event_index.borrow_mut() += 1;
+                webview_clone.eval(&format!("onEvent({})", event_index.borrow()));
+            },
             _ => {}
         }
         true

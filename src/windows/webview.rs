@@ -377,6 +377,12 @@ impl WebView {
         Ok(self)
     }
 
+    pub fn evaluate_script(&self, js: &str) {
+        let js = string_to_pcwstr(js);
+        unsafe { self.webview
+            .ExecuteScript(PCWSTR(js.as_ptr()), &ExecuteScriptCompletedHandler::create(Box::new(|k, _|k))).unwrap() };
+    }
+
     pub fn eval(&self, js: &str) -> Result<&Self> {
         let webview = self.webview.clone();
         let js = String::from(js);
