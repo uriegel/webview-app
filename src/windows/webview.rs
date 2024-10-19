@@ -21,11 +21,11 @@ use windows::Win32::{
     }
 };
 use windows_sys::Win32::UI::Shell::SHCreateMemStream;
-use windows_core::{w, Interface, PWSTR};
+use windows_core::{w, Interface, PCWSTR, PWSTR};
 
 use crate::{bounds::Bounds, content_type, html, javascript::{self, RequestData}, params::Params, request::Request};
 
-use super::{framewindow::FrameWindow, GetWindowLong, SetWindowLong};
+use super::{framewindow::FrameWindow, string_to_pcwstr, GetWindowLong, SetWindowLong};
 
 pub const WM_SENDRESPONSE: u32 = WM_APP + 1;
 pub const WM_SENDSCRIPT: u32 = WM_APP + 2;
@@ -92,9 +92,9 @@ impl WebView {
             CreateCoreWebView2EnvironmentCompletedHandler::wait_for_async_operation(
                 Box::new(move |environmentcreatedhandler| unsafe {
                     let options: ICoreWebView2EnvironmentOptions = ICoreWebView2EnvironmentOptions::from(options);
-                    let user_data_path = CoTaskMemPWSTR::from(local_path_clone.as_os_str().to_str().unwrap());
-                    CreateCoreWebView2EnvironmentWithOptions(None, *user_data_path.as_ref().as_pcwstr(), &options, 
-                            &environmentcreatedhandler) // TODO with options
+                    let user_data_path = string_to_pcwstr(local_path_clone.as_os_str().to_str().unwrap());
+                    CreateCoreWebView2EnvironmentWithOptions(None, PCWSTR(user_data_path.as_ptr()), &options, 
+                            &environmentcreatedhandler) 
                         .map_err(webview2_com::Error::WindowsError)
                 }),
                 Box::new(move |error_code, environment| {
@@ -246,11 +246,6 @@ impl WebView {
 
         if custom_resource_scheme || params.without_native_titlebar {
             unsafe {
-                let url = CoTaskMemPWSTR::from(url.as_str());
-                println!("Test: {}", url);
-
-
-                //webview.webview.AddWebResourceRequestedFilter(*url.as_ref().as_pcwstr(), COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL).unwrap();
                 webview.webview.AddWebResourceRequestedFilter(w!("req:*"), COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL).unwrap();
                 let mut _token = EventRegistrationToken::default();
 
@@ -284,10 +279,10 @@ impl WebView {
             }
         }
 
-        let url = CoTaskMemPWSTR::from(url.as_str());
+        let url = string_to_pcwstr(url.as_str());
         unsafe { 
-            webview.webview.Navigate(*url.as_ref().as_pcwstr()).unwrap() 
-        };
+            webview.webview.Navigate(PCWSTR(url.as_ptr())).unwrap(); 
+        }
         WebView::set_window_webview(parent, Some(Box::new(webview.clone())));
         webview
     }
@@ -372,9 +367,9 @@ impl WebView {
         let js = String::from(js);
         AddScriptToExecuteOnDocumentCreatedCompletedHandler::wait_for_async_operation(
             Box::new(move |handler| unsafe {
-                let js = CoTaskMemPWSTR::from(js.as_str());
+                let js = string_to_pcwstr(js.as_str());
                 webview
-                    .AddScriptToExecuteOnDocumentCreated(*js.as_ref().as_pcwstr(), &handler)
+                    .AddScriptToExecuteOnDocumentCreated(PCWSTR(js.as_ptr()), &handler)
                     .map_err(webview2_com::Error::WindowsError)
             }),
             Box::new(|error_code, _id| error_code),
@@ -387,9 +382,9 @@ impl WebView {
         let js = String::from(js);
         ExecuteScriptCompletedHandler::wait_for_async_operation(
             Box::new(move |handler| unsafe {
-                let js = CoTaskMemPWSTR::from(js.as_str());
+                let js = string_to_pcwstr(js.as_str());
                 webview
-                    .ExecuteScript(*js.as_ref().as_pcwstr(), &handler)
+                    .ExecuteScript(PCWSTR(js.as_ptr()), &handler)
                     .map_err(webview2_com::Error::WindowsError)
             }),
             Box::new(|error_code, _result| error_code),
@@ -505,12 +500,12 @@ fn send_custom_response(environment: &ICoreWebView2Environment, content: &[u8], 
         let stream = IStream::from_raw(stream);    
 
         let content_type = format!("Content-Type: {}", content_type::get(url));
-        let content_type = CoTaskMemPWSTR::from(content_type.as_str());
+        let content_type = string_to_pcwstr(content_type.as_str());
         environment.CreateWebResourceResponse(
             &stream,
             200, // HTTP Status 200 OK
             w!("OK"),
-            *content_type.as_ref().as_pcwstr()
+            PCWSTR(content_type.as_ptr())
         ).unwrap()
     }
 }

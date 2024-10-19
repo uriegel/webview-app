@@ -70,7 +70,7 @@ pub fn request_blocking<F: FnOnce() -> String + Send + 'static>(
             let response = on_request();
             let back: String = format!("result,{},{}", id, response);
             let mut back = CoTaskMemPWSTR::from(back.as_str());
-            let wparam: WPARAM = WPARAM(back.take().as_ptr() as usize);
+            let wparam: WPARAM = WPARAM(back.take().as_ptr() as usize); 
             let lparam: LPARAM = LPARAM(0);   
             let hwnd = hwnd as *mut c_void;
             let hwnd = HWND(hwnd);

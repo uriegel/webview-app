@@ -1,4 +1,4 @@
-use std::{ffi::OsString, os::windows::ffi::OsStringExt};
+use std::{ffi::OsString, os::windows::ffi::OsStringExt, slice};
 
 use windows::Win32::{Foundation::{HWND, WPARAM}, System::Com::CoTaskMemFree, UI::WindowsAndMessaging::{GetWindowLongPtrW, SetWindowLongPtrW, WINDOW_LONG_PTR_INDEX}};
 use windows_core::PWSTR;
@@ -29,6 +29,33 @@ unsafe fn GetWindowLong(window: HWND, index: WINDOW_LONG_PTR_INDEX) -> isize {
 #[cfg(target_pointer_width = "64")]
 unsafe fn GetWindowLong(window: HWND, index: WINDOW_LONG_PTR_INDEX) -> isize {
     GetWindowLongPtrW(window, index)
+}
+
+fn string_to_pcwstr(x: &str) -> Vec<u16> {
+    x.encode_utf16().chain(std::iter::once(0)).collect()
+}
+
+fn _string_from_pcwstr_arr(pwcstr: &[u16]) -> String {
+    let pstr: Vec<u16> = 
+        pwcstr
+            .iter()
+            .take_while(|&&i|i != 0)
+            .cloned()
+            .collect();
+    String::from_utf16_lossy(&pstr)
+}
+
+fn _string_from_pcwstr(pwcstr: *const u16) -> String {
+    if pwcstr.is_null() {
+        return String::new();
+    }
+    let mut len = 0;
+    unsafe {
+        while *pwcstr.add(len) != 0 {
+            len += 1;
+        }
+        String::from_utf16_lossy(slice::from_raw_parts(pwcstr, len))
+    }
 }
 
 fn wparam_to_string_and_free(wparam: WPARAM) -> String {

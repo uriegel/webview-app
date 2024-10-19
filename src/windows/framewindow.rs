@@ -1,6 +1,5 @@
 use std::{cell::RefCell, rc::Rc};
 
-use webview2_com::CoTaskMemPWSTR;
 use windows::Win32::{
     Foundation::{
         HWND, LPARAM, LRESULT, RECT, SIZE, TRUE, WPARAM
@@ -9,11 +8,11 @@ use windows::Win32::{
         NCCALCSIZE_PARAMS, SIZE_MAXIMIZED, WM_CLOSE, WM_DESTROY, WM_NCCALCSIZE, WM_SIZE, WNDCLASSW, WS_OVERLAPPEDWINDOW
     }
 };
-use windows_core::w;
+use windows_core::{w, PWSTR};
 
 use crate::bounds::Bounds;
 
-use super::{webview::{WebView, WM_SENDRESPONSE, WM_SENDSCRIPT}, wparam_to_string_and_free};
+use super::{string_to_pcwstr, webview::{WebView, WM_SENDRESPONSE, WM_SENDSCRIPT}, wparam_to_string_and_free};
 
 #[derive(Clone)]
 pub struct FrameWindow {
@@ -33,11 +32,11 @@ impl FrameWindow {
 
             unsafe {
                 RegisterClassW(&window_class);
-                let title = CoTaskMemPWSTR::from(title);
+                let mut title = string_to_pcwstr(title);
                 CreateWindowExW(
                     Default::default(),
                     w!("$$WebView_APP$$"),
-                    *title.as_ref().as_pcwstr(),
+                    PWSTR(title.as_mut_ptr()),
                     WS_OVERLAPPEDWINDOW, 
                     bounds.x.unwrap_or(CW_USEDEFAULT),
                     bounds.y.unwrap_or(CW_USEDEFAULT),
