@@ -29,18 +29,10 @@ r##"
 {}
 {}
 
-var webViewEventSinks = new Map()
-
 var WebView = (() => {{
     {}
     {}
     {}
-    {}
-
-    const registerEvents = (id, evt) => {{
-        webViewEventSinks.set(id, evt)
-        onEventsCreated(id)
-    }}
 
     let evtHandler = () => {{ }}
     const setDroppedFilesEventHandler = eh => evtHandler = eh
@@ -56,7 +48,6 @@ var WebView = (() => {{
         showDevTools,
         startDragFiles,
         request,
-        registerEvents,
         dropFiles,
         setDroppedFilesEventHandler,
         setDroppedEvent,
@@ -69,7 +60,7 @@ try {{
     if (onWebViewLoaded) 
         onWebViewLoaded()
 }} catch {{ }}"##, no_titlebar_script(no_native_titlebar, title), request_result(windows), dev_tools(windows), 
-                requests(), on_files_drop(files_drop), on_events_created(windows))
+                requests(), on_files_drop(files_drop))
 }
 
 fn dev_tools(windows: bool)->String { 
@@ -89,11 +80,6 @@ r##"
     })
 "##
     }.to_string()
-}
-
-fn on_events_created(windows: bool)->String {
-    if windows { "const onEventsCreated = id => callback.OnEvents(id)" } 
-    else { "const onEventsCreated = id => fetch(`req://onEvents/${id}`)" }.to_string() 
 }
 
 fn no_titlebar_script(no_native_titlebar: bool, title: &str)->String {

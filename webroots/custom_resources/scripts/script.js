@@ -7,13 +7,8 @@ const dragzone = document.getElementById("dragzone")
 
 btnDevTools.onclick = () => WebView.showDevTools()
 
-let currentDirectory = ""
-
 const initialize = async () => {
-    WebView.registerEvents("fast", console.log)
-    WebView.registerEvents("slow", console.log)
     WebView.setDroppedFilesEventHandler(success => console.log("Files dropped", success))
-//    currentDirectory = (await WebView.request("getCurrentDir", {})).directory
 }
 try {
     if (WebView)
