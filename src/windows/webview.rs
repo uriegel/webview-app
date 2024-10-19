@@ -16,7 +16,9 @@ use windows::Win32::{
         Com::{CoTaskMemFree, IStream}, Threading, WinRT::EventRegistrationToken
     }, UI::{
         Input::KeyboardAndMouse, WindowsAndMessaging::{
-            DispatchMessageW, GetClientRect, GetMessageW, PostMessageW, PostQuitMessage, PostThreadMessageW, SendMessageW, SetWindowPos, ShowWindow, TranslateMessage, GWLP_USERDATA, HWND_TOP, MSG, SWP_FRAMECHANGED, SWP_NOMOVE, SWP_NOSIZE, SW_SHOW, SW_SHOWMAXIMIZED, SW_SHOWMINIMIZED, SW_SHOWNORMAL, WM_APP, WM_CLOSE 
+            DispatchMessageW, GetClientRect, GetMessageW, PostMessageW, PostQuitMessage, PostThreadMessageW, SendMessageW, SetWindowPos, 
+            ShowWindow, TranslateMessage, GWLP_USERDATA, HWND_TOP, MSG, 
+            SWP_FRAMECHANGED, SWP_NOMOVE, SWP_NOSIZE, SW_SHOW, SW_SHOWMAXIMIZED, SW_SHOWMINIMIZED, SW_SHOWNORMAL, WM_APP, WM_CLOSE 
         }
     }
 };
@@ -41,6 +43,11 @@ type Result<T> = std::result::Result<T, Error>;
 
 type WebViewSender = mpsc::Sender<Box<dyn FnOnce(WebView) + Send>>;
 type WebViewReceiver = mpsc::Receiver<Box<dyn FnOnce(WebView) + Send>>;
+
+#[derive(Clone)]
+pub struct WebViewHandle {
+    hwnd: isize
+}
 
 #[derive(Clone)]
 pub struct WebView {
@@ -377,10 +384,20 @@ impl WebView {
         Ok(self)
     }
 
-    pub fn evaluate_script(&self, js: &str) {
-        let js = string_to_pcwstr(js);
-        unsafe { self.webview
-            .ExecuteScript(PCWSTR(js.as_ptr()), &ExecuteScriptCompletedHandler::create(Box::new(|k, _|k))).unwrap() };
+    pub fn get_handle(&self)->WebViewHandle {
+        WebViewHandle {
+            hwnd: self.frame.get_hwnd()
+        }
+    }
+
+    pub fn start_evaluate_script(handle: crate::webview::WebViewHandle, script: &str) {
+        let mut js = CoTaskMemPWSTR::from(script);
+        let wparam: WPARAM = WPARAM(js.take().as_ptr() as usize);
+        let lparam: LPARAM = LPARAM(0);   
+        let hwnd = handle.handle.hwnd;
+        let hwnd = hwnd as *mut c_void;
+        let hwnd = HWND(hwnd);
+        unsafe { PostMessageW(hwnd, WM_SENDSCRIPT, wparam, lparam).unwrap() };
     }
 
     pub fn eval(&self, js: &str) -> Result<&Self> {

@@ -7,7 +7,7 @@ use std::rc::Rc;
 
 use include_dir::Dir;
 
-use crate::{application::Application, bounds::Bounds, params::Params, request::Request};
+use crate::{application::Application, bounds::Bounds, params::Params, request::Request, windows::webview::WebViewHandle as WebViewHandleImpl};
 
 #[cfg(target_os = "linux")]
 use crate::linux::webview::WebView as WebViewImpl;
@@ -21,6 +21,12 @@ use crate::windows::webview::WebView as WebViewImpl;
 pub struct WebView {
     pub(crate) webview: WebViewImpl
 }
+
+#[derive(Clone)]
+pub struct WebViewHandle {
+    pub(crate) handle: WebViewHandleImpl
+}
+
 
 impl WebView {
     /// Creates a ```WebViewBuilder``` to construct a WebView.
@@ -79,8 +85,14 @@ impl WebView {
         self.webview.connect_request(on_request);
     }   
 
-    pub fn eval(&self, script: &str) {
-        self.webview.evaluate_script(script);
+    pub fn get_handle(&self)->WebViewHandle {
+        WebViewHandle {
+            handle: self.webview.get_handle()
+        }
+    }
+
+    pub fn eval(handle: WebViewHandle, script: &str) {
+        WebViewImpl::start_evaluate_script(handle, script);
     }
 }
 
