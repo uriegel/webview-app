@@ -12,7 +12,7 @@ mod content_type;
 mod javascript;
 mod html;
 
-pub use serde;
+pub use serde::{Serialize, Deserialize};
 pub use include_dir;
 pub use webkit6;
 
