@@ -1,4 +1,4 @@
-use webkit6::gtk::prelude::*;
+use gtk::prelude::*;
 
 use crate::webview::WebView;
 

@@ -1,18 +1,12 @@
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
+use gtk::gio::MemoryInputStream;
+use gtk::glib::{self, clone, spawn_future_local, timeout_future_with_priority, Bytes, MainContext, Priority};
+use gtk::Builder;
 use include_dir::Dir;
-
 use webkit6::prelude::*;
-use webkit6::{
-    soup::MessageHeaders, LoadEvent, URISchemeRequest, URISchemeResponse, WebView, gtk::{
-        Builder,
-        gio::MemoryInputStream, glib::{
-            self, clone, spawn_future_local, timeout_future_with_priority, Bytes, MainContext, Priority
-        }
-    }
-
-};
+use webkit6::{soup::MessageHeaders, LoadEvent, URISchemeRequest, URISchemeResponse, WebView};
 use async_channel::Sender;
 
 use crate::content_type;

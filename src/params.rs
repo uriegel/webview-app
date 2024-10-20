@@ -17,7 +17,7 @@ pub struct Params<'a> {
     #[cfg(target_os = "windows")]
     pub without_native_titlebar: bool,
     #[cfg(target_os = "linux")]    
-    pub with_builder: Option<Rc<dyn Fn(&webkit6::gtk::Builder)>>,
+    pub with_builder: Option<Rc<dyn Fn(&gtk::Builder)>>,
     #[cfg(target_os = "linux")]    
     pub builder_path: Option<String>,
     pub devtools: bool,
