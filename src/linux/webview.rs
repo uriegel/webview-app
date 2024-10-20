@@ -72,6 +72,7 @@ impl WebView {
         }
 
         window.present();           
+        webview.webview.grab_focus();
         Self {
             window,
             webview 
