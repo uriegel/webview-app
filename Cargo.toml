@@ -1,11 +1,10 @@
 [package]
 name = "webview_app"
-version = "1.0.0-beta.29"
+version = "1.0.0-beta.30"
 description = "Simple integration of a web view in an application window for windows and linux similar to Electron"
 authors = ["Uwe Riegel <uriegel@hotmail.de>"]
 edition = "2021"
 license = "MIT"
-documentation = "https://github.com/uriegel/webview-app"
 repository = "https://github.com/uriegel/webview-app"
 readme = "README.md"
 include = [
