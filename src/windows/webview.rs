@@ -5,7 +5,8 @@ use webview2_com::{
     CreateCoreWebView2ControllerCompletedHandler, CreateCoreWebView2EnvironmentCompletedHandler, ExecuteScriptCompletedHandler, 
     Microsoft::Web::WebView2::Win32::{
         CreateCoreWebView2EnvironmentWithOptions, ICoreWebView2, ICoreWebView2Controller, ICoreWebView2CustomSchemeRegistration, ICoreWebView2Environment, 
-        ICoreWebView2EnvironmentOptions, ICoreWebView2Settings6, ICoreWebView2WebResourceResponse, COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL
+        ICoreWebView2EnvironmentOptions, ICoreWebView2Settings6, ICoreWebView2WebResourceResponse, 
+        COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC, COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL
     }, NavigationCompletedEventHandler, WebMessageReceivedEventHandler, WebResourceRequestedEventHandler, WindowCloseRequestedEventHandler
 };
 
@@ -15,7 +16,7 @@ use windows::Win32::{
     }, Graphics::Gdi::UpdateWindow, System::{
         Com::{CoTaskMemFree, IStream}, Threading, WinRT::EventRegistrationToken
     }, UI::{
-        Input::KeyboardAndMouse, WindowsAndMessaging::{
+        WindowsAndMessaging::{
             DispatchMessageW, GetClientRect, GetMessageW, PostMessageW, PostQuitMessage, PostThreadMessageW, SendMessageW, SetWindowPos, 
             ShowWindow, TranslateMessage, GWLP_USERDATA, HWND_TOP, MSG, 
             SWP_FRAMECHANGED, SWP_NOMOVE, SWP_NOSIZE, SW_SHOW, SW_SHOWMAXIMIZED, SW_SHOWMINIMIZED, SW_SHOWNORMAL, WM_APP, WM_CLOSE 
@@ -326,7 +327,7 @@ impl WebView {
             let _ = ShowWindow(*self.frame.window, SW_SHOW);
             let _ = UpdateWindow(*self.frame.window);
             let _ = SetWindowPos(*self.frame.window, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
-            let _ = KeyboardAndMouse::SetFocus(*self.frame.window);
+            let _ = self.controller.0.MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC);
         }
 
         let mut msg = MSG::default();
