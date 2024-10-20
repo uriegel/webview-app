@@ -6,6 +6,7 @@ use gtk::ApplicationWindow;
 use crate::request::Request;
 use crate::{bounds::Bounds, params::Params};
 
+use super::webkitview::WebViewHandle;
 use super::webkitview::{WebkitViewParams, WebkitView};
 
 #[derive(Clone)]
@@ -87,6 +88,14 @@ impl WebView {
     ) {
         self.webview.connect_request(on_request);
     }   
+
+    pub fn get_handle(&self)->WebViewHandle {
+        self.webview.get_handle()
+    }
+
+    pub fn start_evaluate_script(handle: crate::webview::WebViewHandle, script: &str) {    
+        WebkitView::start_evaluate_script(handle, script);
+    }
 }
 
 fn get_resource_ui()->&'static str {

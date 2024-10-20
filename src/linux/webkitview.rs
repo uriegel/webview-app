@@ -7,6 +7,7 @@ use gtk::Builder;
 use include_dir::Dir;
 use webkit6::prelude::*;
 use webkit6::{soup::MessageHeaders, LoadEvent, URISchemeRequest, URISchemeResponse, WebView};
+use async_channel::Sender;
 
 use crate::content_type;
 use crate::html;
@@ -16,6 +17,12 @@ use crate::request::Request;
 #[derive(Clone)]
 pub struct WebkitView {
     pub webview: WebView,
+    event_sender: Sender<String>
+}
+
+#[derive(Clone)]
+pub struct WebViewHandle {
+    event_sender: Sender<String>    
 }
 
 pub struct WebkitViewParams<'a> {
@@ -28,6 +35,7 @@ pub struct WebkitViewParams<'a> {
 
 impl WebkitView {
     pub fn new(builder: &Builder, params: WebkitViewParams) -> Self {
+        let (sender, receiver) = async_channel::unbounded::<String>();
 
         let webview: WebView = builder.object("webview").expect("There must be a child with id 'webview' in the window.ui");
         webview.set_visible(false);
@@ -39,8 +47,17 @@ impl WebkitView {
             webview.connect_context_menu(|_,_,_|true);
         }
 
+        glib::spawn_future_local(clone!(
+            #[weak] webview, async move {
+                while let Ok(script) = receiver.recv().await {
+                    webview.evaluate_javascript_future(&script, None, None).await.unwrap();
+                }
+            }
+        ));
+
         let res = WebkitView {
             webview,
+            event_sender: sender
         };
 
         res.enable_request_scheme();
@@ -72,7 +89,6 @@ impl WebkitView {
                 ));                
             }
         });
-
         res
     }
 
@@ -152,6 +168,16 @@ impl WebkitView {
         headers.append("Content-Length", &bytes.len().to_string());
         response.set_http_headers(headers);
         request.finish_with_response(&response);                        
+    }
+
+    pub fn get_handle(&self)->WebViewHandle {
+        WebViewHandle { 
+            event_sender: self.event_sender.clone()
+        }
+    }
+
+    pub fn start_evaluate_script(handle: crate::webview::WebViewHandle, script: &str) {  
+        handle.handle.event_sender.send_blocking(script.to_string()).unwrap();
     }
 }
 

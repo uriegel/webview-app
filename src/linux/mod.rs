@@ -1,3 +1,3 @@
 pub mod application;
 pub mod webview;
-mod webkitview;
+pub mod webkitview;

@@ -7,12 +7,12 @@ use std::rc::Rc;
 
 use include_dir::Dir;
 
-use crate::{application::Application, bounds::Bounds, params::Params, request::Request, windows::webview::WebViewHandle as WebViewHandleImpl};
+use crate::{application::Application, bounds::Bounds, params::Params, request::Request};
 
 #[cfg(target_os = "linux")]
-use crate::linux::webview::WebView as WebViewImpl;
+use crate::linux::{webview::WebView as WebViewImpl, webkitview::WebViewHandle as WebViewHandleImpl};
 #[cfg(target_os = "windows")]
-use crate::windows::webview::WebView as WebViewImpl;
+use crate::windows::webview::{WebView as WebViewImpl, WebViewHandle as WebViewHandleImpl};
 
 /// WebView is a Window running as program including a web view
 /// 
