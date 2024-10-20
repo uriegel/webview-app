@@ -12,9 +12,8 @@ mod content_type;
 mod javascript;
 mod html;
 
-pub use serde;
-pub use include_dir;
-pub use webkit6;
+pub use serde::{Serialize, Deserialize};
+pub use include_dir::include_dir;
 
 // TODO Result as return instead of unwraps
 // TODO Dark backgroundcolor 
