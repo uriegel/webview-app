@@ -22,7 +22,7 @@ serde_json = "1.0.132"
 [target.'cfg(target_os="linux")'.dependencies]
 adw = { version = "0.7.0", package = "libadwaita", features = ["v1_5"] }
 webkit6 = "0.4.0"
-async-channel = "2.3.1"
+async_channel = "2.3.1"
 
 [target.'cfg(target_os="windows")'.dependencies]
 webview2-com = "0.33.0"
