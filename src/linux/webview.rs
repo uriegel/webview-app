@@ -1,7 +1,7 @@
 use std::{fs, path::Path};
 
-use gtk::prelude::*;
-use gtk::ApplicationWindow;
+use webkit6::gtk::prelude::*;
+use webkit6::gtk::ApplicationWindow;
 
 use crate::request::Request;
 use crate::{bounds::Bounds, params::Params};
@@ -41,9 +41,9 @@ impl WebView {
         let builder = 
             match params.builder_path {
                 Some(builder_path) if params.with_builder.is_some() => 
-                    gtk::Builder::from_resource(&builder_path),
+                    webkit6::gtk::Builder::from_resource(&builder_path),
                 _ => 
-                    gtk::Builder::from_string(get_resource_ui()) 
+                    webkit6::gtk::Builder::from_string(get_resource_ui()) 
             };
         let webview = WebkitView::new(&builder, webkitview_params);
 

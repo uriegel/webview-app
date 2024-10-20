@@ -106,7 +106,7 @@ pub struct WebViewBuilder {
     height: Option<i32>,
     save_bounds: bool,
     #[cfg(target_os = "linux")]    
-    with_builder: Option<Rc<dyn Fn(&gtk::Builder)>>,
+    with_builder: Option<Rc<dyn Fn(&webkit6::gtk::Builder)>>,
     #[cfg(target_os = "linux")]    
     builder_path: Option<String>,
     without_native_titlebar: bool,
@@ -200,7 +200,7 @@ impl WebViewBuilder {
 
     #[cfg(target_os = "linux")]
     /// Callback to create the app via a ui resource
-    pub fn with_builder(mut self, builder_path: String, on_build: impl Fn(&gtk::Builder) + 'static)->WebViewBuilder {
+    pub fn with_builder(mut self, builder_path: String, on_build: impl Fn(&webkit6::gtk::Builder) + 'static)->WebViewBuilder {
         self.builder_path = Some(builder_path);
         self.with_builder = Some(Rc::new(on_build));
         self

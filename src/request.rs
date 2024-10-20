@@ -1,5 +1,5 @@
 #[cfg(target_os = "linux")]
-use gtk::gio;
+use webkit6::gtk::gio;
 
 use serde::{Deserialize, Serialize};
 
@@ -24,7 +24,7 @@ pub struct Request {
 #[cfg(target_os = "linux")]
 pub fn request_async<F: std::future::Future<Output = String> + 'static>(
     request: &Request, id: String, on_request: F) {
-        use gtk::glib::spawn_future_local;
+        use webkit6::gtk::glib::spawn_future_local;
         use webkit6::prelude::*;
 
         let webview = request.webview.clone();
@@ -38,7 +38,7 @@ pub fn request_async<F: std::future::Future<Output = String> + 'static>(
 #[cfg(target_os = "linux")]
 pub fn request_blocking<F: FnOnce() -> String + Send + 'static>(
     request: &Request, id: String, on_request: F) {
-        use gtk::glib::spawn_future_local;
+        use webkit6::gtk::glib::spawn_future_local;
         use webkit6::prelude::*;
 
         let webview = request.webview.clone();
