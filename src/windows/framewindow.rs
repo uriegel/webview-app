@@ -1,14 +1,13 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, ptr, rc::Rc};
 
 use windows::Win32::{
     Foundation::{
         HWND, LPARAM, LRESULT, RECT, SIZE, TRUE, WPARAM
-    }, System::LibraryLoader, UI::WindowsAndMessaging::{
-        CreateWindowExW, DefWindowProcW, DestroyWindow, GetClientRect, GetWindowRect, IsZoomed, RegisterClassW, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, 
-        NCCALCSIZE_PARAMS, SIZE_MAXIMIZED, WM_CLOSE, WM_DESTROY, WM_NCCALCSIZE, WM_SIZE, WNDCLASSW, WS_OVERLAPPEDWINDOW
+    }, System::LibraryLoader::{GetModuleHandleW}, UI::WindowsAndMessaging::{
+        CreateWindowExW, DefWindowProcW, DestroyWindow, GetClientRect, GetWindowRect, IsZoomed, LoadIconW, RegisterClassW, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, HICON, NCCALCSIZE_PARAMS, SIZE_MAXIMIZED, WM_CLOSE, WM_DESTROY, WM_NCCALCSIZE, WM_SIZE, WNDCLASSW, WS_OVERLAPPEDWINDOW
     }
 };
-use windows_core::{w, PWSTR};
+use windows_core::{w, PCWSTR, PWSTR};
 
 use crate::bounds::Bounds;
 
@@ -22,11 +21,13 @@ pub struct FrameWindow {
 
 impl FrameWindow {
     pub fn new(title: &str, bounds: Bounds) -> Self {
+        let hinstance = unsafe { GetModuleHandleW(None) }.unwrap();
         let hwnd = {
             let window_class = WNDCLASSW {
                 lpfnWndProc: Some(window_proc),
                 lpszClassName: w!("$$WebView_APP$$"),
                 style: CS_HREDRAW | CS_VREDRAW,
+                hIcon: unsafe { LoadIconW(hinstance, PCWSTR(32512 as u16 as *const u16)).unwrap_or(HICON(ptr::null_mut())) },
                 ..Default::default()
             };
 
@@ -44,7 +45,7 @@ impl FrameWindow {
                     bounds.height.unwrap_or(CW_USEDEFAULT),
                     None,
                     None,
-                    LibraryLoader::GetModuleHandleW(None).unwrap_or_default(),
+                    hinstance,
                     None,
                 )
             }

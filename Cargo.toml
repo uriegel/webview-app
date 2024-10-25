@@ -1,6 +1,6 @@
 [package]
 name = "webview_app"
-version = "1.0.0-beta.31"
+version = "1.0.0-beta.32"
 description = "Simple integration of a web view in an application window for windows and linux similar to Electron"
 authors = ["Uwe Riegel <uriegel@hotmail.de>"]
 edition = "2021"
@@ -15,8 +15,8 @@ include = [
 
 [dependencies]
 include_dir = "0.7.4"
-serde = { version = "1.0", features = [ "derive" ] }
-serde_json = "1.0"
+serde = { version = "1.0.213", features = [ "derive" ] }
+serde_json = "1.0.132"
 
 [target.'cfg(target_os="linux")'.dependencies]
 gtk = { version = "0.9.1", package = "gtk4", features = ["v4_14"]}
