@@ -3,8 +3,8 @@ use std::{cell::RefCell, ptr, rc::Rc};
 use windows::Win32::{
     Foundation::{
         HWND, LPARAM, LRESULT, RECT, SIZE, TRUE, WPARAM
-    }, System::LibraryLoader::{GetModuleHandleW}, UI::WindowsAndMessaging::{
-        CreateWindowExW, DefWindowProcW, DestroyWindow, GetClientRect, GetWindowRect, IsZoomed, LoadIconW, RegisterClassW, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, HICON, NCCALCSIZE_PARAMS, SIZE_MAXIMIZED, WM_CLOSE, WM_DESTROY, WM_NCCALCSIZE, WM_SIZE, WNDCLASSW, WS_OVERLAPPEDWINDOW
+    }, System::LibraryLoader::GetModuleHandleW, UI::WindowsAndMessaging::{
+        CreateWindowExW, DefWindowProcW, DestroyWindow, GetClientRect, GetWindowLongPtrW, GetWindowRect, IsZoomed, LoadIconW, RegisterClassW, SetWindowLongPtrW, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, GWL_STYLE, HICON, NCCALCSIZE_PARAMS, SIZE_MAXIMIZED, WM_CLOSE, WM_CREATE, WM_DESTROY, WM_NCCALCSIZE, WM_NCCREATE, WM_SIZE, WNDCLASSW, WS_BORDER, WS_CAPTION, WS_CLIPCHILDREN, WS_CLIPSIBLINGS, WS_MAXIMIZEBOX, WS_MINIMIZE, WS_MINIMIZEBOX, WS_OVERLAPPED, WS_OVERLAPPEDWINDOW, WS_SYSMENU, WS_THICKFRAME
     }
 };
 use windows_core::{w, PCWSTR, PWSTR};
@@ -65,7 +65,26 @@ impl FrameWindow {
 extern "system" fn window_proc(hwnd: HWND, msg: u32, w_param: WPARAM, l_param: LPARAM) -> LRESULT {
         let webview = match WebView::get_window_webview(hwnd) {
             Some(webview) => webview,
-            None => return unsafe { DefWindowProcW(hwnd, msg, w_param, l_param) },
+            None => {
+                let res = if msg == WM_CREATE {
+                    unsafe { 
+                        // let style = GetWindowLongPtrW(hwnd, GWL_STYLE) as u32;
+                        // let new_style = style & !WS_SYSMENU.0;
+                        // let new_style = new_style & !WS_CAPTION.0;
+                        // let new_style = new_style & WS_BORDER.0;
+
+
+
+
+                        SetWindowLongPtrW(hwnd, GWL_STYLE, (WS_CLIPSIBLINGS.0 | WS_CLIPCHILDREN.0 | WS_BORDER.0 | WS_THICKFRAME.0 | 
+                            WS_OVERLAPPED.0 | WS_MINIMIZEBOX.0 | WS_MAXIMIZEBOX.0) as isize)
+                    };
+                    LRESULT::default()
+                } else {
+                    unsafe { DefWindowProcW(hwnd, msg, w_param, l_param) }
+                };
+                return res;
+            }
         };
     
         let frame = &webview.frame;
