@@ -98,9 +98,6 @@ function WEBVIEWsetMaximized(m) {{
 
 const WEBVIEWNoNativeTitlebarInitialize = () => {{
 
-    const favicon = document.getElementById('$FAVICON$')
-    if (favicon)
-        favicon.src = 'req://icon'
     const title = document.getElementById('$TITLE$')
     if (title)
         title.innerText = '{}'

@@ -22,7 +22,7 @@ pub struct Output {
 
 fn on_activate(app: &Application)->WebView {
     let webview = WebView::builder(app)
-        .title("Custom Windows Titlebar 👍".to_string())
+        .title("Custom Windows Titlebar 🦞".to_string())
         .save_bounds()
         .devtools(true)
         .webroot(include_dir!("webroot"))
