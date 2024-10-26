@@ -263,10 +263,12 @@ impl WebView {
                             let mut uri = PWSTR(ptr::null_mut());
                             request.Uri(&mut uri).unwrap();
                             let uri = CoTaskMemPWSTR::from(uri);
-                            let mut uri = uri.to_string();
+                            let uri = uri.to_string();
                             if uri.starts_with("req://webroot") {
-                                let path = uri.split_off(14);
-                                match params.webroot.clone().expect("Custom request without webroot").lock().unwrap().get_file(path.clone()) {
+
+                                let end_pos = uri.find('?');
+                                let path = if let Some(end_pos) = end_pos { &uri[14..end_pos] } else { &uri[14..] };
+                                match params.webroot.clone().expect("Custom request without webroot").lock().unwrap().get_file(path) {
                                     Some(file)  => {
                                         let content = file.contents();
                                         let response = send_custom_response(&environment_clone, content, &path);

@@ -11,9 +11,9 @@ fn on_activate(app: &Application)->WebView {
         .initial_bounds(300, 500)
         .save_bounds()
         .debug_url("https://crates.io/crates/webview_app".to_string())
+        .query_string("?param1=123&param2=456".to_string())
         .url("https://crates.io/crates".to_string())
         .devtools(true)
-        .default_contextmenu_disabled()
         .build();
 
     webview.can_close(move ||can_close);
