@@ -265,7 +265,6 @@ impl WebView {
                             let uri = CoTaskMemPWSTR::from(uri);
                             let uri = uri.to_string();
                             if uri.starts_with("req://webroot") {
-
                                 let end_pos = uri.find('?');
                                 let path = if let Some(end_pos) = end_pos { &uri[14..end_pos] } else { &uri[14..] };
                                 match params.webroot.clone().expect("Custom request without webroot").lock().unwrap().get_file(path) {

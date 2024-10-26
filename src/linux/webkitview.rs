@@ -29,6 +29,7 @@ pub struct WebkitViewParams<'a> {
     pub url: &'a str,
     pub debug_url: Option<String>,
     pub devtools: bool,
+    pub query_string: Option<String>,
     pub default_contextmenu: bool,
     pub webroot: Option<Arc<Mutex<Dir<'static>>>>,
 }
@@ -64,13 +65,13 @@ impl WebkitView {
         let url = match (params.debug_url, params.webroot) {
             (None, Some(webroot)) => {
                 res.enable_resource_scheme(webroot);
-                "res://webroot/index.html"
+                "res://webroot/index.html".to_string()
             },
             (Some(debug_url), _) => debug_url,
-            _ => params.url
+            _ => params.url.to_string()
         };
-        let url = if let Some(query) = params.query_string { url + query } else { url };
-        res.webview.load_uri(url);
+        let url = if let Some(query) = params.query_string { url.to_string() + &query } else { url };
+        res.webview.load_uri(&url);
 
         res.webview.connect_load_changed(move|webview, evt| {
             if evt == LoadEvent::Committed {
@@ -134,13 +135,12 @@ impl WebkitView {
             .expect("Could not get default web context")
             .register_uri_scheme("res", move | req | {
                 let uri = req.uri().unwrap().to_string();
-
-                let mut file = uri.clone();
-                let mut path = file.split_off(14);
+                let end_pos = uri.find('?');
+                let path = if let Some(end_pos) = end_pos { &uri[14..end_pos] } else { &uri[14..] };
                 let path = if path.starts_with("webroot/") {
-                    path.split_off(8)
+                    &path[8..]
                 } else {
-                    path
+                    &path
                 };
 
                 match webroot
@@ -151,7 +151,7 @@ impl WebkitView {
                     Some(bytes) => {
                         let bs = Bytes::from_static(&bytes);
                         let stream = MemoryInputStream::from_bytes(&bs);
-                        req.finish(&stream, bytes.len() as i64, Some(&content_type::get(&uri)));
+                        req.finish(&stream, bytes.len() as i64, Some(&content_type::get(path)));
                     },
                     None => WebkitView::send_response(req, 404, "Not found", html::not_found())
                 };
