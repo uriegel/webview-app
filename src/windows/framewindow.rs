@@ -1,10 +1,13 @@
-use std::{cell::RefCell, ptr, rc::Rc};
+use std::{cell::RefCell, ffi::c_void, ptr, rc::Rc};
 
 use windows::Win32::{
     Foundation::{
         HWND, LPARAM, LRESULT, RECT, SIZE, TRUE, WPARAM
     }, System::LibraryLoader::GetModuleHandleW, UI::WindowsAndMessaging::{
-        CreateWindowExW, DefWindowProcW, DestroyWindow, GetClientRect, GetWindowLongPtrW, GetWindowRect, IsZoomed, LoadIconW, RegisterClassW, SetWindowLongPtrW, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, GWL_STYLE, HICON, NCCALCSIZE_PARAMS, SIZE_MAXIMIZED, WM_CLOSE, WM_CREATE, WM_DESTROY, WM_NCCALCSIZE, WM_NCCREATE, WM_SIZE, WNDCLASSW, WS_BORDER, WS_CAPTION, WS_CLIPCHILDREN, WS_CLIPSIBLINGS, WS_MAXIMIZEBOX, WS_MINIMIZE, WS_MINIMIZEBOX, WS_OVERLAPPED, WS_OVERLAPPEDWINDOW, WS_SYSMENU, WS_THICKFRAME
+        CreateWindowExW, DefWindowProcW, DestroyWindow, GetClientRect, GetWindowRect, IsZoomed, LoadIconW, RegisterClassW, SetWindowLongPtrW, 
+        CREATESTRUCTW, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, GWL_STYLE, HICON, NCCALCSIZE_PARAMS, SIZE_MAXIMIZED, 
+        WM_CLOSE, WM_CREATE, WM_DESTROY, WM_NCCALCSIZE, WM_SIZE, WNDCLASSW, 
+        WS_BORDER, WS_CLIPCHILDREN, WS_CLIPSIBLINGS, WS_MAXIMIZEBOX, WS_MINIMIZEBOX, WS_OVERLAPPED, WS_OVERLAPPEDWINDOW, WS_THICKFRAME
     }
 };
 use windows_core::{w, PCWSTR, PWSTR};
@@ -20,7 +23,7 @@ pub struct FrameWindow {
 }
 
 impl FrameWindow {
-    pub fn new(title: &str, bounds: Bounds) -> Self {
+    pub fn new(title: &str, bounds: Bounds, without_titlebar: bool) -> Self {
         let hinstance = unsafe { GetModuleHandleW(None) }.unwrap();
         let hwnd = {
             let window_class = WNDCLASSW {
@@ -46,7 +49,7 @@ impl FrameWindow {
                     None,
                     None,
                     hinstance,
-                    None,
+                    if without_titlebar { Some(1 as u8 as *const c_void) } else { None },
                 )
             }
         };
@@ -67,17 +70,12 @@ extern "system" fn window_proc(hwnd: HWND, msg: u32, w_param: WPARAM, l_param: L
             Some(webview) => webview,
             None => {
                 let res = if msg == WM_CREATE {
-                    unsafe { 
-                        // let style = GetWindowLongPtrW(hwnd, GWL_STYLE) as u32;
-                        // let new_style = style & !WS_SYSMENU.0;
-                        // let new_style = new_style & !WS_CAPTION.0;
-                        // let new_style = new_style & WS_BORDER.0;
-
-
-
-
-                        SetWindowLongPtrW(hwnd, GWL_STYLE, (WS_CLIPSIBLINGS.0 | WS_CLIPCHILDREN.0 | WS_BORDER.0 | WS_THICKFRAME.0 | 
-                            WS_OVERLAPPED.0 | WS_MINIMIZEBOX.0 | WS_MAXIMIZEBOX.0) as isize)
+                    unsafe {
+                        let params = & *(l_param.0 as *const CREATESTRUCTW);
+                        if params.lpCreateParams == (1 as u8 as *mut c_void) {
+                            SetWindowLongPtrW(hwnd, GWL_STYLE, (WS_CLIPSIBLINGS.0 | WS_CLIPCHILDREN.0 | WS_BORDER.0 | WS_THICKFRAME.0 | 
+                                WS_OVERLAPPED.0 | WS_MINIMIZEBOX.0 | WS_MAXIMIZEBOX.0) as isize);
+                        }
                     };
                     LRESULT::default()
                 } else {
