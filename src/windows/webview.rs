@@ -179,6 +179,7 @@ impl WebView {
             (_, Some(debug_url), _) => (debug_url, false),
             (_, _, _) => ("about:plain".to_string(), false)
         };
+        let url = if let Some(query) = params.query_string { url + &query } else { url };
 
         let webview = WebView {
             controller: Rc::new(WebViewController(controller)),

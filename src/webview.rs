@@ -57,6 +57,7 @@ impl WebView {
             app: app.clone(),
             url: None,
             debug_url: None,
+            query_string: None,
             width: None,
             height: None,
             save_bounds: false,
@@ -102,6 +103,7 @@ pub struct WebViewBuilder {
     app: Application,
     url: Option<String>,
     debug_url: Option<String>,
+    query_string: Option<String>,
     width: Option<i32>,
     height: Option<i32>,
     save_bounds: bool,
@@ -139,6 +141,7 @@ impl WebViewBuilder {
             save_bounds: self.save_bounds,
             url: self.url.clone(),
             debug_url: self.debug_url.clone(),
+            query_string: self.query_string,
             #[cfg(target_os = "windows")]
             without_native_titlebar: self.without_native_titlebar,
             devtools: self.devtools,
@@ -188,6 +191,14 @@ impl WebViewBuilder {
         self
     }
 
+    #[cfg(target_os = "linux")]
+    /// Callback to create the app via a ui resource
+    pub fn with_builder(mut self, builder_path: String, on_build: impl Fn(&gtk::Builder) + 'static)->WebViewBuilder {
+        self.builder_path = Some(builder_path);
+        self.with_builder = Some(Rc::new(on_build));
+        self
+    }        
+
     /// Sets the web view's url
     /// 
     /// You can use 
@@ -197,14 +208,6 @@ impl WebViewBuilder {
         self.url = Some(val);
         self
     }
-
-    #[cfg(target_os = "linux")]
-    /// Callback to create the app via a ui resource
-    pub fn with_builder(mut self, builder_path: String, on_build: impl Fn(&gtk::Builder) + 'static)->WebViewBuilder {
-        self.builder_path = Some(builder_path);
-        self.with_builder = Some(Rc::new(on_build));
-        self
-    }        
 
     /// Sets the web view's url when debugging
     /// 
@@ -256,6 +259,30 @@ impl WebViewBuilder {
     /// ```
     pub fn webroot(mut self, webroot: Dir<'static>)->WebViewBuilder {
         self.webroot = Some(webroot);
+        self
+    }
+
+    /// Sets the query string to the final webroot's url
+    /// 
+    /// # example
+    /// 
+    /// ```
+    /// use include_dir::{include_dir};
+    /// use webview_app::webview::WebView;
+    ///
+    /// fn main() {
+    ///     let webview = 
+    ///         WebView::builder()
+    ///             .appid("de.uriegel.hello".to_string())
+    ///             .title("Website form custom resources 👍".to_string())
+    ///             .webroot(include_dir!("webroots/custom_resources"))
+    ///             .query_string("?param1=test&param2=somthing")
+    ///             .build();
+    ///     webview.run();
+    /// }
+    /// ```
+    pub fn query_string(mut self, query_string: String)->WebViewBuilder {
+        self.query_string = Some(query_string);
         self
     }
 

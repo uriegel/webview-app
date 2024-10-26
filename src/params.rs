@@ -14,6 +14,7 @@ pub struct Params<'a> {
     pub save_bounds: bool,
     pub url: Option<String>,
     pub debug_url: Option<String>,
+    pub query_string: Option<String>,
     #[cfg(target_os = "windows")]
     pub without_native_titlebar: bool,
     #[cfg(target_os = "linux")]    

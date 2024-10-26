@@ -61,14 +61,16 @@ impl WebkitView {
         };
 
         res.enable_request_scheme();
-        match (params.debug_url, params.webroot) {
+        let url = match (params.debug_url, params.webroot) {
             (None, Some(webroot)) => {
-                res.webview.load_uri("res://webroot/index.html");
-                res.enable_resource_scheme(webroot)
+                res.enable_resource_scheme(webroot);
+                "res://webroot/index.html"
             },
-            (Some(debug_url), _) => res.webview.load_uri(&debug_url),
-            _ => res.webview.load_uri(params.url)
-        }
+            (Some(debug_url), _) => debug_url,
+            _ => params.url
+        };
+        let url = if let Some(query) = params.query_string { url + query } else { url };
+        res.webview.load_uri(url);
 
         res.webview.connect_load_changed(move|webview, evt| {
             if evt == LoadEvent::Committed {
