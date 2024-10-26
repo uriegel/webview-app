@@ -21,6 +21,7 @@ h1>div {
 }
 h1 img {
     object-fit: contain;
+    width: 24px;
 }
 
 

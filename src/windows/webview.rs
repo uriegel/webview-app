@@ -15,13 +15,11 @@ use windows::Win32::{
         E_POINTER, HWND, LPARAM, RECT, SIZE, WPARAM
     }, Graphics::Gdi::UpdateWindow, System::{
         Com::{CoTaskMemFree, IStream}, Threading, WinRT::EventRegistrationToken
-    }, UI::{
-        WindowsAndMessaging::{
+    }, UI::WindowsAndMessaging::{
             DispatchMessageW, GetClientRect, GetMessageW, PostMessageW, PostQuitMessage, PostThreadMessageW, SendMessageW, SetWindowPos, 
             ShowWindow, TranslateMessage, GWLP_USERDATA, HWND_TOP, MSG, 
             SWP_FRAMECHANGED, SWP_NOMOVE, SWP_NOSIZE, SW_SHOW, SW_SHOWMAXIMIZED, SW_SHOWMINIMIZED, SW_SHOWNORMAL, WM_APP, WM_CLOSE 
         }
-    }
 };
 use windows_sys::Win32::UI::Shell::SHCreateMemStream;
 use windows_core::{w, Interface, PCWSTR, PWSTR};
