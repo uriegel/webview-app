@@ -32,7 +32,7 @@ fn on_activate(app: &Application)->WebView {
         .title("Requests 🦞")
         .save_bounds()
         .devtools(true)
-        .debug_url("http://localhost:5173/".to_string())
+        .debug_url("http://localhost:5173/")
         .default_contextmenu_disabled()
         .build();
     

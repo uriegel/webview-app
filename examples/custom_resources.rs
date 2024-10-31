@@ -26,7 +26,7 @@ fn on_activate(app: &Application)->WebView {
         .save_bounds()
         .devtools(true)
         .webroot(include_dir!("webroots/custom_resources"))
-        .query_string("?param1=123&param2=456".to_string())
+        .query_string("?param1=123&param2=456")
         .default_contextmenu_disabled()
         .build();
 

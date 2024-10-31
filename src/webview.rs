@@ -101,9 +101,9 @@ impl WebView {
 pub struct WebViewBuilder<'a> {
     title: Option<&'a str>,
     app: Application,
-    url: Option<String>,
-    debug_url: Option<String>,
-    query_string: Option<String>,
+    url: Option<&'a str>,
+    debug_url: Option<&'a str>,
+    query_string: Option<&'a str>,
     width: Option<i32>,
     height: Option<i32>,
     save_bounds: bool,
@@ -122,8 +122,6 @@ impl <'a> WebViewBuilder<'a> {
     /// 
     /// Call this function when all settings are set.
     pub fn build(self)->WebView {
-        let title = self.title;
-
         let bounds = Bounds {
             x: None,
             y: None,
@@ -135,12 +133,12 @@ impl <'a> WebViewBuilder<'a> {
         let webroot = self.webroot.map(|webroot| Arc::new(Mutex::new(webroot)));
 
         let params = Params {
-            title,
+            title: self.title,
             app: &self.app,
             bounds,
             save_bounds: self.save_bounds,
-            url: self.url.clone(),
-            debug_url: self.debug_url.clone(),
+            url: self.url,
+            debug_url: self.debug_url,
             query_string: self.query_string,
             #[cfg(target_os = "windows")]
             without_native_titlebar: self.without_native_titlebar,
@@ -204,7 +202,7 @@ impl <'a> WebViewBuilder<'a> {
     /// You can use 
     /// * ```http(s)://``` 
     /// * ```file://```
-    pub fn url(mut self, val: String)->WebViewBuilder<'a> {
+    pub fn url(mut self, val: &'a str)->WebViewBuilder<'a> {
         self.url = Some(val);
         self
     }
@@ -220,7 +218,7 @@ impl <'a> WebViewBuilder<'a> {
     /// You can use 
     /// * ```http(s)://``` 
     /// * ```file://```
-    pub fn debug_url(mut self, val: String)->WebViewBuilder<'a> {
+    pub fn debug_url(mut self, val: &'a str)->WebViewBuilder<'a> {
         if cfg!(debug_assertions) {
             self.debug_url = Some(val);
         }
@@ -281,7 +279,7 @@ impl <'a> WebViewBuilder<'a> {
     ///     webview.run();
     /// }
     /// ```
-    pub fn query_string(mut self, query_string: String)->WebViewBuilder<'a> {
+    pub fn query_string(mut self, query_string: &'a str)->WebViewBuilder<'a> {
         self.query_string = Some(query_string);
         self
     }

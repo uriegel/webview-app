@@ -174,12 +174,12 @@ impl WebView {
 
         let with_webroot = params.webroot.is_some();
         let (url, custom_resource_scheme) = match (params.url, params.debug_url, with_webroot) {
-            (None, None, true) => ("req://webroot/index.html".to_string(), true),
+            (None, None, true) => ("req://webroot/index.html", true),
             (Some(url), None, _) => (url, true),
             (_, Some(debug_url), _) => (debug_url, false),
-            (_, _, _) => ("about:plain".to_string(), false)
+            (_, _, _) => ("about:plain", false)
         };
-        let url = if let Some(query) = params.query_string { url + &query } else { url };
+        let url = if let Some(query) = params.query_string { url.to_string() + &query } else { url.to_string() };
 
         let webview = WebView {
             controller: Rc::new(WebViewController(controller)),
