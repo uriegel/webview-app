@@ -11,7 +11,7 @@ fn on_activate(app: &Application)->WebView {
     .url("https://crates.io/crates")
     .devtools(true)
     .default_contextmenu_disabled()
-    .with_builder("/de/uriegel/webview_app/window.ui".to_string(), |builder| {
+    .with_builder("/de/uriegel/webview_app/window.ui", |builder| {
         let webview: webkit6::WebView = builder.object("webview").unwrap();
         let button: Button = builder.object("button").unwrap();
         button.connect_clicked(move|_| { 

@@ -82,6 +82,7 @@ impl WebView {
         self.window.connect_close_request(move|_| (val() == false).into());
     }
 
+    // TODO &str
     pub fn connect_request<F: Fn(&Request, String, String, String) -> bool + 'static>(
         &self,
         on_request: F,

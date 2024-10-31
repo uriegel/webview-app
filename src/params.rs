@@ -20,7 +20,7 @@ pub struct Params<'a> {
     #[cfg(target_os = "linux")]    
     pub with_builder: Option<Rc<dyn Fn(&gtk::Builder)>>,
     #[cfg(target_os = "linux")]    
-    pub builder_path: Option<String>,
+    pub builder_path: Option<&'a str>,
     pub devtools: bool,
     pub default_contextmenu: bool,
     pub webroot: Option<Arc<Mutex<Dir<'static>>>>,
