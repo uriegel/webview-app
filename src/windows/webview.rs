@@ -80,8 +80,8 @@ impl WebView {
                 { Bounds::restore(&local_path.to_string_lossy()).unwrap_or(params.bounds) } 
             else
                 { params.bounds};
-        let title = params.title.unwrap_or_else(||"Webview App".to_string());
-        let frame = FrameWindow::new(&title.clone(), bounds, params.without_native_titlebar);
+        let title = params.title.unwrap_or_else(||"Webview App");
+        let frame = FrameWindow::new(title, bounds, params.without_native_titlebar);
         let parent = *frame.window;
 
         let environment = {

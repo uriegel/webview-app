@@ -22,7 +22,7 @@ pub struct Output {
 
 fn on_activate(app: &Application)->WebView {
     let webview = WebView::builder(app)
-        .title("Website form custom resources 🦞".to_string())
+        .title("Website form custom resources 🦞")
         .save_bounds()
         .devtools(true)
         .webroot(include_dir!("webroots/custom_resources"))
