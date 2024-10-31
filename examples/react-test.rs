@@ -29,7 +29,7 @@ pub struct Outputs {
 
 fn on_activate(app: &Application)->WebView {
     let webview = WebView::builder(app)
-        .title("Requests 🦞".to_string())
+        .title("Requests 🦞")
         .save_bounds()
         .devtools(true)
         .debug_url("http://localhost:5173/".to_string())

@@ -8,7 +8,7 @@ use include_dir::Dir;
 use crate::{application::Application, bounds::Bounds};
 
 pub struct Params<'a> {
-    pub title: Option<String>,
+    pub title: Option<&'a str>,
     pub app: &'a Application,
     pub bounds: Bounds,
     pub save_bounds: bool,

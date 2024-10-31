@@ -98,8 +98,8 @@ impl WebView {
 }
 
 /// Builder to construct a WebView
-pub struct WebViewBuilder {
-    title: Option<String>,
+pub struct WebViewBuilder<'a> {
+    title: Option<&'a str>,
     app: Application,
     url: Option<String>,
     debug_url: Option<String>,
@@ -117,7 +117,7 @@ pub struct WebViewBuilder {
     webroot: Option<Dir<'static>>,
 }
 
-impl WebViewBuilder {
+impl <'a> WebViewBuilder<'a> {
     /// Builds the WebView.
     /// 
     /// Call this function when all settings are set.
@@ -159,7 +159,7 @@ impl WebViewBuilder {
     }
 
     /// Sets the title of the window containing the web view.
-    pub fn title(mut self, val: String)->WebViewBuilder {
+    pub fn title(mut self, val: &'a str)->WebViewBuilder<'a> {
         self.title = Some(val);
         self
     }
@@ -167,7 +167,7 @@ impl WebViewBuilder {
     /// With the help of this method you can initialize the size of the window with custom values.
     /// In combination with "save_bounds()" this is the initial width and heigth of the window at first start,
     /// otherwise the window is always starting with these values.
-    pub fn initial_bounds(mut self, w: i32, h: i32)->WebViewBuilder {
+    pub fn initial_bounds(mut self, w: i32, h: i32)->WebViewBuilder<'a> {
         self.width = Some(w);
         self.height = Some(h);
         self
@@ -177,7 +177,7 @@ impl WebViewBuilder {
     /// 
     /// When you call save_bounds, then windows location and width and height and normal/maximized state is saved on close. 
     /// After restarting the app the webview is displayed at these settings again.
-    pub fn save_bounds(mut self)->WebViewBuilder {
+    pub fn save_bounds(mut self)->WebViewBuilder<'a> {
         self.save_bounds = true;
         self
     }
@@ -186,14 +186,14 @@ impl WebViewBuilder {
     /// 
     /// Only working on Windows
     /// 
-    pub fn without_native_titlebar(mut self)->WebViewBuilder {
+    pub fn without_native_titlebar(mut self)->WebViewBuilder<'a> {
         self.without_native_titlebar = true;
         self
     }
 
     #[cfg(target_os = "linux")]
     /// Callback to create the app via a ui resource
-    pub fn with_builder(mut self, builder_path: String, on_build: impl Fn(&gtk::Builder) + 'static)->WebViewBuilder {
+    pub fn with_builder(mut self, builder_path: String, on_build: impl Fn(&gtk::Builder) + 'static)->WebViewBuilder<'a> {
         self.builder_path = Some(builder_path);
         self.with_builder = Some(Rc::new(on_build));
         self
@@ -204,7 +204,7 @@ impl WebViewBuilder {
     /// You can use 
     /// * ```http(s)://``` 
     /// * ```file://```
-    pub fn url(mut self, val: String)->WebViewBuilder {
+    pub fn url(mut self, val: String)->WebViewBuilder<'a> {
         self.url = Some(val);
         self
     }
@@ -220,7 +220,7 @@ impl WebViewBuilder {
     /// You can use 
     /// * ```http(s)://``` 
     /// * ```file://```
-    pub fn debug_url(mut self, val: String)->WebViewBuilder {
+    pub fn debug_url(mut self, val: String)->WebViewBuilder<'a> {
         if cfg!(debug_assertions) {
             self.debug_url = Some(val);
         }
@@ -257,7 +257,7 @@ impl WebViewBuilder {
     ///     webview.run();
     /// }
     /// ```
-    pub fn webroot(mut self, webroot: Dir<'static>)->WebViewBuilder {
+    pub fn webroot(mut self, webroot: Dir<'static>)->WebViewBuilder<'a> {
         self.webroot = Some(webroot);
         self
     }
@@ -281,7 +281,7 @@ impl WebViewBuilder {
     ///     webview.run();
     /// }
     /// ```
-    pub fn query_string(mut self, query_string: String)->WebViewBuilder {
+    pub fn query_string(mut self, query_string: String)->WebViewBuilder<'a> {
         self.query_string = Some(query_string);
         self
     }
@@ -290,7 +290,7 @@ impl WebViewBuilder {
     /// 
     /// Used to enable the developer tools. Otherwise it is not possible to open these tools. 
     /// The developer tools can be shown by default context menu or by calling the javascript method WebView.showDevtools()
-    pub fn devtools(mut self, only_when_debugging: bool)->WebViewBuilder {
+    pub fn devtools(mut self, only_when_debugging: bool)->WebViewBuilder<'a> {
         self.devtools = true;
         if cfg!(not(debug_assertions)) {
             self.devtools = !only_when_debugging;
@@ -301,7 +301,7 @@ impl WebViewBuilder {
     /// Diables the default context menu.
     /// 
     /// If you set ```default_contextmenu()```, the web view's default context menu is not being displayed when you right click the mouse.    
-    pub fn default_contextmenu_disabled(mut self)->WebViewBuilder {
+    pub fn default_contextmenu_disabled(mut self)->WebViewBuilder<'a> {
         self.default_contextmenu = false;
         self
     }
