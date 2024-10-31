@@ -1,16 +1,17 @@
 //! # webview_app
 //! 
 //! Integration of a web view in an application window like Electron, 
-//! but using rust as programming language. On Windows webview2 will be used as 
-//! webview, on Linux it is WebKitGTK 6.
-//! Here is an easy example to create and run a simple webview app displaying crates homepage:
+//! but using rust as programming language. On Windows WebView2 will be used as 
+//! web view, on Linux it is WebKitGTK.
+//! 
+//! A simple example to create and run a simple web view app displaying crates homepage:
 //! ``` 
 //! use webview_app::{application::Application, webview::WebView};
 //! 
 //! fn on_activate(app: &Application)->WebView {
 //!     WebView::builder(app)
-//!         .title("Rust Web View 👍".to_string())
-//!         .url("https://crates.io/crates".to_string())
+//!         .title("Rust Web View 🦞")
+//!         .url("https://crates.io/crates")
 //!         .default_contextmenu_disabled()
 //!         .build();
 //! }
@@ -21,7 +22,7 @@
 //!     .run();
 //! }
 //! ``` 
-//! A tutorial for using weview_app:
+//! A tutorial for using webview_app:
 //! 
 //! https://github.com/uriegel/webview-app
 

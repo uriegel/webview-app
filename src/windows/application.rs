@@ -17,7 +17,6 @@ impl Application {
         }
         set_process_dpi_awareness();
     
-    
         Self {
             appid: appid.to_string(),
             webview: RefCell::new(None)
