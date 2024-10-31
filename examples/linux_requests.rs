@@ -23,7 +23,7 @@ pub struct Output {
 
 fn on_activate(app: &Application)->WebView {
     let webview = WebView::builder(app)
-        .title("Linux requests 🦞".to_string())
+        .title("Linux requests 🦞")
         .save_bounds()
         .devtools(true)
         .webroot(include_dir!("webroots/custom_resources"))

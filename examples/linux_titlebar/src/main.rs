@@ -7,8 +7,8 @@ use webview_app::webview::WebView;
 fn on_activate(app: &Application)->WebView {
     WebView::builder(app)
     .save_bounds()
-    .debug_url("https://crates.io/crates/webview_app".to_string())
-    .url("https://crates.io/crates".to_string())
+    .debug_url("https://crates.io/crates/webview_app")
+    .url("https://crates.io/crates")
     .devtools(true)
     .default_contextmenu_disabled()
     .with_builder("/de/uriegel/webview_app/window.ui".to_string(), |builder| {

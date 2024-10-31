@@ -27,9 +27,9 @@ pub struct WebViewHandle {
 
 pub struct WebkitViewParams<'a> {
     pub url: &'a str,
-    pub debug_url: Option<String>,
+    pub debug_url: Option<&'a str>,
     pub devtools: bool,
-    pub query_string: Option<String>,
+    pub query_string: Option<&'a str>,
     pub default_contextmenu: bool,
     pub webroot: Option<Arc<Mutex<Dir<'static>>>>,
 }
@@ -65,13 +65,17 @@ impl WebkitView {
         let url = match (params.debug_url, params.webroot) {
             (None, Some(webroot)) => {
                 res.enable_resource_scheme(webroot);
-                "res://webroot/index.html".to_string()
+                "res://webroot/index.html"
             },
             (Some(debug_url), _) => debug_url,
-            _ => params.url.to_string()
+            _ => params.url
         };
-        let url = if let Some(query) = params.query_string { url.to_string() + &query } else { url };
-        res.webview.load_uri(&url);
+        if let Some(query) = params.query_string { 
+            res.webview.load_uri(&(url.to_string() + &query)) 
+        } else 
+        { 
+            res.webview.load_uri(url) 
+        };
 
         res.webview.connect_load_changed(move|webview, evt| {
             if evt == LoadEvent::Committed {

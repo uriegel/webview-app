@@ -28,11 +28,9 @@ impl WebView {
         else
             {params.bounds};
 
-        let debug_url = params.debug_url.map(|s|s.to_string());
-
         let webkitview_params = WebkitViewParams {
-            url: &params.url.unwrap_or("about:plain".to_string()),
-            debug_url: debug_url,
+            url: &params.url.unwrap_or("about:plain"),
+            debug_url: params.debug_url,
             query_string: params.query_string,
             default_contextmenu: params.default_contextmenu,
             devtools: params.devtools,
