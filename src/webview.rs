@@ -27,7 +27,6 @@ pub struct WebViewHandle {
     pub(crate) handle: WebViewHandleImpl
 }
 
-
 impl WebView {
     /// Creates a ```WebViewBuilder``` to construct a WebView.
     /// 
@@ -94,6 +93,12 @@ impl WebView {
 
     pub fn eval(handle: WebViewHandle, script: &str) {
         WebViewImpl::start_evaluate_script(handle, script);
+    }
+
+    #[cfg(target_os = "windows")]
+    /// Execute script in webview
+    pub fn execute_javascript(script: &str) {
+        WebViewImpl::execute_javascript(script);        
     }
 }
 
@@ -296,14 +301,12 @@ impl <'a> WebViewBuilder<'a> {
         self
     }
 
-    /// Diables the default context menu.
+    /// Disable the default context menu.
     /// 
     /// If you set ```default_contextmenu()```, the web view's default context menu is not being displayed when you right click the mouse.    
     pub fn default_contextmenu_disabled(mut self)->WebViewBuilder<'a> {
         self.default_contextmenu = false;
         self
     }
-
-
 }
 
