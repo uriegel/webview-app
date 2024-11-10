@@ -1,11 +1,16 @@
 [package]
 name = "webview_app"
-version = "1.0.0-beta.38"
+version = "1.0.0-beta.39"
+# Tutorial at gh-pages ./tutorial with images
+# keywords for finding crate (rust, WebView, WebViewApp, electron, windows, linux, webview2, webkit)
+# docs finished 
+#tutorial finished
 description = "Simple integration of a web view in an application window for windows and linux similar to Electron"
 authors = ["Uwe Riegel <uriegel@hotmail.de>"]
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/uriegel/webview-app"
+documentation = "https://uriegel.github.io/webview-app"
 readme = "README.md"
 include = [
     "src/**/*",
@@ -41,7 +46,5 @@ windows-sys = {version = "0.59", features = [
     "Win32_UI_Shell",
 ]}
 
-[package.metadata.docs.rs]
-targets = ["x86_64-pc-windows-msvc"]
 
 

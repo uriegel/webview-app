@@ -66,3 +66,22 @@ oder
 ## Icon in Windows
 Use ```winres``` and build-script ```build.rs``` with ```res.set_icon()```. This Icon will be the web view windows icon.
 
+## Build doc
+
+On windows:
+
+``` cargo doc --target x86_64-pc-windows-msvc```
+
+On Linux
+
+``` cargo doc --target x86_64-unknown-linux-gnu```
+
+Branch ```gh-pages``` created
+
+Cloned to local repository
+
+All files deleted
+
+Content of ```C:\Projekte\webview-app\target\x86_64-pc-windows-msvc\doc``` copies to .\doc
+
+Commited changes
