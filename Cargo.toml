@@ -6,6 +6,10 @@ version = "1.0.0-beta.40"
 # docs finished 
 # tutorial finished
 # index html: switch to windows/linux automatically
+# gh-pages:
+# docs/windows
+# docs/linux
+# docs/tutorial
 # switch to manually created documentation
 description = "Simple integration of a web view in an application window for windows and linux similar to Electron"
 authors = ["Uwe Riegel <uriegel@hotmail.de>"]
