@@ -1,1 +1,0 @@
-window.ALL_CRATES = ["include_dir","itoa","memchr","ryu","serde","serde_json","webview2_com","webview2_com_sys","webview_app","windows","windows_core","windows_result","windows_strings","windows_sys","windows_targets","windows_x86_64_msvc"];

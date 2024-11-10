@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["all_declared_callbacks","all_declared_options"]};

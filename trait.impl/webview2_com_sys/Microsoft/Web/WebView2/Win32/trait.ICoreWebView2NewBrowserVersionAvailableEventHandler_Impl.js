@@ -1,3 +1,0 @@
-(function() {var implementors = {
-"webview2_com":[["impl <a class=\"trait\" href=\"webview2_com/Microsoft/Web/WebView2/Win32/trait.ICoreWebView2NewBrowserVersionAvailableEventHandler_Impl.html\" title=\"trait webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2NewBrowserVersionAvailableEventHandler_Impl\">ICoreWebView2NewBrowserVersionAvailableEventHandler_Impl</a> for <a class=\"struct\" href=\"webview2_com/struct.NewBrowserVersionAvailableEventHandler_Impl.html\" title=\"struct webview2_com::NewBrowserVersionAvailableEventHandler_Impl\">NewBrowserVersionAvailableEventHandler_Impl</a>"]]
-};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
