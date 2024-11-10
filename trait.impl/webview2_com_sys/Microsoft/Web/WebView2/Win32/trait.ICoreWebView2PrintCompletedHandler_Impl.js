@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"webview2_com":[["impl <a class=\"trait\" href=\"webview2_com/Microsoft/Web/WebView2/Win32/trait.ICoreWebView2PrintCompletedHandler_Impl.html\" title=\"trait webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2PrintCompletedHandler_Impl\">ICoreWebView2PrintCompletedHandler_Impl</a> for <a class=\"struct\" href=\"webview2_com/struct.PrintCompletedHandler_Impl.html\" title=\"struct webview2_com::PrintCompletedHandler_Impl\">PrintCompletedHandler_Impl</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

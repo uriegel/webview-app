@@ -1,0 +1,5 @@
+(function() {var implementors = {
+"serde":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.81.0/core/error/trait.Error.html\" title=\"trait core::error::Error\">Error</a> for <a class=\"struct\" href=\"serde/de/value/struct.Error.html\" title=\"struct serde::de::value::Error\">Error</a>"]],
+"serde_json":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.81.0/core/error/trait.Error.html\" title=\"trait core::error::Error\">Error</a> for <a class=\"struct\" href=\"serde_json/struct.Error.html\" title=\"struct serde_json::Error\">Error</a>"]],
+"windows_result":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.81.0/core/error/trait.Error.html\" title=\"trait core::error::Error\">Error</a> for <a class=\"struct\" href=\"windows_result/struct.Error.html\" title=\"struct windows_result::Error\">Error</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

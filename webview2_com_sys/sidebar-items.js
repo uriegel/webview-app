@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["Microsoft","declared_interfaces"]};
