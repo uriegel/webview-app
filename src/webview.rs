@@ -41,14 +41,14 @@ impl WebView {
     ///
     /// use webview_app::webview::WebView;
     /// 
-    /// fn main() {
+    /// fn on_activate(app: &Application)->WebView {
     ///     let webview = 
     ///         WebView::builder()
     ///             .appid("de.uriegel.hello".to_string())
     ///             .title("Rust Web View 👍".to_string())
     ///             .url("https://crates.io/crates/webview_app".to_string())
     ///             .build();
-    ///     webview.run();
+    ///     webview
     /// }
     /// ```
     pub fn builder(app: &Application)->WebViewBuilder {
@@ -75,6 +75,14 @@ impl WebView {
     /// Sets a callback which is invoked on closing the app
     /// 
     /// You can prevent closing the app when returning false
+    /// 
+    /// # Example
+    /// 
+    /// ```
+    /// let can_close = true;
+    /// ...
+    /// webview.can_close(move ||can_close);
+    /// ```
     pub fn can_close(&self, val: impl Fn()->bool + 'static) {
         self.webview.can_close(val);
     }
@@ -268,7 +276,7 @@ impl <'a> WebViewBuilder<'a> {
     /// use include_dir::{include_dir};
     /// use webview_app::webview::WebView;
     ///
-    /// fn main() {
+    /// fn on_activate(app: &Application)->WebView {
     ///     let webview = 
     ///         WebView::builder()
     ///             .appid("de.uriegel.hello".to_string())
@@ -276,7 +284,7 @@ impl <'a> WebViewBuilder<'a> {
     ///             .webroot(include_dir!("webroots/custom_resources"))
     ///             .query_string("?param1=test&param2=somthing")
     ///             .build();
-    ///     webview.run();
+    ///     webview
     /// }
     /// ```
     pub fn query_string(mut self, query_string: &'a str)->WebViewBuilder<'a> {

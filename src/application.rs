@@ -10,6 +10,8 @@ pub struct Application {
 }
 
 /// Implementation of Application
+/// 
+/// The Appplication represents a Windows or Linux Gtk Application running the WebView window
 impl Application {
     /// Creates an application
     /// 
@@ -29,10 +31,13 @@ impl Application {
         }
     }
 
+    /// Retrieves the app id set on creation
     pub fn get_appid(&self)->String {
         self.app.get_appid()
     }
 
+    /// when the application is started, this method is being called to give you the oppertunity to 
+    /// create the WebView. The callback expects a WebView build with the WebViewBuilder.
     pub fn on_activate(&self, val: impl Fn(&Application)->WebView + 'static)->&Self {
         let app = self.clone();
         self.app.on_activate(move ||{
@@ -44,6 +49,7 @@ impl Application {
     /// Runs the web view application.
     /// 
     /// The function blocks until the window (and the application) is closed.
+    /// After calling this function, on_activate callback is being called
     pub fn run(&self)->u32 {
         self.app.run()
     }
