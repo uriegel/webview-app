@@ -16,9 +16,8 @@ use windows::Win32::{
     }, Graphics::Gdi::UpdateWindow, System::{
         Com::{CoTaskMemFree, IStream}, Threading, WinRT::EventRegistrationToken
     }, UI::WindowsAndMessaging::{
-            DispatchMessageW, GetClientRect, GetMessageW, PostMessageW, PostQuitMessage, PostThreadMessageW, SendMessageW, SetWindowPos, 
-            ShowWindow, TranslateMessage, GWLP_USERDATA, HWND_TOP, MSG, 
-            SWP_FRAMECHANGED, SWP_NOMOVE, SWP_NOSIZE, SW_SHOW, SW_SHOWMAXIMIZED, SW_SHOWMINIMIZED, SW_SHOWNORMAL, WM_APP, WM_CLOSE 
+            DispatchMessageW, GetClientRect, GetMessageW, PostMessageW, PostQuitMessage, PostThreadMessageW, SendMessageW, SetWindowPos, ShowWindow, TranslateMessage, 
+            GWLP_USERDATA, HWND_TOP, MSG, SWP_FRAMECHANGED, SWP_NOMOVE, SWP_NOSIZE, SW_SHOW, SW_SHOWMAXIMIZED, SW_SHOWMINIMIZED, SW_SHOWNORMAL, WM_APP, WM_CLOSE 
         }
 };
 use windows_sys::Win32::UI::Shell::SHCreateMemStream;
@@ -26,7 +25,7 @@ use windows_core::{w, Interface, PCWSTR, PWSTR};
 
 use crate::{bounds::Bounds, content_type, html, javascript::{self, RequestData}, params::Params, request::Request};
 
-use super::{framewindow::FrameWindow, string_to_pcwstr, GetWindowLong, SetWindowLong};
+use super::{framewindow::{get_hwnd, FrameWindow}, string_to_pcwstr, GetWindowLong, SetWindowLong};
 
 pub const WM_SENDRESPONSE: u32 = WM_APP + 1;
 pub const WM_SENDSCRIPT: u32 = WM_APP + 2;
@@ -368,6 +367,14 @@ impl WebView {
             self.webview.PostWebMessageAsString(ptr).unwrap();
             CoTaskMemFree(Some(ptr.0 as *mut _));
         }
+    }
+
+    pub fn execute_javascript(script: &str) {
+        let hwnd = get_hwnd().lock().unwrap();
+        let mut js = CoTaskMemPWSTR::from(script);
+        let wparam: WPARAM = WPARAM(js.take().as_ptr() as usize);
+        let lparam: LPARAM = LPARAM(0);   
+        unsafe { PostMessageW(*hwnd, WM_SENDSCRIPT, wparam, lparam).unwrap() };
     }
 
     fn init(&self, js: &str) -> Result<&Self> {

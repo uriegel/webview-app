@@ -27,7 +27,6 @@ pub struct WebViewHandle {
     pub(crate) handle: WebViewHandleImpl
 }
 
-
 impl WebView {
     /// Creates a ```WebViewBuilder``` to construct a WebView.
     /// 
@@ -44,9 +43,9 @@ impl WebView {
     /// fn on_activate(app: &Application)->WebView {
     ///     let webview = 
     ///         WebView::builder()
-    ///             .appid("de.uriegel.hello".to_string())
-    ///             .title("Rust Web View 👍".to_string())
-    ///             .url("https://crates.io/crates/webview_app".to_string())
+    ///             .appid("de.uriegel.hello")
+    ///             .title("Rust Web View 🦞")
+    ///             .url("https://crates.io/crates/webview_app")
     ///             .build();
     ///     webview
     /// }
@@ -103,6 +102,12 @@ impl WebView {
     pub fn eval(handle: WebViewHandle, script: &str) {
         WebViewImpl::start_evaluate_script(handle, script);
     }
+
+    #[cfg(target_os = "windows")]
+    /// Execute script in webview
+    pub fn execute_javascript(script: &str) {
+        WebViewImpl::execute_javascript(script);        
+    }
 }
 
 /// Builder to construct a WebView
@@ -118,7 +123,7 @@ pub struct WebViewBuilder<'a> {
     #[cfg(target_os = "linux")]    
     with_builder: Option<Rc<dyn Fn(&gtk::Builder)>>,
     #[cfg(target_os = "linux")]    
-    builder_path: Option<String>,
+    builder_path: Option<&'a str>,
     without_native_titlebar: bool,
     devtools: bool,
     default_contextmenu: bool,
@@ -199,7 +204,7 @@ impl <'a> WebViewBuilder<'a> {
 
     #[cfg(target_os = "linux")]
     /// Callback to create the app via a ui resource
-    pub fn with_builder(mut self, builder_path: String, on_build: impl Fn(&gtk::Builder) + 'static)->WebViewBuilder<'a> {
+    pub fn with_builder(mut self, builder_path: &'a str, on_build: impl Fn(&gtk::Builder) + 'static)->WebViewBuilder<'a> {
         self.builder_path = Some(builder_path);
         self.with_builder = Some(Rc::new(on_build));
         self
@@ -256,8 +261,8 @@ impl <'a> WebViewBuilder<'a> {
     /// fn main() {
     ///     let webview = 
     ///         WebView::builder()
-    ///             .appid("de.uriegel.hello".to_string())
-    ///             .title("Website form custom resources 👍".to_string())
+    ///             .appid("de.uriegel.hello")
+    ///             .title("Website form custom resources 🦞")
     ///             .webroot(include_dir!("webroots/custom_resources"))
     ///             .build();
     ///     webview.run();
@@ -280,7 +285,7 @@ impl <'a> WebViewBuilder<'a> {
     ///     let webview = 
     ///         WebView::builder()
     ///             .appid("de.uriegel.hello".to_string())
-    ///             .title("Website form custom resources 👍".to_string())
+    ///             .title("Website form custom resources 🦞")
     ///             .webroot(include_dir!("webroots/custom_resources"))
     ///             .query_string("?param1=test&param2=somthing")
     ///             .build();
@@ -304,14 +309,12 @@ impl <'a> WebViewBuilder<'a> {
         self
     }
 
-    /// Diables the default context menu.
+    /// Disable the default context menu.
     /// 
     /// If you set ```default_contextmenu()```, the web view's default context menu is not being displayed when you right click the mouse.    
     pub fn default_contextmenu_disabled(mut self)->WebViewBuilder<'a> {
         self.default_contextmenu = false;
         self
     }
-
-
 }
 
