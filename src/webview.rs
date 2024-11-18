@@ -1,5 +1,5 @@
 //! This module contains all the important structs and implementations to create, configure
-//! and run an application containing only a webview.
+//! and run a webview window.
 
 use std::sync::{Arc, Mutex};
 #[cfg(target_os = "linux")]
@@ -22,6 +22,9 @@ pub struct WebView {
     pub(crate) webview: WebViewImpl
 }
 
+/// With the help of this WebViewHandle you can evaluate script in the WebView (via WebView::eval)
+/// 
+/// You can retrieve a WebViewHandle via WebView::get_handle
 #[derive(Clone)]
 pub struct WebViewHandle {
     pub(crate) handle: WebViewHandleImpl
@@ -86,6 +89,12 @@ impl WebView {
         self.webview.can_close(val);
     }
 
+    /// When the webview is created, this callback is being called. You can then install WebView requests.
+    /// 
+    /// The Callback function has the following parameters: a request object, the request id, the command id (the Webview method) and the 
+    /// JSON payload.
+    /// 
+    /// A true return value signals that the request is being processed by this callback. 
     pub fn connect_request<F: Fn(&Request, String, String, String) -> bool + 'static>(
         &self,
         on_request: F,
@@ -93,16 +102,25 @@ impl WebView {
         self.webview.connect_request(on_request);
     }   
 
+    /// Retrieving a WebViewHandle to valuate script in the WebView
     pub fn get_handle(&self)->WebViewHandle {
         WebViewHandle {
             handle: self.webview.get_handle()
         }
     }
 
+    /// Evaluates script in the WebView
+    /// 
+    /// You need a WebViewHandle which you can retrieve via WebView::get_handle
+    /// 
+    /// You do not need a reference to the WebView!
     pub fn eval(handle: WebViewHandle, script: &str) {
         WebViewImpl::start_evaluate_script(handle, script);
     }
 
+    /// Evaluates script in the WebView
+    /// 
+    /// You do need need either a WebView or a WebViewHandle
     #[cfg(target_os = "windows")]
     /// Execute script in webview
     pub fn execute_javascript(script: &str) {

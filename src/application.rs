@@ -4,14 +4,12 @@ use crate::linux::application::Application as ApplicationImpl;
 #[cfg(target_os = "windows")]
 use crate::windows::application::Application as ApplicationImpl;
 
+/// The Application represents a Windows or Linux Gtk Application running the WebView window
 #[derive(Clone)]
 pub struct Application {
     pub app: ApplicationImpl
 }
 
-/// Implementation of Application
-/// 
-/// The Appplication represents a Windows or Linux Gtk Application running the WebView window
 impl Application {
     /// Creates an application
     /// 
