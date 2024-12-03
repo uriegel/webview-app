@@ -3,24 +3,33 @@ use gtk::gio;
 
 use serde::{Deserialize, Serialize};
 
+/// To get the deserialized payload from a JSON request
 pub fn get_input<'a, T>(data: &'a str)->T where T: Deserialize<'a> {
     serde_json::from_str(data).unwrap()
 }
 
+// To serialize payload result for a JSON request
 pub fn get_output<T>(result: &T)->String where T: Serialize {
     serde_json::to_string(result).unwrap()
 }
 
+/// This struct is used as handle for "request_async" and "request_blocking"
 #[cfg(target_os = "linux")]
 pub struct Request {
     pub(crate) webview: webkit6::WebView
 }
 
+/// This struct is used as handle for "request_async" and "request_blocking"
 #[cfg(target_os = "windows")]
 pub struct Request {
     pub(crate) hwnd: isize
 }
 
+/// Handling an incoming request from javascript.
+/// 
+/// The callback function has to be non blocking and async
+/// 
+/// If an exception occurs, the error text is written to the error console
 #[cfg(target_os = "linux")]
 pub fn request_async<F: std::future::Future<Output = String> + 'static>(
     request: &Request, id: String, on_request: F) {
@@ -31,10 +40,19 @@ pub fn request_async<F: std::future::Future<Output = String> + 'static>(
         spawn_future_local(async move {
             let response = on_request.await;
             let back: String = format!("result,{},{}", id, response);
-            webview.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
+            let res = webview
+                .evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None)
+                .await;
+            let _r = res.inspect_err(|err|eprintln!("Error executing script: {:?}", err));
+                
     });
 } 
 
+/// Handling an incoming request from javascript in a blocking manner in a threadpool thread.
+/// 
+/// The calling function does not block, the callback function runs in a threadpool thread and can be blocking.
+/// 
+/// If an exception occurs, the error text is written to the error console
 #[cfg(target_os = "linux")]
 pub fn request_blocking<F: FnOnce() -> String + Send + 'static>(
     request: &Request, id: String, on_request: F) {
@@ -49,11 +67,18 @@ pub fn request_blocking<F: FnOnce() -> String + Send + 'static>(
             }).await.expect("Task needs to finish successfully.");
 
             let back: String = format!("result,{},{}", id, response);
-            webview.evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None).await.expect("error in initial running script");
+            let res = webview
+                .evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None)
+                .await;
+            let _r = res.inspect_err(|err|eprintln!("Error executing script blocking: {:?}", err));
     });
 } 
 
-
+/// Handling an incoming request from javascript in a blocking manner in a thread.
+/// 
+/// The calling function does not block, the callback function runs in a thread and can be blocking.
+/// 
+/// If an exception occurs, the error text is written to the error console
 #[cfg(target_os = "windows")]
 pub fn request_blocking<F: FnOnce() -> String + Send + 'static>(
     request: &Request, id: String, on_request: F) {
@@ -74,6 +99,7 @@ pub fn request_blocking<F: FnOnce() -> String + Send + 'static>(
             let lparam: LPARAM = LPARAM(0);   
             let hwnd = hwnd as *mut c_void;
             let hwnd = HWND(hwnd);
-            unsafe { PostMessageW(hwnd, WM_SENDRESPONSE, wparam, lparam).unwrap() };
+            let res = unsafe { PostMessageW(hwnd, WM_SENDRESPONSE, wparam, lparam) };
+            let _r = res.inspect_err(|err|eprintln!("Error executing script blocking: {:?}", err));
         });
 } 
