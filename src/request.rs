@@ -39,7 +39,7 @@ pub fn request_async<F: std::future::Future<Output = String> + 'static>(
         let webview = request.webview.clone();
         spawn_future_local(async move {
             let response = on_request.await;
-            let back: String = format!("result,{},{}", id, response);
+            let back: String = get_back(id, response);
             let res = webview
                 .evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None)
                 .await;
@@ -66,7 +66,7 @@ pub fn request_blocking<F: FnOnce() -> String + Send + 'static>(
                 res
             }).await.expect("Task needs to finish successfully.");
 
-            let back: String = format!("result,{},{}", id, response);
+            let back: String = get_back(id, response);
             let res = webview
                 .evaluate_javascript_future(&format!("WebView.backtothefuture('{}')", back), None, None)
                 .await;
@@ -103,3 +103,8 @@ pub fn request_blocking<F: FnOnce() -> String + Send + 'static>(
             let _r = res.inspect_err(|err|eprintln!("Error executing script blocking: {:?}", err));
         });
 } 
+
+fn get_back(id: String, response: String)->String {
+    let back: String = format!("result,{},{}", id, response);
+    back.replace("'", "u0027")
+}

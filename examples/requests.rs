@@ -68,7 +68,7 @@ fn cmd1(request: &Request, id: String, json: String) {
     request_blocking(request, id, move || {
         let input: Input = request::get_input(&json);
         let res = Output {
-            email: "uriegel@hotmail.de".to_string(),
+            email: "u'riegel@hotmail.de".to_string(),
             text: input.text,
             number: input.id + 1,
         };
