@@ -23,6 +23,11 @@ Sample webview_app:
 5. [Callback when closing the Web View](#canclose)
 6. [Requests from Web View's javascript to the rust app](#requests)
     1. [Non UI blocking request processing](#blockingrequests)
+7. [Calls to Web View's javascript (Events)](#events)    
+8. [Other injected Javascript functions](#injected)    
+9. [Window Customizations](#customizations)
+    1. [Disable the native titlebar on Windows](#disabletitlebar)
+    2. [Enhance the Gtk4 Window on Linux](#withbuilder)
 
 ## Features <a name="features"></a>
 
@@ -367,15 +372,52 @@ fn cmd2(request: &Request, id: String) {
 ``` 
 The processing is async but runs in the UI thread, so you must not call blocking functions!
 
-## Calls to Web View's javascript
-Events
+## Calls to Web View's javascript (Events) <a name="events"></a>
 
-## Other injected Javascript functions
+The other direction is also possible: Calling javascript code from rust. With the function ```WebView::eval``` you can call javascript code. You need a handle to the webview which you get by calling the method ```get_handle```  from the webview built by WebViewBuilder:
 
-## Window Customizations
+```rs
+let webview = WebView::builder(app)
+    ...
+    .build();
+let handle = webview.get_handle();
 
-### Disable the native titlebar on Windows
+webview.connect_request(move|request, id, cmd: String, json| {
+        let handle = handle.clone();
+        match cmd.as_str() {
+            "cmd1" => { thread::spawn(move||{
+                    let mut index = 0;
+                    loop {
+                        thread::sleep(Duration::from_secs(5));
+                        index+=1;
+                        WebView::eval(handle.clone(), &format!("onEvent({index})"));
+                    };
+                });
+            },
+            _ => {}
+        }
+        true
+    });
+    webview
+
+```
+
+## Other injected Javascript functions <a name="injected"></a>
+
+There are two functions you can call in javascript on the injected WebView object:
+
+* ```WebView.closeWindow()```
+* ```WebView.showDevTools()```
+
+With  ```closeWindow``` you can close the app from javascript code.
+
+With  ```showDevTools()``` you can show the Developer Tools from javascript code, but only when ```devtools()``` on the ```WebViewBuilder``` was called.
+
+## Window Customizations <a name="customizations"></a>
+
+### Disable the native titlebar on Windows <a name="disabletitlebar"></a>
 // without_native_titlebar
+initializeNoTitlebar()
 
-### Enhance the Gtk4 Window on Linux
+### Enhance the Gtk4 Window on Linux <a name="withbuilder"></a>
 // with_builder
