@@ -58,7 +58,7 @@ In order to create a WebView app, you have to  create a rust console app with ``
 
 Then add the webview_app crate with ```cargo add webview_app```.
 
-## Setup <a name="setup"></a>
+
 ### Additional step for Windows <a name="prewindows"></a>
 To get rid of the console window, you can hide it.
 
@@ -103,7 +103,7 @@ Congratulations! Your first web view app is running!
 
 ### Creating WebViewBuilder and running app <a name="featuresCreating"></a>
 
-The absolute minial program is
+The absolute minimal program is
 
 ```rs
 use webview_app::{application::Application, webview::WebView};
@@ -120,12 +120,12 @@ fn main() {
 }
 ```
 
-```Application::new()``` creates a new Application. Parameter is ```appid```. This is used for creating a directory path for temporary data and saving window bounds in a file. Also for Linux it is the GTK App ID. When the app is beeing created, the callback function ```on_activate``` is being called in order to create the WebView window.
+```Application::new()``` creates a new Application. Parameter is ```appid```. This is used for creating a directory path for temporary data and saving window bounds in a file. Also for Linux it is the GTK App ID. When the app is being created, the callback function ```on_activate``` is being called in order to create the WebView window.
 
 In this callback a WebViewBuilder is being created with the constructor
 ``` WebView::builder()```. This builder has a lot of optional builder functions to add behaviors to the web app. To create the WebView, you have to call WebView::build().
 
-At the end you have to call the function ```Application::run```. This function calls on_activate and creates the web view app, runs the application and show the Web View. 
+At the end you have to call the function ```Application::run```. This function calls ``` on_activate```  and creates the web view app, runs the application and show the Web View. 
 
 Of course in this minimal setup only an empty window appears. You have to call one or more of the following builder functions. They have all in common that they are optional and are returning the web view builder, so that the builder functions can be chained and one big declaration is created.
 
