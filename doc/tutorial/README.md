@@ -416,8 +416,64 @@ With  ```showDevTools()``` you can show the Developer Tools from javascript code
 ## Window Customizations <a name="customizations"></a>
 
 ### Disable the native titlebar on Windows <a name="disabletitlebar"></a>
-// without_native_titlebar
-initializeNoTitlebar()
+
+You can hide the native titlebar on Windows, so that the complete WebView app is HTML. You don't have to miss Aero Grip or Window shadow.
+
+First you have to get rid of the native Windows titlebar:
+
+```rs
+    WebView::builder(app)
+        .title("Website form custom resources 🦞")
+        .webroot(include_dir!("webroots/custom_resources"))
+        .without_native_titlebar()
+        .build()
+```
+To create a titlebar in HTML, you have to create one like this:
+
+```HTML
+<div className="titlebar">
+    <img alt="" src="/webroot/images/favion.png"/>
+    <div class="titlebarGrip">
+        <span id="$TITLE$"></span>
+    </div>
+    <div class="titlebarButton" id="$MINIMIZE$"><span className="dash">&#x2012;</span></div>
+    <div class="titlebarButton" id="$RESTORE$"><span>&#10697;</span></div>  
+    <div class="titlebarButton" id="$MAXIMIZE$"><span>&#9744;</span></div>
+    <div class="titlebarButton close" id="$CLOSE$"><span>&#10005;</span></div>
+</div>
+```
+
+To get titlebar control like moving the Window or snap to maximize, you have to declare a draggable region. In this case it is the ```<div>``` with the class "titlebarGrip".
+In css it is declared as: 
+
+```css
+.titlebarGrip {
+    flex-grow: 1;
+    text-align: center;
+    vertical-align: middle;
+    margin: 3px 3px 0px 0px;    
+    -webkit-app-region: drag;
+    display: flex;
+    align-items: center;  
+}
+```
+
+```-webkit-app-region: drag;``` does the magic!
+
+To get the Window buttons functioning, you have to declare ```<div>``` objects with special ids:
+* ```$MINIMIZE$``` to minimize the Window
+* ```$RESTORE$``` to restore the Window
+* ```$MAXIMIZE$``` to maximize the Window
+* ```$CLOSE$``` to close the Window
+
+You can achieve this funcionality when you call
+
+``` WebView.initializeNoTitlebar()``` 
+
+in Javascript. A HTML element with the id ```$TITLE$``` becomes the title of the Window, the title string set in the rust WebViewBuilder is then set as Window Title.
+
+Sample of a Windows App with custom titlebar:
+![custom titlebar](customTitlebar.png) 
 
 ### Enhance the Gtk4 Window on Linux <a name="withbuilder"></a>
 // with_builder
