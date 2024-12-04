@@ -1,0 +1,9 @@
+(function() {
+    var implementors = Object.fromEntries([["webview_app",[["impl !<a class=\"trait\" href=\"https://doc.rust-lang.org/1.83.0/core/marker/trait.Send.html\" title=\"trait core::marker::Send\">Send</a> for <a class=\"struct\" href=\"webview_app/application/struct.Application.html\" title=\"struct webview_app::application::Application\">Application</a>",1,["webview_app::application::Application"]],["impl !<a class=\"trait\" href=\"https://doc.rust-lang.org/1.83.0/core/marker/trait.Send.html\" title=\"trait core::marker::Send\">Send</a> for <a class=\"struct\" href=\"webview_app/request/struct.Request.html\" title=\"struct webview_app::request::Request\">Request</a>",1,["webview_app::request::Request"]],["impl !<a class=\"trait\" href=\"https://doc.rust-lang.org/1.83.0/core/marker/trait.Send.html\" title=\"trait core::marker::Send\">Send</a> for <a class=\"struct\" href=\"webview_app/webview/struct.WebView.html\" title=\"struct webview_app::webview::WebView\">WebView</a>",1,["webview_app::webview::WebView"]],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.83.0/core/marker/trait.Send.html\" title=\"trait core::marker::Send\">Send</a> for <a class=\"struct\" href=\"webview_app/webview/struct.WebViewHandle.html\" title=\"struct webview_app::webview::WebViewHandle\">WebViewHandle</a>",1,["webview_app::webview::WebViewHandle"]],["impl&lt;'a&gt; !<a class=\"trait\" href=\"https://doc.rust-lang.org/1.83.0/core/marker/trait.Send.html\" title=\"trait core::marker::Send\">Send</a> for <a class=\"struct\" href=\"webview_app/webview/struct.WebViewBuilder.html\" title=\"struct webview_app::webview::WebViewBuilder\">WebViewBuilder</a>&lt;'a&gt;",1,["webview_app::webview::WebViewBuilder"]]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":57,"fragment_lengths":[1671]}
