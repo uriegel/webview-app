@@ -20,7 +20,9 @@ Sample webview_app:
     8. [Developer Tools](#featuresDevTools)
     9. [Disable WebView's default Context Menu](#featuresDefaultContextMenuDisabled)
     10. [Add a query string to the Url](#featuresQueryString)
-    
+5. [Callback when closing the Web View](#canclose)
+6. [Requests from Web View's javascript to the rust app](#requests)
+    1. [Non ui blocking request processing](#blockingrequests)
 
 ## Features <a name="features"></a>
 
@@ -265,11 +267,67 @@ You can set a query string to the url by calling the method ```query_string```. 
 
 
 
-## Callback when closing the Web View
-can_close
+## Callback when closing the Web View <a name="canclose"></a>
 
-## Requests from Web View's javascript to the rust app
-connect_request
+When the Web View and therefore the application is to be closed, you can be informed and prevent this by installing a callback with the help of ```can_close```.
+
+```rs
+...
+    fn can_close()->bool {
+        true
+    } 
+
+    let webview = WebView::builder(app)
+        .webroot(include_dir!("webroot"))
+    webview.can_close(|| can_close());
+    webview        
+...
+
+```
+
+## Requests from Web View's javascript to the rust app <a name="requests"></a>
+
+```webview_app``` offers the possibility to call requests from the Web View via javascript to the rust app.
+You have to install a callback which is called when a special injected javascript function is called.
+
+To install this callback, use the function ```connect_request```:
+```rs
+...
+    fn handle_request1(json: String)->String {
+        let input: Input = request::get_input(&json);
+        ...
+        request::get_output(result);
+    }
+
+    let webview = WebView::builder(app)
+        .webroot(include_dir!("webroot"))
+    webview.connect_request(move|request, id, cmd, json| {
+        match cmd.as_str() {
+            "cmd1" => handle_request1(json),
+            ...
+        }
+        true
+    });
+    webview        
+...
+
+```
+You get a json string as input parameter which you can deserialize with the help of ```request::get_input(json)```. 
+Every request gets a unique id and can have a command name (```cmd```). The result should be a json fromatted string. 
+You can create this string with ```request::get_output(result)```. Result is a struct with the Trait ```Deserialize``` set.
+
+To create this request from javascript, use the following injected function:
+
+```js
+const res = await WebView.request("cmd1", {
+    text: "Text",
+    number: 123
+})
+``` 
+
+## Non ui blocking request processing <a name="blockingrequests"></a>
+
+
 request_blocking
 request_async (Linux)
 
