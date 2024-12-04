@@ -1,6 +1,6 @@
 [package]
 name = "webview_app"
-version = "1.0.0-beta.43"
+version = "1.0.0-beta.44"
 # Tutorial at gh-pages ./tutorial with images
 # keywords for finding crate (rust, WebView, WebViewApp, electron, windows, linux, webview2, webkit)
 # tutorial finished
@@ -17,8 +17,8 @@ authors = ["Uwe Riegel <uriegel@hotmail.de>"]
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/uriegel/webview-app"
-documentation = "https://uriegel.github.io/webview-app"
-readme = "README.md"
+# documentation = "https://uriegel.github.io/webview-app"
+readme = "README_CRATE.md"
 include = [
     "src/**/*",
     "assets/**/*",
