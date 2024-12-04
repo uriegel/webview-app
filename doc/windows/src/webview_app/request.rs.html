@@ -77,30 +77,70 @@
 <a href="#77" id="77">77</a>
 <a href="#78" id="78">78</a>
 <a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
 </pre></div><pre class="rust"><code><span class="attr">#[cfg(target_os = <span class="string">"linux"</span>)]
 </span><span class="kw">use </span>gtk::gio;
 
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 
-<span class="kw">pub fn </span>get_input&lt;<span class="lifetime">'a</span>, T&gt;(data: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str)-&gt;T <span class="kw">where </span>T: Deserialize&lt;<span class="lifetime">'a</span>&gt; {
+<span class="doccomment">/// To get the deserialized payload from a JSON request
+</span><span class="kw">pub fn </span>get_input&lt;<span class="lifetime">'a</span>, T&gt;(data: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str)-&gt;T <span class="kw">where </span>T: Deserialize&lt;<span class="lifetime">'a</span>&gt; {
     serde_json::from_str(data).unwrap()
 }
 
-<span class="kw">pub fn </span>get_output&lt;T&gt;(result: <span class="kw-2">&amp;</span>T)-&gt;String <span class="kw">where </span>T: Serialize {
+<span class="comment">// To serialize payload result for a JSON request
+</span><span class="kw">pub fn </span>get_output&lt;T&gt;(result: <span class="kw-2">&amp;</span>T)-&gt;String <span class="kw">where </span>T: Serialize {
     serde_json::to_string(result).unwrap()
 }
 
-<span class="attr">#[cfg(target_os = <span class="string">"linux"</span>)]
+<span class="doccomment">/// This struct is used as handle for "request_async" and "request_blocking"
+</span><span class="attr">#[cfg(target_os = <span class="string">"linux"</span>)]
 </span><span class="kw">pub struct </span>Request {
     <span class="kw">pub</span>(<span class="kw">crate</span>) webview: webkit6::WebView
 }
 
-<span class="attr">#[cfg(target_os = <span class="string">"windows"</span>)]
+<span class="doccomment">/// This struct is used as handle for "request_async" and "request_blocking"
+</span><span class="attr">#[cfg(target_os = <span class="string">"windows"</span>)]
 </span><span class="kw">pub struct </span>Request {
     <span class="kw">pub</span>(<span class="kw">crate</span>) hwnd: isize
 }
 
-<span class="attr">#[cfg(target_os = <span class="string">"linux"</span>)]
+<span class="doccomment">/// Handling an incoming request from javascript.
+/// 
+/// The callback function has to be non blocking and async
+/// 
+/// If an exception occurs, the error text is written to the error console
+</span><span class="attr">#[cfg(target_os = <span class="string">"linux"</span>)]
 </span><span class="kw">pub fn </span>request_async&lt;F: std::future::Future&lt;Output = String&gt; + <span class="lifetime">'static</span>&gt;(
     request: <span class="kw-2">&amp;</span>Request, id: String, on_request: F) {
         <span class="kw">use </span>gtk::glib::spawn_future_local;
@@ -109,12 +149,21 @@
         <span class="kw">let </span>webview = request.webview.clone();
         spawn_future_local(<span class="kw">async move </span>{
             <span class="kw">let </span>response = on_request.<span class="kw">await</span>;
-            <span class="kw">let </span>back: String = <span class="macro">format!</span>(<span class="string">"result,{},{}"</span>, id, response);
-            webview.evaluate_javascript_future(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"WebView.backtothefuture('{}')"</span>, back), <span class="prelude-val">None</span>, <span class="prelude-val">None</span>).<span class="kw">await</span>.expect(<span class="string">"error in initial running script"</span>);
+            <span class="kw">let </span>back: String = get_back(id, response);
+            <span class="kw">let </span>res = webview
+                .evaluate_javascript_future(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"WebView.backtothefuture('{}')"</span>, back), <span class="prelude-val">None</span>, <span class="prelude-val">None</span>)
+                .<span class="kw">await</span>;
+            <span class="kw">let </span>_r = res.inspect_err(|err|<span class="macro">eprintln!</span>(<span class="string">"Error executing script: {:?}"</span>, err));
+                
     });
 } 
 
-<span class="attr">#[cfg(target_os = <span class="string">"linux"</span>)]
+<span class="doccomment">/// Handling an incoming request from javascript in a blocking manner in a threadpool thread.
+/// 
+/// The calling function does not block, the callback function runs in a threadpool thread and can be blocking.
+/// 
+/// If an exception occurs, the error text is written to the error console
+</span><span class="attr">#[cfg(target_os = <span class="string">"linux"</span>)]
 </span><span class="kw">pub fn </span>request_blocking&lt;F: FnOnce() -&gt; String + Send + <span class="lifetime">'static</span>&gt;(
     request: <span class="kw-2">&amp;</span>Request, id: String, on_request: F) {
         <span class="kw">use </span>gtk::glib::spawn_future_local;
@@ -127,13 +176,20 @@
                 res
             }).<span class="kw">await</span>.expect(<span class="string">"Task needs to finish successfully."</span>);
 
-            <span class="kw">let </span>back: String = <span class="macro">format!</span>(<span class="string">"result,{},{}"</span>, id, response);
-            webview.evaluate_javascript_future(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"WebView.backtothefuture('{}')"</span>, back), <span class="prelude-val">None</span>, <span class="prelude-val">None</span>).<span class="kw">await</span>.expect(<span class="string">"error in initial running script"</span>);
+            <span class="kw">let </span>back: String = get_back(id, response);
+            <span class="kw">let </span>res = webview
+                .evaluate_javascript_future(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"WebView.backtothefuture('{}')"</span>, back), <span class="prelude-val">None</span>, <span class="prelude-val">None</span>)
+                .<span class="kw">await</span>;
+            <span class="kw">let </span>_r = res.inspect_err(|err|<span class="macro">eprintln!</span>(<span class="string">"Error executing script blocking: {:?}"</span>, err));
     });
 } 
 
-
-<span class="attr">#[cfg(target_os = <span class="string">"windows"</span>)]
+<span class="doccomment">/// Handling an incoming request from javascript in a blocking manner in a thread.
+/// 
+/// The calling function does not block, the callback function runs in a thread and can be blocking.
+/// 
+/// If an exception occurs, the error text is written to the error console
+</span><span class="attr">#[cfg(target_os = <span class="string">"windows"</span>)]
 </span><span class="kw">pub fn </span>request_blocking&lt;F: FnOnce() -&gt; String + Send + <span class="lifetime">'static</span>&gt;(
     request: <span class="kw-2">&amp;</span>Request, id: String, on_request: F) {
         <span class="kw">use </span>std::{ffi::c_void, thread};
@@ -153,7 +209,13 @@
             <span class="kw">let </span>lparam: LPARAM = LPARAM(<span class="number">0</span>);   
             <span class="kw">let </span>hwnd = hwnd <span class="kw">as </span><span class="kw-2">*mut </span>c_void;
             <span class="kw">let </span>hwnd = HWND(hwnd);
-            <span class="kw">unsafe </span>{ PostMessageW(hwnd, WM_SENDRESPONSE, wparam, lparam).unwrap() };
+            <span class="kw">let </span>res = <span class="kw">unsafe </span>{ PostMessageW(hwnd, WM_SENDRESPONSE, wparam, lparam) };
+            <span class="kw">let </span>_r = res.inspect_err(|err|<span class="macro">eprintln!</span>(<span class="string">"Error executing script blocking: {:?}"</span>, err));
         });
 } 
+
+<span class="kw">fn </span>get_back(id: String, response: String)-&gt;String {
+    <span class="kw">let </span>back: String = <span class="macro">format!</span>(<span class="string">"result,{},{}"</span>, id, response);
+    back.replace(<span class="string">"'"</span>, <span class="string">"u0027"</span>)
+}
 </code></pre></div></section></main></body></html>

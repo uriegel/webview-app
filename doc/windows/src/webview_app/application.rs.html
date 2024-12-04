@@ -50,19 +50,23 @@
 <a href="#50" id="50">50</a>
 <a href="#51" id="51">51</a>
 <a href="#52" id="52">52</a>
+<a href="#53" id="53">53</a>
+<a href="#54" id="54">54</a>
+<a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::webview::WebView;
 <span class="attr">#[cfg(target_os = <span class="string">"linux"</span>)]
 </span><span class="kw">use </span><span class="kw">crate</span>::linux::application::Application <span class="kw">as </span>ApplicationImpl;
 <span class="attr">#[cfg(target_os = <span class="string">"windows"</span>)]
 </span><span class="kw">use </span><span class="kw">crate</span>::windows::application::Application <span class="kw">as </span>ApplicationImpl;
 
-<span class="attr">#[derive(Clone)]
+<span class="doccomment">/// The Application represents a Windows or Linux Gtk Application running the WebView window
+</span><span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>Application {
     <span class="kw">pub </span>app: ApplicationImpl
 }
 
-<span class="doccomment">/// Implementation of Application
-</span><span class="kw">impl </span>Application {
+<span class="kw">impl </span>Application {
     <span class="doccomment">/// Creates an application
     /// 
     /// param appid:
@@ -81,11 +85,14 @@
         }
     }
 
-    <span class="kw">pub fn </span>get_appid(<span class="kw-2">&amp;</span><span class="self">self</span>)-&gt;String {
+    <span class="doccomment">/// Retrieves the app id set on creation
+    </span><span class="kw">pub fn </span>get_appid(<span class="kw-2">&amp;</span><span class="self">self</span>)-&gt;String {
         <span class="self">self</span>.app.get_appid()
     }
 
-    <span class="kw">pub fn </span>on_activate(<span class="kw-2">&amp;</span><span class="self">self</span>, val: <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span>Application)-&gt;WebView + <span class="lifetime">'static</span>)-&gt;<span class="kw-2">&amp;</span><span class="self">Self </span>{
+    <span class="doccomment">/// when the application is started, this method is being called to give you the oppertunity to 
+    /// create the WebView. The callback expects a WebView build with the WebViewBuilder.
+    </span><span class="kw">pub fn </span>on_activate(<span class="kw-2">&amp;</span><span class="self">self</span>, val: <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span>Application)-&gt;WebView + <span class="lifetime">'static</span>)-&gt;<span class="kw-2">&amp;</span><span class="self">Self </span>{
         <span class="kw">let </span>app = <span class="self">self</span>.clone();
         <span class="self">self</span>.app.on_activate(<span class="kw">move </span>||{
             val(<span class="kw-2">&amp;</span>app)
@@ -96,6 +103,7 @@
     <span class="doccomment">/// Runs the web view application.
     /// 
     /// The function blocks until the window (and the application) is closed.
+    /// After calling this function, on_activate callback is being called
     </span><span class="kw">pub fn </span>run(<span class="kw-2">&amp;</span><span class="self">self</span>)-&gt;u32 {
         <span class="self">self</span>.app.run()
     }
