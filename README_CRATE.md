@@ -1,5 +1,5 @@
 # webview-app
-A Rust Web View Application for Windows and Linux similar to Electron. It offers the possibility to make web requests from the web site to the rust app and to send events from rust to the web site. The web site can be hosted as integrated resource, of course alternatively via HTTP(s):// or file://.
+Rust Web View Application for Windows and Linux similar to Electron, but very light weight. It offers the possibility to make web requests from the web site to the rust app and to send events from rust to the web site. The web site can be hosted as integrated resource, of course alternatively via HTTP(s):// or file://.
 
 Sample webview_app:
 ![Sample WebView app](readme/sampleapp.png)
