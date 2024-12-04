@@ -90,7 +90,7 @@
         <span class="self">self</span>.app.get_appid()
     }
 
-    <span class="doccomment">/// when the application is started, this method is being called to give you the oppertunity to 
+    <span class="doccomment">/// when the application is started, this method is being called to give you the opportunity to 
     /// create the WebView. The callback expects a WebView build with the WebViewBuilder.
     </span><span class="kw">pub fn </span>on_activate(<span class="kw-2">&amp;</span><span class="self">self</span>, val: <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span>Application)-&gt;WebView + <span class="lifetime">'static</span>)-&gt;<span class="kw-2">&amp;</span><span class="self">Self </span>{
         <span class="kw">let </span>app = <span class="self">self</span>.clone();
