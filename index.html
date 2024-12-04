@@ -9,7 +9,10 @@
     <p><a href="doc/windows/webview_app/index.html">Windows version</a>...</p>
     <p><a href="doc/linux/webview_app/index.html">Linux version</a>...</p>
     <script>
-        // window.location = "doc/windows/webview_app/index.html"
+        if (navigator.platform.startsWith("Win"))
+            window.location = "doc/windows/webview_app/index.html"
+        else
+            window.location = "doc/linux/webview_app/index.html"
     </script>
 </body>
 </html>
