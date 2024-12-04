@@ -22,7 +22,7 @@ Sample webview_app:
     10. [Add a query string to the Url](#featuresQueryString)
 5. [Callback when closing the Web View](#canclose)
 6. [Requests from Web View's javascript to the rust app](#requests)
-    1. [Non ui blocking request processing](#blockingrequests)
+    1. [Non UI blocking request processing](#blockingrequests)
 
 ## Features <a name="features"></a>
 
@@ -325,11 +325,47 @@ const res = await WebView.request("cmd1", {
 })
 ``` 
 
-## Non ui blocking request processing <a name="blockingrequests"></a>
+## Non UI blocking request processing <a name="blockingrequests"></a>
 
+The processing of the request is blocking the UI. To prevent this, there is a runtime which transfers the processing in another thread.
+You can call the runtime processing with ```request_blocking```:
 
-request_blocking
-request_async (Linux)
+```rs
+fn cmd1(request: &Request, id: String, json: String) {
+    request_blocking(request, id, move || {
+        let input: Input = request::get_input(&json);
+        let res = Output {
+            email: "uriegel@hotmail.de".to_string(),
+            text: input.text,
+            number: input.id + 1,
+        };
+
+        thread::sleep(Duration::from_secs(5));
+
+        request::get_output(&res)
+    })
+}
+``` 
+
+For the Linux version exists another runtime: ```request_async```. With this approach you can call async GTK functions:
+
+```rs
+fn cmd2(request: &Request, id: String) {
+    request_async(request, id, async move {
+        let res = Output {
+            email: "uriegel@hotmail.de".to_string(),
+            text: "Return fom cmd2".to_string(),
+            number: 456,
+        };
+
+        glib::timeout_future_seconds(5)
+            .await;
+
+        request::get_output(&res)
+    })
+}
+``` 
+The processing is async but runs in the UI thread, so you must not call blocking functions!
 
 ## Calls to Web View's javascript
 Events
