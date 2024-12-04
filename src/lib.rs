@@ -24,7 +24,7 @@
 //! ``` 
 //! A tutorial for using webview_app:
 //! 
-//! <https://github.com/uriegel/webview-app>
+//! <https://uriegel.github.io/webview-app/doc/tutorial/>
 
 #[cfg(target_os = "linux")]
 mod linux;
