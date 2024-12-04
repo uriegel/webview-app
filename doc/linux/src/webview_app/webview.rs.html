@@ -333,10 +333,7 @@
 <a href="#332" id="332">332</a>
 <a href="#333" id="333">333</a>
 <a href="#334" id="334">334</a>
-<a href="#335" id="335">335</a>
-<a href="#336" id="336">336</a>
-<a href="#337" id="337">337</a>
-<a href="#338" id="338">338</a></pre></div><pre class="rust"><code><span class="doccomment">//! This module contains all the important structs and implementations to create, configure
+<a href="#335" id="335">335</a></pre></div><pre class="rust"><code><span class="doccomment">//! This module contains all the important structs and implementations to create, configure
 //! and run a webview window.
 
 </span><span class="kw">use </span>std::sync::{Arc, Mutex};
@@ -440,7 +437,7 @@
         <span class="self">self</span>.webview.connect_request(on_request);
     }   
 
-    <span class="doccomment">/// Retrieving a WebViewHandle to valuate script in the WebView
+    <span class="doccomment">/// Retrieving a WebViewHandle to evaluate script in the WebView
     </span><span class="kw">pub fn </span>get_handle(<span class="kw-2">&amp;</span><span class="self">self</span>)-&gt;WebViewHandle {
         WebViewHandle {
             handle: <span class="self">self</span>.webview.get_handle()
@@ -451,15 +448,12 @@
     /// 
     /// You need a WebViewHandle which you can retrieve via WebView::get_handle
     /// 
-    /// You do not need a reference to the WebView!
+    /// You do not need a reference to the WebView handle!
     </span><span class="kw">pub fn </span>eval(handle: WebViewHandle, script: <span class="kw-2">&amp;</span>str) {
         WebViewImpl::start_evaluate_script(handle, script);
     }
 
-    <span class="doccomment">/// Evaluates script in the WebView
-    /// 
-    /// You do need need either a WebView or a WebViewHandle
-    </span><span class="attr">#[cfg(target_os = <span class="string">"windows"</span>)]
+    <span class="attr">#[cfg(target_os = <span class="string">"windows"</span>)]
     </span><span class="doccomment">/// Execute script in webview
     </span><span class="kw">pub fn </span>execute_javascript(script: <span class="kw-2">&amp;</span>str) {
         WebViewImpl::execute_javascript(script);        
@@ -559,14 +553,14 @@
     </span>}
 
     <span class="attr">#[cfg(target_os = <span class="string">"linux"</span>)]
-    </span><span class="doccomment">/// Callback to create the app via a ui resource
+    </span><span class="doccomment">/// Callback to create the Web View Window via a UI resource
     </span><span class="kw">pub fn </span>with_builder(<span class="kw-2">mut </span><span class="self">self</span>, builder_path: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, on_build: <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span>gtk::Builder) + <span class="lifetime">'static</span>)-&gt;WebViewBuilder&lt;<span class="lifetime">'a</span>&gt; {
         <span class="self">self</span>.builder_path = <span class="prelude-val">Some</span>(builder_path);
         <span class="self">self</span>.with_builder = <span class="prelude-val">Some</span>(Rc::new(on_build));
         <span class="self">self
     </span>}        
 
-    <span class="doccomment">/// Sets the web view's url
+    <span class="doccomment">/// Sets the Web View's url
     /// 
     /// You can use 
     /// * ```http(s)://``` 
@@ -576,7 +570,7 @@
         <span class="self">self
     </span>}
 
-    <span class="doccomment">/// Sets the web view's url when debugging
+    <span class="doccomment">/// Sets the Web View's url when debugging
     /// 
     /// This url is used when the app is being debugged. For example, if you use a react website you can set
     /// 
