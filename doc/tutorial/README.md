@@ -13,6 +13,7 @@ Sample webview_app:
     1. [Creating WebViewBuilder and running app](#featuresCreating)
     2. [Url](#featuresUrl)
     3. [Custom resource scheme](#featuresCustomScheme)
+    4. [Debug Url](#featuresDebugUrl)
 
 ## Features <a name="features"></a>
 
@@ -146,8 +147,39 @@ Now the web app is doing something, it is displaying crates's home page!
 
 ### Custom resource scheme <a name="featuresCustomScheme"></a>
 
-The complete web site can be included as rust resource in the executable. 
+The complete web site can be included as resource in the executable (for single file approach). 
 
+In order to do this, you have to add the crate ```include_dir```. The web site has to be in the directory of the web app:
 
+![Sample WebView app](website.png)
 
-With the ```res://``` url specifier it is possible that the web view is automatically loaded from resources. All you have to do is include the website parts as .NET resources and add logical names with the help of the ```LogicalName``` node. The resources have to be included in the .csproj file like this:
+Now you have to call the method ```WebViewBuilder::webroot``` and add the relative path to the web site, in this case ```webroots/custom_resources```:
+
+```rs
+    WebView::builder(app)
+        .title("Website form custom resources 🦞")
+        .webroot(include_dir!("webroots/custom_resources"))
+        .build()
+
+```
+
+Do not call the method ```url```!
+
+### Debug Url <a name="featuresDebugUrl"></a>
+
+Sometimes you have to use a different url for debugging the app, for example when you use a react app. If you want to debug this web app, you have to use vite's debug server ```http://localhost:5173```. But when you build the final web app, you want to include the built web app as resource.
+
+For debugging the web app you can use the builder function ```debug_url``` together with ```url``` (or with ```webroot```). 
+
+```rs
+use include_dir::include_dir;
+
+fn on_activate(app: &Application)->WebView {
+    WebView::builder(app)
+        .debug_url("https://crates.io/crates/webview_app")
+        .url("https://crates.io/crates")
+        .build()
+}
+
+```
+
