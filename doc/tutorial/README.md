@@ -313,7 +313,7 @@ To install this callback, use the function ```connect_request```:
 
 ```
 You get a json string as input parameter which you can deserialize with the help of ```request::get_input(json)```. 
-Every request gets a unique id and can have a command name (```cmd```). The result should be a json fromatted string. 
+Every request gets a unique id and can have a command name (```cmd```). The result should be a json formatted string. 
 You can create this string with ```request::get_output(result)```. Result is a struct with the Trait ```Deserialize``` set.
 
 To create this request from javascript, use the following injected function:
