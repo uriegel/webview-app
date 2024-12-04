@@ -4,7 +4,9 @@
 use webview_app::{application::Application, webview::WebView};
 
 fn on_activate(app: &Application)->WebView {
-    let can_close = true;
+    fn can_close()->bool {
+        true
+    } 
 
     let webview = WebView::builder(app)
         .title("Rust Web View 🦞")
@@ -16,7 +18,7 @@ fn on_activate(app: &Application)->WebView {
         .devtools(true)
         .build();
 
-    webview.can_close(move ||can_close);
+    webview.can_close(||can_close());
     webview
 }
 
