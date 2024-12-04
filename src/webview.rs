@@ -102,7 +102,7 @@ impl WebView {
         self.webview.connect_request(on_request);
     }   
 
-    /// Retrieving a WebViewHandle to valuate script in the WebView
+    /// Retrieving a WebViewHandle to evaluate script in the WebView
     pub fn get_handle(&self)->WebViewHandle {
         WebViewHandle {
             handle: self.webview.get_handle()
@@ -113,14 +113,11 @@ impl WebView {
     /// 
     /// You need a WebViewHandle which you can retrieve via WebView::get_handle
     /// 
-    /// You do not need a reference to the WebView!
+    /// You do not need a reference to the WebView handle!
     pub fn eval(handle: WebViewHandle, script: &str) {
         WebViewImpl::start_evaluate_script(handle, script);
     }
 
-    /// Evaluates script in the WebView
-    /// 
-    /// You do need need either a WebView or a WebViewHandle
     #[cfg(target_os = "windows")]
     /// Execute script in webview
     pub fn execute_javascript(script: &str) {
@@ -221,14 +218,14 @@ impl <'a> WebViewBuilder<'a> {
     }
 
     #[cfg(target_os = "linux")]
-    /// Callback to create the app via a ui resource
+    /// Callback to create the Web View Window via a UI resource
     pub fn with_builder(mut self, builder_path: &'a str, on_build: impl Fn(&gtk::Builder) + 'static)->WebViewBuilder<'a> {
         self.builder_path = Some(builder_path);
         self.with_builder = Some(Rc::new(on_build));
         self
     }        
 
-    /// Sets the web view's url
+    /// Sets the Web View's url
     /// 
     /// You can use 
     /// * ```http(s)://``` 
@@ -238,7 +235,7 @@ impl <'a> WebViewBuilder<'a> {
         self
     }
 
-    /// Sets the web view's url when debugging
+    /// Sets the Web View's url when debugging
     /// 
     /// This url is used when the app is being debugged. For example, if you use a react website you can set
     /// 

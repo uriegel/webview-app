@@ -34,7 +34,7 @@ impl Application {
         self.app.get_appid()
     }
 
-    /// when the application is started, this method is being called to give you the oppertunity to 
+    /// when the application is started, this method is being called to give you the opportunity to 
     /// create the WebView. The callback expects a WebView build with the WebViewBuilder.
     pub fn on_activate(&self, val: impl Fn(&Application)->WebView + 'static)->&Self {
         let app = self.clone();
