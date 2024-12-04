@@ -476,4 +476,10 @@ Sample of a Windows App with custom titlebar:
 ![custom titlebar](customTitlebar.png) 
 
 ### Enhance the Gtk4 Window on Linux <a name="withbuilder"></a>
-// with_builder
+
+If you want to extend the Web View window in Linux, you can call the WebViewBuilder function with_builder, which is only present in the Linux version.
+With this method you are responsible to create a Gtk4 window which hosts the WebView. This function you have to call with a str parameter, the path to the UI resource for the window.
+
+The UI resource has to be included in the executable, please consult the rust GTK4 book.
+
+For further information please look at the linux_titlebar example in GitHub project of webview_app.
