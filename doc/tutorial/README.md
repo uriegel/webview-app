@@ -4,6 +4,12 @@ Rust Web View Application for Windows and Linux similar to Electron. It offers t
 Sample webview_app:
 ![Sample WebView app](sampleapp.png)
 
+# Table of contents
+1. [Introduction](#features)
+2. [Setup](#setup)
+    1. [Additional step for Windows](#prewindows)
+3. [Hello World (a minimal web view app)](#helloworld)    
+
 ## Features <a name="features"></a>
 
 webview_app includes following features:
@@ -42,3 +48,25 @@ fn main() {
 Sample of a Windows App with custom titlebar:
 ![custom titlebar](customTitlebar.png) 
 
+## Setup <a name="setup"></a>
+
+In order to create a WebView app, you have to  create a rust console app with ```cargo new``` or ```cargo init```.
+
+Then add the webview_app crate with ```cargo add webview_app```.
+
+## Setup <a name="setup"></a>
+### Additional step for Windows <a name="prewindows"></a>
+To get rid of the console window, you can hide it.
+
+Add the following code to your main.rs file at the top:
+
+```rs
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+// Allows console to show up in debug build but not release build.
+```
+
+Now there is no console window in release mode but not debug mode to be able to see console logs.
+
+## Hello World (a minimal web view app) <a name="helloworld"></a>
+
+![Sample WebView app](helloworld.png)
