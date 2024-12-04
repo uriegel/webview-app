@@ -4,7 +4,12 @@ A Rust Web View Application for Windows and Linux similar to Electron. It offers
 Sample webview_app:
 ![Sample WebView app](readme/sampleapp.png)
 
-webview_app >= version 1.0.0 is completely redesigned and it doesn't include a warp server anymore.
+## Version >= 1.0.0
+webview_app >= version 1.0.0 is completely redesigned and more light weight, it doesn't include a warp server anymore and doesn't need the tokio runtime either.
+
+If you want to update from older version, you have to migrate, please look at this documentation or this [tutorial](https://uriegel.github.io/webview-app/doc/tutorial/).
+
+If you don't want to migrate, you have to stick to the old version 0.5.1. Here is the [crate documentation for Version 0.5.1](https://docs.rs/webview_app/0.5.1/webview_app/).
 
 ## Features <a name="features"></a>
 
@@ -14,7 +19,7 @@ webview_app includes following features:
 * Uses WebView2 on Windows and WebKitGtk-6.0 on Linux
 * Can serve the web site via resources (single file approach)
 * Optional save and restore of window bounds
-* Has an integrated event sink mechanismen, so you can retrieve javascript events from the Rust app
+* Has an integrated event sink mechanismn, so you can retrieve javascript events from the Rust app
 * Offers the possibility to serve requests from javascript to Rust
 * You can expand the Gtk4 Window (on Linux) with a custom header bar
 * You can alternatively disable the Windows titlebar and borders, and you can build a title bar in HTML with standard Windows logic for closing, maximizing, restoring resizing, snap to dock, ...
