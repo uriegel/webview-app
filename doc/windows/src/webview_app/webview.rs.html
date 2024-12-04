@@ -310,8 +310,34 @@
 <a href="#310" id="310">310</a>
 <a href="#311" id="311">311</a>
 <a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! This module contains all the important structs and implementations to create, configure
-//! and run an application containing only a webview.
+//! and run a webview window.
 
 </span><span class="kw">use </span>std::sync::{Arc, Mutex};
 <span class="attr">#[cfg(target_os = <span class="string">"linux"</span>)]
@@ -334,7 +360,10 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) webview: WebViewImpl
 }
 
-<span class="attr">#[derive(Clone)]
+<span class="doccomment">/// With the help of this WebViewHandle you can evaluate script in the WebView (via WebView::eval)
+/// 
+/// You can retrieve a WebViewHandle via WebView::get_handle
+</span><span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>WebViewHandle {
     <span class="kw">pub</span>(<span class="kw">crate</span>) handle: WebViewHandleImpl
 }
@@ -352,14 +381,14 @@
     ///
     /// use webview_app::webview::WebView;
     /// 
-    /// fn main() {
+    /// fn on_activate(app: &amp;Application)-&gt;WebView {
     ///     let webview = 
     ///         WebView::builder()
     ///             .appid("de.uriegel.hello")
     ///             .title("Rust Web View 🦞")
     ///             .url("https://crates.io/crates/webview_app")
     ///             .build();
-    ///     webview.run();
+    ///     webview
     /// }
     /// ```
     </span><span class="kw">pub fn </span>builder(app: <span class="kw-2">&amp;</span>Application)-&gt;WebViewBuilder {
@@ -386,28 +415,51 @@
     <span class="doccomment">/// Sets a callback which is invoked on closing the app
     /// 
     /// You can prevent closing the app when returning false
+    /// 
+    /// # Example
+    /// 
+    /// ```
+    /// let can_close = true;
+    /// ...
+    /// webview.can_close(move ||can_close);
+    /// ```
     </span><span class="kw">pub fn </span>can_close(<span class="kw-2">&amp;</span><span class="self">self</span>, val: <span class="kw">impl </span>Fn()-&gt;bool + <span class="lifetime">'static</span>) {
         <span class="self">self</span>.webview.can_close(val);
     }
 
-    <span class="kw">pub fn </span>connect_request&lt;F: Fn(<span class="kw-2">&amp;</span>Request, String, String, String) -&gt; bool + <span class="lifetime">'static</span>&gt;(
+    <span class="doccomment">/// When the webview is created, this callback is being called. You can then install WebView requests.
+    /// 
+    /// The Callback function has the following parameters: a request object, the request id, the command id (the Webview method) and the 
+    /// JSON payload.
+    /// 
+    /// A true return value signals that the request is being processed by this callback. 
+    </span><span class="kw">pub fn </span>connect_request&lt;F: Fn(<span class="kw-2">&amp;</span>Request, String, String, String) -&gt; bool + <span class="lifetime">'static</span>&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         on_request: F,
     ) {
         <span class="self">self</span>.webview.connect_request(on_request);
     }   
 
-    <span class="kw">pub fn </span>get_handle(<span class="kw-2">&amp;</span><span class="self">self</span>)-&gt;WebViewHandle {
+    <span class="doccomment">/// Retrieving a WebViewHandle to valuate script in the WebView
+    </span><span class="kw">pub fn </span>get_handle(<span class="kw-2">&amp;</span><span class="self">self</span>)-&gt;WebViewHandle {
         WebViewHandle {
             handle: <span class="self">self</span>.webview.get_handle()
         }
     }
 
-    <span class="kw">pub fn </span>eval(handle: WebViewHandle, script: <span class="kw-2">&amp;</span>str) {
+    <span class="doccomment">/// Evaluates script in the WebView
+    /// 
+    /// You need a WebViewHandle which you can retrieve via WebView::get_handle
+    /// 
+    /// You do not need a reference to the WebView!
+    </span><span class="kw">pub fn </span>eval(handle: WebViewHandle, script: <span class="kw-2">&amp;</span>str) {
         WebViewImpl::start_evaluate_script(handle, script);
     }
 
-    <span class="attr">#[cfg(target_os = <span class="string">"windows"</span>)]
+    <span class="doccomment">/// Evaluates script in the WebView
+    /// 
+    /// You do need need either a WebView or a WebViewHandle
+    </span><span class="attr">#[cfg(target_os = <span class="string">"windows"</span>)]
     </span><span class="doccomment">/// Execute script in webview
     </span><span class="kw">pub fn </span>execute_javascript(script: <span class="kw-2">&amp;</span>str) {
         WebViewImpl::execute_javascript(script);        
@@ -585,7 +637,7 @@
     /// use include_dir::{include_dir};
     /// use webview_app::webview::WebView;
     ///
-    /// fn main() {
+    /// fn on_activate(app: &amp;Application)-&gt;WebView {
     ///     let webview = 
     ///         WebView::builder()
     ///             .appid("de.uriegel.hello".to_string())
@@ -593,7 +645,7 @@
     ///             .webroot(include_dir!("webroots/custom_resources"))
     ///             .query_string("?param1=test&amp;param2=somthing")
     ///             .build();
-    ///     webview.run();
+    ///     webview
     /// }
     /// ```
     </span><span class="kw">pub fn </span>query_string(<span class="kw-2">mut </span><span class="self">self</span>, query_string: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str)-&gt;WebViewBuilder&lt;<span class="lifetime">'a</span>&gt; {

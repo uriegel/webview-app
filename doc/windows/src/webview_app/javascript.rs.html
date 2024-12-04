@@ -192,6 +192,7 @@
 <a href="#192" id="192">192</a>
 <a href="#193" id="193">193</a>
 <a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
 </pre></div><pre class="rust"><code><span class="kw">pub struct </span>RequestData&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">pub </span>cmd: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
     <span class="kw">pub </span>id: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
@@ -350,7 +351,8 @@ WEBVIEWNoNativeTitlebarInitialize()
             const msg = data.substring(7)
             const idx = msg.indexOf(',')
             const id = msg.substring(0, idx)
-            const json = JSON.parse(msg.substring(idx + 1))
+            const back = msg.substring(idx + 1).replace("u0027", "'")
+            const json = JSON.parse(back)
             const res = webviewrequests.get(id)    
             webviewrequests.delete(id)
             res(json)
