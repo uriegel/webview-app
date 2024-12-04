@@ -14,6 +14,13 @@ Sample webview_app:
     2. [Url](#featuresUrl)
     3. [Custom resource scheme](#featuresCustomScheme)
     4. [Debug Url](#featuresDebugUrl)
+    5. [Title](#featuresTitle)
+    6. [Initial Bounds](#featuresInitialBounds)
+    7. [Save Bounds](#featuresSaveBounds)    
+    8. [Developer Tools](#featuresDevTools)
+    9. [Disable WebView's default Context Menu](#featuresDefaultContextMenuDisabled)
+    10. [Add a query string to the Url](#featuresQueryString)
+    
 
 ## Features <a name="features"></a>
 
@@ -183,3 +190,98 @@ fn on_activate(app: &Application)->WebView {
 
 ```
 
+### Title <a name="featuresTitle"></a>
+
+The created app has a default title. Take the builder function ```title``` to set one.
+
+```rs
+    ...
+    WebView::builder(app)
+        .title("My phenominal web app")
+    ...
+```
+### Initial Bounds <a name="featuresInitialBounds"></a>
+
+With the help of the method ```initial_bounds``` you can initialize the size of the window with custom values.
+
+```rs
+...
+    WebView::builder(app)
+        .initial_bounds(1200, 800)
+...
+```
+In combination with ```save_bounds``` this is the initial width and heigth of the window at first start, otherwise the window is always starting with these values.
+
+### Save Bounds <a name="featuresSaveBounds"></a>
+
+When you call ```save_bounds```, then windows location and width and height and normal/maximized state is saved on close. After restarting the app the webview is displayed at these settings again.
+
+```rs
+...
+    WebView::builder(app)
+        .save_bounds()
+...
+```
+The parameter ```appid``` in the constructor ```Application::new```  is used to create a path, where these settings are saved.
+
+### Developer Tools <a name="featuresDevTools"></a>
+
+Used to enable (not to show) the developer tools. Otherwise it is not possible to open these tools.
+The developer tools can be shown by default context menu or by calling the javascript method ```WebView.showDevtools()```
+
+```rs
+...
+    WebView::builder(app)
+        .devtools(true)
+...
+```
+When you set the parameter ```only_when_debugging``` to ```true```, then the developer tools are not shown when the app is build in release mode.
+
+### Disable WebView's default Context Menu <a name="featuresDefaultContextMenuDisabled"></a>
+
+If you call ```default_contextmenu_disabled```, the web view's default context menu is not being displayed when you right click the mouse.
+
+```rs
+...
+    WebView::builder(app)
+        .default_contextmenu_disabled()
+...
+
+```
+
+### Add a query string to the Url <a name="featuresQueryString"></a>
+
+You can set a query string to the url by calling the method ```query_string```. The query string is added to the ```debug_url```, the ```url``` or when using the custom resource scheme.
+
+```rs
+...
+    WebView::builder(app)
+        .debug_url("http://localhost:5173/")
+        .webroot(include_dir!("webroot"))
+        .query_string("?param1=123&param2=456")
+...
+
+```
+
+
+
+## Callback when closing the Web View
+can_close
+
+## Requests from Web View's javascript to the rust app
+connect_request
+request_blocking
+request_async (Linux)
+
+## Calls to Web View's javascript
+Events
+
+## Other injected Javascript functions
+
+## Window Customizations
+
+### Disable the native titlebar on Windows
+// without_native_titlebar
+
+### Enhance the Gtk4 Window on Linux
+// with_builder
