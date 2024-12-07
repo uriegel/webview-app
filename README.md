@@ -70,11 +70,11 @@ Use ```winres``` and build-script ```build.rs``` with ```res.set_icon()```. This
 
 On windows:
 
-``` cargo doc --target x86_64-pc-windows-msvc --no-deps```
+```cargo doc --target x86_64-pc-windows-msvc --no-deps```
 
 On Linux
 
-``` cargo doc --target x86_64-unknown-linux-gnu --no-deps```
+```cargo doc --target x86_64-unknown-linux-gnu --no-deps```
 
 Branch ```gh-pages``` created
 
