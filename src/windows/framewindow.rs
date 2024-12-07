@@ -14,7 +14,7 @@ use windows_core::{w, PCWSTR, PWSTR};
 
 use crate::bounds::Bounds;
 
-use super::{string_to_pcwstr, webview::{WebView, WM_SENDRESPONSE, WM_SENDSCRIPT}, wparam_to_string_and_free};
+use super::{appmessage::{APP_SENDRESPONSE, APP_SENDSCRIPT}, string_to_pcwstr, webview::WebView, wparam_to_string_and_free};
 
 #[derive(Clone)]
 pub struct FrameWindow {
@@ -96,12 +96,12 @@ extern "system" fn window_proc(hwnd: HWND, msg: u32, w_param: WPARAM, l_param: L
             LRESULT::default()
         }
 
-        WM_SENDRESPONSE => {
+        APP_SENDRESPONSE => {
             webview.send_response(w_param);
             LRESULT::default()
         }
 
-        WM_SENDSCRIPT => {
+        APP_SENDSCRIPT => {
             let js = wparam_to_string_and_free(w_param);
             webview.eval(&js).unwrap();
             LRESULT::default()
@@ -139,8 +139,10 @@ extern "system" fn window_proc(hwnd: HWND, msg: u32, w_param: WPARAM, l_param: L
         }
 
         WM_SETFOCUS => {
-            webview.set_focus();
-            unsafe { DefWindowProcW(hwnd, msg, w_param, l_param) }
+            unsafe { 
+                webview.set_focus();
+                DefWindowProcW(hwnd, msg, w_param, l_param) 
+            }
         }
 
         WM_CLOSE => {

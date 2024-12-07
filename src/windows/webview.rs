@@ -25,10 +25,7 @@ use windows_core::{w, Interface, PCWSTR, PWSTR};
 
 use crate::{bounds::Bounds, content_type, html, javascript::{self, RequestData}, params::Params, request::Request};
 
-use super::{framewindow::{get_hwnd, FrameWindow}, string_to_pcwstr, GetWindowLong, SetWindowLong};
-
-pub const WM_SENDRESPONSE: u32 = WM_APP + 1;
-pub const WM_SENDSCRIPT: u32 = WM_APP + 2;
+use super::{appmessage::APP_SENDSCRIPT, framewindow::{get_hwnd, FrameWindow}, string_to_pcwstr, GetWindowLong, SetWindowLong};
 
 struct WebViewController(ICoreWebView2Controller);
 
@@ -378,7 +375,7 @@ impl WebView {
         let mut js = CoTaskMemPWSTR::from(script);
         let wparam: WPARAM = WPARAM(js.take().as_ptr() as usize);
         let lparam: LPARAM = LPARAM(0);   
-        unsafe { PostMessageW(*hwnd, WM_SENDSCRIPT, wparam, lparam).unwrap() };
+        unsafe { PostMessageW(*hwnd, APP_SENDSCRIPT, wparam, lparam).unwrap() };
     }
 
     fn init(&self, js: &str) -> Result<&Self> {
@@ -409,7 +406,7 @@ impl WebView {
         let hwnd = handle.handle.hwnd;
         let hwnd = hwnd as *mut c_void;
         let hwnd = HWND(hwnd);
-        unsafe { PostMessageW(hwnd, WM_SENDSCRIPT, wparam, lparam).unwrap() };
+        unsafe { PostMessageW(hwnd, APP_SENDSCRIPT, wparam, lparam).unwrap() };
     }
 
     pub fn eval(&self, js: &str) -> Result<&Self> {
@@ -448,7 +445,7 @@ impl WebView {
             let hwnd = self.frame.get_hwnd();
             let hwnd = hwnd as *mut c_void;
             let hwnd = HWND(hwnd);
-            unsafe { PostMessageW(hwnd, WM_SENDSCRIPT, wparam, lparam).unwrap() };
+            unsafe { PostMessageW(hwnd, APP_SENDSCRIPT, wparam, lparam).unwrap() };
         }
     }
 

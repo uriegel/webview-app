@@ -87,7 +87,7 @@ pub fn request_blocking<F: FnOnce() -> String + Send + 'static>(
         use windows::Win32::Foundation::{HWND, LPARAM, WPARAM};
         use windows::Win32::UI::WindowsAndMessaging::PostMessageW;
 
-        use crate::windows::webview::WM_SENDRESPONSE;
+        use crate::windows::appmessage::APP_SENDRESPONSE;
 
         let hwnd = request.hwnd;
 
@@ -99,7 +99,7 @@ pub fn request_blocking<F: FnOnce() -> String + Send + 'static>(
             let lparam: LPARAM = LPARAM(0);   
             let hwnd = hwnd as *mut c_void;
             let hwnd = HWND(hwnd);
-            let res = unsafe { PostMessageW(hwnd, WM_SENDRESPONSE, wparam, lparam) };
+            let res = unsafe { PostMessageW(hwnd, APP_SENDRESPONSE, wparam, lparam) };
             let _r = res.inspect_err(|err|eprintln!("Error executing script blocking: {:?}", err));
         });
 } 

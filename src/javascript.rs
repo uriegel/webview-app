@@ -98,6 +98,16 @@ function WEBVIEWsetMaximized(m) {{
 
 const WEBVIEWNoNativeTitlebarInitialize = () => {{
 
+    const dragRegion = document.getElementById('$DRAG_REGION$')
+    if (dragRegion) {{
+        dragRegion.style.setProperty('-webkit-app-region', 'drag')
+        let activeElement = null
+        dragRegion.onmousedown = e => {{
+            activeElement = document.activeElement
+        }}
+        dragRegion.onmouseup = e => activeElement.focus()
+    }}
+
     const title = document.getElementById('$TITLE$')
     if (title)
         title.innerText = '{}'

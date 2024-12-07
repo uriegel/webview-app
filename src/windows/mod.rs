@@ -5,6 +5,7 @@ use windows_core::PWSTR;
 
 pub mod application;
 pub mod webview;
+pub mod appmessage;
 mod framewindow;
 
 #[allow(non_snake_case)]
