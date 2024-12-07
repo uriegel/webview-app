@@ -45,6 +45,6 @@ mod html;
 // TODO DragDrop
 // TODO Doc with examples and panics and global descriptions, module descriptions and links to tutorial
 // TODO Keywords like http webview, gtk, webview2 webkit, electron like
-// TODO Dependency Gtk4, Webkit, Aswaita for doc
+// TODO Dependency Gtk4, Webkit, Adwaita for doc
 
 

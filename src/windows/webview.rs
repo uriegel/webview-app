@@ -369,6 +369,10 @@ impl WebView {
         }
     }
 
+    pub fn set_focus(&self) {
+        unsafe { let _ = self.controller.0.MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC); };
+    }
+
     pub fn execute_javascript(script: &str) {
         let hwnd = get_hwnd().lock().unwrap();
         let mut js = CoTaskMemPWSTR::from(script);

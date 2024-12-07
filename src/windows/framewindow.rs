@@ -6,7 +6,7 @@ use windows::Win32::{
     }, System::LibraryLoader::GetModuleHandleW, UI::WindowsAndMessaging::{
         CreateWindowExW, DefWindowProcW, DestroyWindow, GetClientRect, GetWindowRect, IsZoomed, LoadIconW, RegisterClassW, SetWindowLongPtrW, 
         CREATESTRUCTW, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, GWL_STYLE, HICON, NCCALCSIZE_PARAMS, SIZE_MAXIMIZED, 
-        WM_CLOSE, WM_CREATE, WM_DESTROY, WM_NCCALCSIZE, WM_SIZE, WNDCLASSW, 
+        WM_CLOSE, WM_CREATE, WM_DESTROY, WM_NCCALCSIZE, WM_SETFOCUS, WM_SIZE, WNDCLASSW, 
         WS_BORDER, WS_CLIPCHILDREN, WS_CLIPSIBLINGS, WS_MAXIMIZEBOX, WS_MINIMIZEBOX, WS_OVERLAPPED, WS_OVERLAPPEDWINDOW, WS_THICKFRAME
     }
 };
@@ -93,7 +93,7 @@ extern "system" fn window_proc(hwnd: HWND, msg: u32, w_param: WPARAM, l_param: L
             let size = get_window_size(hwnd);
             webview.set_size(size.cx, size.cy, w_param == WPARAM(SIZE_MAXIMIZED as usize));
             *frame.size.borrow_mut() = size;
-                LRESULT::default()
+            LRESULT::default()
         }
 
         WM_SENDRESPONSE => {
@@ -136,6 +136,11 @@ extern "system" fn window_proc(hwnd: HWND, msg: u32, w_param: WPARAM, l_param: L
                     DefWindowProcW(hwnd, msg, w_param, l_param)
                 }
             }
+        }
+
+        WM_SETFOCUS => {
+            webview.set_focus();
+            unsafe { DefWindowProcW(hwnd, msg, w_param, l_param) }
         }
 
         WM_CLOSE => {

@@ -104,6 +104,7 @@ pub fn request_blocking<F: FnOnce() -> String + Send + 'static>(
         });
 } 
 
+#[cfg(target_os = "linux")]
 fn get_back(id: String, response: String)->String {
     let back: String = format!("result,{},{}", id, response);
     back.replace("'", "u0027")
