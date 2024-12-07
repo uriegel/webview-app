@@ -178,6 +178,13 @@
 <a href="#178" id="178">178</a>
 <a href="#179" id="179">179</a>
 <a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{cell::RefCell, ffi::c_void, ptr, rc::Rc, sync::{Arc, Mutex}};
 
 <span class="kw">use </span>windows::Win32::{
@@ -186,7 +193,7 @@
     }, System::LibraryLoader::GetModuleHandleW, UI::WindowsAndMessaging::{
         CreateWindowExW, DefWindowProcW, DestroyWindow, GetClientRect, GetWindowRect, IsZoomed, LoadIconW, RegisterClassW, SetWindowLongPtrW, 
         CREATESTRUCTW, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, GWL_STYLE, HICON, NCCALCSIZE_PARAMS, SIZE_MAXIMIZED, 
-        WM_CLOSE, WM_CREATE, WM_DESTROY, WM_NCCALCSIZE, WM_SIZE, WNDCLASSW, 
+        WM_CLOSE, WM_CREATE, WM_DESTROY, WM_NCCALCSIZE, WM_SETFOCUS, WM_SIZE, WNDCLASSW, 
         WS_BORDER, WS_CLIPCHILDREN, WS_CLIPSIBLINGS, WS_MAXIMIZEBOX, WS_MINIMIZEBOX, WS_OVERLAPPED, WS_OVERLAPPEDWINDOW, WS_THICKFRAME
     }
 };
@@ -194,7 +201,7 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::bounds::Bounds;
 
-<span class="kw">use super</span>::{string_to_pcwstr, webview::{WebView, WM_SENDRESPONSE, WM_SENDSCRIPT}, wparam_to_string_and_free};
+<span class="kw">use super</span>::{appmessage::{APP_SENDRESPONSE, APP_SENDSCRIPT}, string_to_pcwstr, webview::WebView, wparam_to_string_and_free};
 
 <span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>FrameWindow {
@@ -273,15 +280,15 @@
             <span class="kw">let </span>size = get_window_size(hwnd);
             webview.set_size(size.cx, size.cy, w_param == WPARAM(SIZE_MAXIMIZED <span class="kw">as </span>usize));
             <span class="kw-2">*</span>frame.size.borrow_mut() = size;
-                LRESULT::default()
+            LRESULT::default()
         }
 
-        WM_SENDRESPONSE =&gt; {
+        APP_SENDRESPONSE =&gt; {
             webview.send_response(w_param);
             LRESULT::default()
         }
 
-        WM_SENDSCRIPT =&gt; {
+        APP_SENDSCRIPT =&gt; {
             <span class="kw">let </span>js = wparam_to_string_and_free(w_param);
             webview.eval(<span class="kw-2">&amp;</span>js).unwrap();
             LRESULT::default()
@@ -315,6 +322,13 @@
                 <span class="kw">else </span>{
                     DefWindowProcW(hwnd, msg, w_param, l_param)
                 }
+            }
+        }
+
+        WM_SETFOCUS =&gt; {
+            <span class="kw">unsafe </span>{ 
+                webview.set_focus();
+                DefWindowProcW(hwnd, msg, w_param, l_param) 
             }
         }
 

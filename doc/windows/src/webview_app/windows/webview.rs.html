@@ -541,6 +541,7 @@
 <a href="#541" id="541">541</a>
 <a href="#542" id="542">542</a>
 <a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{cell::RefCell, ffi::c_void, mem, path::Path, ptr, rc::Rc, sync::mpsc};
 
 <span class="kw">use </span>webview2_com::{
@@ -568,10 +569,7 @@
 
 <span class="kw">use crate</span>::{bounds::Bounds, content_type, html, javascript::{<span class="self">self</span>, RequestData}, params::Params, request::Request};
 
-<span class="kw">use super</span>::{framewindow::{get_hwnd, FrameWindow}, string_to_pcwstr, GetWindowLong, SetWindowLong};
-
-<span class="kw">pub const </span>WM_SENDRESPONSE: u32 = WM_APP + <span class="number">1</span>;
-<span class="kw">pub const </span>WM_SENDSCRIPT: u32 = WM_APP + <span class="number">2</span>;
+<span class="kw">use super</span>::{appmessage::APP_SENDSCRIPT, framewindow::{get_hwnd, FrameWindow}, string_to_pcwstr, GetWindowLong, SetWindowLong};
 
 <span class="kw">struct </span>WebViewController(ICoreWebView2Controller);
 
@@ -912,12 +910,16 @@
         }
     }
 
+    <span class="kw">pub fn </span>set_focus(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="kw">unsafe </span>{ <span class="kw">let _ </span>= <span class="self">self</span>.controller.<span class="number">0</span>.MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC); };
+    }
+
     <span class="kw">pub fn </span>execute_javascript(script: <span class="kw-2">&amp;</span>str) {
         <span class="kw">let </span>hwnd = get_hwnd().lock().unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>js = CoTaskMemPWSTR::from(script);
         <span class="kw">let </span>wparam: WPARAM = WPARAM(js.take().as_ptr() <span class="kw">as </span>usize);
         <span class="kw">let </span>lparam: LPARAM = LPARAM(<span class="number">0</span>);   
-        <span class="kw">unsafe </span>{ PostMessageW(<span class="kw-2">*</span>hwnd, WM_SENDSCRIPT, wparam, lparam).unwrap() };
+        <span class="kw">unsafe </span>{ PostMessageW(<span class="kw-2">*</span>hwnd, APP_SENDSCRIPT, wparam, lparam).unwrap() };
     }
 
     <span class="kw">fn </span>init(<span class="kw-2">&amp;</span><span class="self">self</span>, js: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>&gt; {
@@ -948,7 +950,7 @@
         <span class="kw">let </span>hwnd = handle.handle.hwnd;
         <span class="kw">let </span>hwnd = hwnd <span class="kw">as </span><span class="kw-2">*mut </span>c_void;
         <span class="kw">let </span>hwnd = HWND(hwnd);
-        <span class="kw">unsafe </span>{ PostMessageW(hwnd, WM_SENDSCRIPT, wparam, lparam).unwrap() };
+        <span class="kw">unsafe </span>{ PostMessageW(hwnd, APP_SENDSCRIPT, wparam, lparam).unwrap() };
     }
 
     <span class="kw">pub fn </span>eval(<span class="kw-2">&amp;</span><span class="self">self</span>, js: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>&gt; {
@@ -987,7 +989,7 @@
             <span class="kw">let </span>hwnd = <span class="self">self</span>.frame.get_hwnd();
             <span class="kw">let </span>hwnd = hwnd <span class="kw">as </span><span class="kw-2">*mut </span>c_void;
             <span class="kw">let </span>hwnd = HWND(hwnd);
-            <span class="kw">unsafe </span>{ PostMessageW(hwnd, WM_SENDSCRIPT, wparam, lparam).unwrap() };
+            <span class="kw">unsafe </span>{ PostMessageW(hwnd, APP_SENDSCRIPT, wparam, lparam).unwrap() };
         }
     }
 

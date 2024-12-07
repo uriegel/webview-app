@@ -193,6 +193,16 @@
 <a href="#193" id="193">193</a>
 <a href="#194" id="194">194</a>
 <a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
 </pre></div><pre class="rust"><code><span class="kw">pub struct </span>RequestData&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">pub </span>cmd: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
     <span class="kw">pub </span>id: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
@@ -292,6 +302,16 @@ function WEBVIEWsetMaximized(m) {{
 }}
 
 const WEBVIEWNoNativeTitlebarInitialize = () =&gt; {{
+
+    const dragRegion = document.getElementById('$DRAG_REGION$')
+    if (dragRegion) {{
+        dragRegion.style.setProperty('-webkit-app-region', 'drag')
+        let activeElement = null
+        dragRegion.onmousedown = e =&gt; {{
+            activeElement = document.activeElement
+        }}
+        dragRegion.onmouseup = e =&gt; activeElement.focus()
+    }}
 
     const title = document.getElementById('$TITLE$')
     if (title)
