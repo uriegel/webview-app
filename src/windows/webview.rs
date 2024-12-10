@@ -4,7 +4,9 @@ use webview2_com::{
     AddScriptToExecuteOnDocumentCreatedCompletedHandler, CoTaskMemPWSTR, CoreWebView2CustomSchemeRegistration, CoreWebView2EnvironmentOptions, 
     CreateCoreWebView2ControllerCompletedHandler, CreateCoreWebView2EnvironmentCompletedHandler, ExecuteScriptCompletedHandler, 
     Microsoft::Web::WebView2::Win32::{
-        CreateCoreWebView2EnvironmentWithOptions, ICoreWebView2, ICoreWebView2Controller, ICoreWebView2CustomSchemeRegistration, ICoreWebView2Environment, ICoreWebView2EnvironmentOptions, ICoreWebView2File, ICoreWebView2Settings6, ICoreWebView2WebMessageReceivedEventArgs2, ICoreWebView2WebMessageReceivedEventArgs2_Impl, ICoreWebView2WebResourceResponse, COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC, COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL
+        CreateCoreWebView2EnvironmentWithOptions, ICoreWebView2, ICoreWebView2Controller, ICoreWebView2CustomSchemeRegistration, ICoreWebView2Environment,
+        ICoreWebView2EnvironmentOptions, ICoreWebView2File, ICoreWebView2Settings6, ICoreWebView2WebMessageReceivedEventArgs2, ICoreWebView2WebResourceResponse, 
+        COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC, COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL
     }, NavigationCompletedEventHandler, WebMessageReceivedEventHandler, WebResourceRequestedEventHandler, WindowCloseRequestedEventHandler
 };
 
@@ -213,23 +215,6 @@ impl WebView {
             webview.webview.add_WebMessageReceived(
                 &WebMessageReceivedEventHandler::create(Box::new(move |_webview, args| {
                     if let Some(args) = args {
-
-                        
-                        
-                        
-                        let args2: ICoreWebView2WebMessageReceivedEventArgs2 = args.cast()?;
-                        if let Ok(ao) = args2.AdditionalObjects() {
-                            let val: ICoreWebView2File = ao.GetValueAtIndex(0)?.cast()?;
-                            let mut path = PWSTR(ptr::null_mut());
-                            val.Path(&mut path)?;
-                            let path = CoTaskMemPWSTR::from(path);
-                            let path = &path.to_string();
-                            println!("file: {:?}", path);
-                        }
-
-                        
-
-
                         let mut message = PWSTR(ptr::null_mut());
                         if args.TryGetWebMessageAsString(&mut message).is_ok() {
                             let message = CoTaskMemPWSTR::from(message);
@@ -253,6 +238,21 @@ impl WebView {
                                 let hwnd = hwnd as *mut c_void;
                                 let hwnd = HWND(hwnd);
                                 ShowWindow(hwnd, SW_SHOWNORMAL).unwrap();
+                            } else if msg.starts_with("AdditionalObjects") {
+                                let args2: ICoreWebView2WebMessageReceivedEventArgs2 = args.cast()?;
+                                if let Ok(ao) = args2.AdditionalObjects() {
+                                    let mut count: u32 = 0;
+                                    let mut pathes: Vec<String> = Vec::with_capacity(count as usize);
+                                    ao.Count(&mut count as *mut u32)?;
+                                    for i in 0 .. count {
+                                        let val: ICoreWebView2File = ao.GetValueAtIndex(i)?.cast()?;
+                                        let mut path = PWSTR(ptr::null_mut());
+                                        val.Path(&mut path)?;
+                                        let path = CoTaskMemPWSTR::from(path);
+                                        pathes.push(path.to_string());
+                                    }
+                                    println!("{:?}", pathes);
+                                }
                             }
                         }
                     }

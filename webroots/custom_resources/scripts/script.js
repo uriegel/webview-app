@@ -69,9 +69,5 @@ dropzone.ondrop = e => {
     e.preventDefault()
     console.log("Drop", e, e.dataTransfer.files)
 
-    chrome.webview.postMessageWithAdditionalObjects({
-        msg: 1,
-        text: "id",
-        move: true
-    }, e.dataTransfer.files)
+    chrome.webview.postMessageWithAdditionalObjects("AdditionalObjects", e.dataTransfer.files)
 }
