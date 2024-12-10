@@ -5,6 +5,15 @@ body {
 #dragzone {
     background-color: chartreuse;
     color: black;
+    margin: 10px;
+    width: 200px;
+    height: 100px;
+}
+
+#dropzone {
+    background-color: chartreuse;
+    color: black;
+    margin: 10px;
     width: 200px;
     height: 100px;
 }

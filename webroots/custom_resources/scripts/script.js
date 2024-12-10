@@ -5,6 +5,7 @@ const btn3 = document.getElementById("button3")
 const btnE = document.getElementById("buttonE")
 const btnDevTools = document.getElementById("buttonDevTools")
 const dragzone = document.getElementById("dragzone")
+const dropzone = document.getElementById("dropzone")
 
 btnDevTools.onclick = () => WebView.showDevTools()
 
@@ -58,3 +59,19 @@ dragzone.onmousedown = () => WebView.startDragFiles([
     ]
     .map(n => `${currentDirectory}${n}`)
 )
+
+dropzone.ondragover = e => {
+    e.preventDefault()
+    e.stopPropagation()
+}
+
+dropzone.ondrop = e => {
+    e.preventDefault()
+    console.log("Drop", e, e.dataTransfer.files)
+
+    chrome.webview.postMessageWithAdditionalObjects({
+        msg: 1,
+        text: "id",
+        move: true
+    }, e.dataTransfer.files)
+}
