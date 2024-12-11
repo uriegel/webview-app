@@ -251,7 +251,14 @@ impl WebView {
                                         let path = CoTaskMemPWSTR::from(path);
                                         pathes.push(path.to_string());
                                     }
-                                    println!("{:?}", pathes);
+
+                                    let script = format!("additionalObjectsBack({})", serde_json::to_string(&pathes).unwrap());
+                                    let mut js = CoTaskMemPWSTR::from(script.as_str());
+                                    let wparam: WPARAM = WPARAM(js.take().as_ptr() as usize);
+                                    let lparam: LPARAM = LPARAM(0);   
+                                    let hwnd = hwnd as *mut c_void;
+                                    let hwnd = HWND(hwnd);
+                                    PostMessageW(hwnd, APP_SENDSCRIPT, wparam, lparam).unwrap();
                                 }
                             }
                         }
@@ -424,19 +431,22 @@ impl WebView {
         unsafe { PostMessageW(hwnd, APP_SENDSCRIPT, wparam, lparam).unwrap() };
     }
 
-    pub fn eval(&self, js: &str) -> Result<&Self> {
+    pub fn eval(&self, js: &str)  {
         let webview = self.webview.clone();
         let js = String::from(js);
-        ExecuteScriptCompletedHandler::wait_for_async_operation(
+        if let Err(err) = ExecuteScriptCompletedHandler::wait_for_async_operation(
             Box::new(move |handler| unsafe {
                 let js = string_to_pcwstr(js.as_str());
-                webview
-                    .ExecuteScript(PCWSTR(js.as_ptr()), &handler)
-                    .map_err(webview2_com::Error::WindowsError)
+                match webview.ExecuteScript(PCWSTR(js.as_ptr()), &handler) {
+                    Err(err) => println!("Error executing script: {:?}", err),
+                    _ => {}
+                };
+                Ok(())
             }),
             Box::new(|error_code, _result| error_code),
-        ).unwrap();
-        Ok(self)
+        )  {
+            println!("Error executing script: {:?}", err);
+        }   
     }
 
     pub fn set_size(&self, x: i32, y: i32, is_maximized: bool) {

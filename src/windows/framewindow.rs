@@ -103,7 +103,7 @@ extern "system" fn window_proc(hwnd: HWND, msg: u32, w_param: WPARAM, l_param: L
 
         APP_SENDSCRIPT => {
             let js = wparam_to_string_and_free(w_param);
-            webview.eval(&js).unwrap();
+            webview.eval(&js);
             LRESULT::default()
         }
 
