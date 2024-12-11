@@ -49,26 +49,40 @@ var WebView = (() => {{
         startDragFiles,
         request,
         dropFiles,
+        filesDropped,
         setDroppedFilesEventHandler,
         setDroppedEvent,
         closeWindow,
-        backtothefuture
+        backtothefuture,
+        additionalObjectsBack
     }}
 }})()
 
 try {{
     if (onWebViewLoaded) 
         onWebViewLoaded()
-}} catch {{ }}"##, no_titlebar_script(no_native_titlebar, title), request_result(windows), dev_tools(windows), 
+}} catch {{ }}"##, no_titlebar_script(no_native_titlebar, title), request_result(windows), platform_specifics(windows), 
                 requests(), on_files_drop(files_drop))
 }
 
-fn dev_tools(windows: bool)->String { 
+fn platform_specifics(windows: bool)->String { 
     if windows {
-    // TODO startDragFiles in devtools?
 r##"        
     const showDevTools = () => window.chrome.webview.postMessage("devtools")
     const startDragFiles = files => callback.StartDragFiles(JSON.stringify({ files }))
+    let additionalObjectsBackRes = null
+    function filesDropped(dataTransfer) {{
+        return new Promise(res => {{
+            chrome.webview.postMessageWithAdditionalObjects("AdditionalObjects", dataTransfer.files)
+            additionalObjectsBackRes = res
+        }})
+    }}
+    function additionalObjectsBack(files) {{
+        if (additionalObjectsBackRes) {{
+            additionalObjectsBackRes(files)
+            additionalObjectsBackRes = null
+        }}
+    }}
 "##
     } else {
 r##"                
@@ -78,6 +92,7 @@ r##"
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ files })
     })
+    async function filesDropped(dataTransfer) {{}}
 "##
     }.to_string()
 }

@@ -68,21 +68,5 @@ dropzone.ondragover = e => {
 dropzone.ondrop = async e => {
     e.preventDefault()
 
-    console.log("Drop", await filesDrop(e.dataTransfer)) 
-}
-
-
-let additionalObjectsBackRes = null
-async function filesDrop(dataTransfer) {
-    return new Promise(res => {
-        chrome.webview.postMessageWithAdditionalObjects("AdditionalObjects", dataTransfer.files)
-        additionalObjectsBackRes = res
-    })
-    
-}
-function additionalObjectsBack(files) {
-    if (additionalObjectsBackRes) {
-        additionalObjectsBackRes(files)
-        additionalObjectsBackRes = null
-    }
+    console.log("Drop", await WebView.filesDropped(e.dataTransfer)) 
 }

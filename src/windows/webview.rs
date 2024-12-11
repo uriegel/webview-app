@@ -252,7 +252,7 @@ impl WebView {
                                         pathes.push(path.to_string());
                                     }
 
-                                    let script = format!("additionalObjectsBack({})", serde_json::to_string(&pathes).unwrap());
+                                    let script = format!("WebView.additionalObjectsBack({})", serde_json::to_string(&pathes).unwrap());
                                     let mut js = CoTaskMemPWSTR::from(script.as_str());
                                     let wparam: WPARAM = WPARAM(js.take().as_ptr() as usize);
                                     let lparam: LPARAM = LPARAM(0);   
