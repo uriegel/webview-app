@@ -41,7 +41,7 @@ type WebViewReceiver = mpsc::Receiver<Box<dyn FnOnce(WebView) + Send>>;
 
 #[derive(Clone)]
 pub struct WebViewHandle {
-    hwnd: isize
+    pub hwnd: isize
 }
 
 #[derive(Clone)]

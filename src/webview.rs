@@ -27,7 +27,7 @@ pub struct WebView {
 /// You can retrieve a WebViewHandle via WebView::get_handle
 #[derive(Clone)]
 pub struct WebViewHandle {
-    pub(crate) handle: WebViewHandleImpl
+    pub handle: WebViewHandleImpl,
 }
 
 impl WebView {
@@ -105,7 +105,7 @@ impl WebView {
     /// Retrieving a WebViewHandle to evaluate script in the WebView
     pub fn get_handle(&self)->WebViewHandle {
         WebViewHandle {
-            handle: self.webview.get_handle()
+            handle: self.webview.get_handle(),
         }
     }
 

@@ -1,6 +1,6 @@
 [package]
 name = "webview_app"
-version = "1.1.2"
+version = "1.2.0"
 keywords = ["WebView", "webview2", "webkit", "Windows", "Linux"]
 categories = ["gui"]
 description = "Simple integration of a web view in an application window for windows and linux similar to Electron"
