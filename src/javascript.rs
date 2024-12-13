@@ -54,7 +54,8 @@ var WebView = (() => {{
         setDroppedEvent,
         closeWindow,
         backtothefuture,
-        additionalObjectsBack
+        additionalObjectsBack,
+        startDragFilesBack
     }}
 }})()
 
@@ -69,7 +70,19 @@ fn platform_specifics(windows: bool)->String {
     if windows {
 r##"        
     const showDevTools = () => window.chrome.webview.postMessage("devtools")
-    const startDragFiles = files => window.chrome.webview.postMessage('startDragFiles,' + JSON.stringify(files))
+    let startDragFilesBackRes = null
+    const startDragFiles = files => {{
+        return new Promise(res => {{
+            window.chrome.webview.postMessage('startDragFiles,' + JSON.stringify(files))
+            startDragFilesBackRes = res
+        }})
+    }}
+    function startDragFilesBack() {{
+        if (startDragFilesBackRes) {{
+            startDragFilesBackRes()
+            startDragFilesBackRes = null
+        }}
+    }}
     let additionalObjectsBackRes = null
     function filesDropped(dataTransfer) {{
         return new Promise(res => {{

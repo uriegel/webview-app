@@ -242,9 +242,9 @@ impl WebView {
                                 let idx = msg.find(',').unwrap();
                                 let files= &msg[idx+1..];
                                 let files: Vec<String> = serde_json::from_str(files).unwrap();                              
-                                println!("startDragFiles {:?}", files);  
                                 dragdrop::start(files);
-
+                                let hwnd = hwnd as *mut c_void;
+                                sendscript(HWND(hwnd), "WebView.startDragFilesBack()");
                             } else if msg.starts_with("AdditionalObjects") {
                                 let args2: ICoreWebView2WebMessageReceivedEventArgs2 = args.cast()?;
                                 if let Ok(ao) = args2.AdditionalObjects() {
@@ -260,12 +260,8 @@ impl WebView {
                                     }
 
                                     let script = format!("WebView.additionalObjectsBack({})", serde_json::to_string(&pathes).unwrap());
-                                    let mut js = CoTaskMemPWSTR::from(script.as_str());
-                                    let wparam: WPARAM = WPARAM(js.take().as_ptr() as usize);
-                                    let lparam: LPARAM = LPARAM(0);   
                                     let hwnd = hwnd as *mut c_void;
-                                    let hwnd = HWND(hwnd);
-                                    PostMessageW(hwnd, APP_SENDSCRIPT, wparam, lparam).unwrap();
+                                    sendscript(HWND(hwnd), &script);
                                 }
                             }
                         }
@@ -401,10 +397,7 @@ impl WebView {
 
     pub fn execute_javascript(script: &str) {
         let hwnd = get_hwnd().lock().unwrap();
-        let mut js = CoTaskMemPWSTR::from(script);
-        let wparam: WPARAM = WPARAM(js.take().as_ptr() as usize);
-        let lparam: LPARAM = LPARAM(0);   
-        unsafe { PostMessageW(*hwnd, APP_SENDSCRIPT, wparam, lparam).unwrap() };
+        sendscript(*hwnd, script);                
     }
 
     fn init(&self, js: &str) -> Result<&Self> {
@@ -429,13 +422,9 @@ impl WebView {
     }
 
     pub fn start_evaluate_script(handle: crate::webview::WebViewHandle, script: &str) {
-        let mut js = CoTaskMemPWSTR::from(script);
-        let wparam: WPARAM = WPARAM(js.take().as_ptr() as usize);
-        let lparam: LPARAM = LPARAM(0);   
         let hwnd = handle.handle.hwnd;
         let hwnd = hwnd as *mut c_void;
-        let hwnd = HWND(hwnd);
-        unsafe { PostMessageW(hwnd, APP_SENDSCRIPT, wparam, lparam).unwrap() };
+        sendscript(HWND(hwnd), script);
     }
 
     pub fn eval(&self, js: &str)  {
@@ -470,14 +459,9 @@ impl WebView {
         if is_maximized != *self.is_maximized.borrow() {
             self.is_maximized.replace(is_maximized);
 
-            let js: String = format!("WEBVIEWsetMaximized({is_maximized})");
-            let mut js = CoTaskMemPWSTR::from(js.as_str());
-            let wparam: WPARAM = WPARAM(js.take().as_ptr() as usize);
-            let lparam: LPARAM = LPARAM(0);   
             let hwnd = self.frame.get_hwnd();
             let hwnd = hwnd as *mut c_void;
-            let hwnd = HWND(hwnd);
-            unsafe { PostMessageW(hwnd, APP_SENDSCRIPT, wparam, lparam).unwrap() };
+            sendscript(HWND(hwnd), &format!("WEBVIEWsetMaximized({is_maximized})"));
         }
     }
 
@@ -572,5 +556,12 @@ fn send_custom_response(environment: &ICoreWebView2Environment, content: &[u8], 
             PCWSTR(content_type.as_ptr())
         ).unwrap()
     }
+}
+
+fn sendscript(hwnd: HWND, script: &str) {
+    let mut js = CoTaskMemPWSTR::from(script);
+    let wparam: WPARAM = WPARAM(js.take().as_ptr() as usize);
+    let lparam: LPARAM = LPARAM(0);   
+    unsafe { PostMessageW(hwnd, APP_SENDSCRIPT, wparam, lparam).unwrap() };
 }
 

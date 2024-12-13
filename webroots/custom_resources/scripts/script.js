@@ -53,10 +53,13 @@ btn3.onclick = () => {
     video.src="http://roxy:8080/media/video/2010.mp4"
 }
 
-dragzone.onmousedown = () => WebView.startDragFiles([
-    "D:\\Videos\\7Samurai.mp4",
-    "D:\\Videos\\AbenteuerInRio.mp4"
-])
+dragzone.onmousedown = async () => {
+    await WebView.startDragFiles([
+        "D:\\Videos\\7Samurai.mp4",
+        "D:\\Videos\\AbenteuerInRio.mp4"
+    ])
+    console.log("Dragging finished")
+}
 
 dropzone.ondragover = e => {
     e.preventDefault()
