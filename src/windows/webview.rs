@@ -23,7 +23,7 @@ use windows::Win32::{
 use windows_sys::Win32::UI::Shell::SHCreateMemStream;
 use windows_core::{w, Interface, PCWSTR, PWSTR};
 
-use crate::{bounds::Bounds, content_type, html, javascript::{self, RequestData}, params::Params, request::Request};
+use crate::{bounds::Bounds, content_type, html, javascript::{self, RequestData}, params::Params, request::Request, windows::dragdrop::dragdrop};
 
 use super::{appmessage::APP_SENDSCRIPT, framewindow::{get_hwnd, FrameWindow}, string_to_pcwstr, GetWindowLong, SetWindowLong};
 
@@ -238,6 +238,13 @@ impl WebView {
                                 let hwnd = hwnd as *mut c_void;
                                 let hwnd = HWND(hwnd);
                                 ShowWindow(hwnd, SW_SHOWNORMAL).unwrap();
+                            } else if msg.starts_with("startDragFiles") {
+                                let idx = msg.find(',').unwrap();
+                                let files= &msg[idx+1..];
+                                let files: Vec<String> = serde_json::from_str(files).unwrap();                              
+                                println!("startDragFiles {:?}", files);  
+                                dragdrop::start(files);
+
                             } else if msg.starts_with("AdditionalObjects") {
                                 let args2: ICoreWebView2WebMessageReceivedEventArgs2 = args.cast()?;
                                 if let Ok(ao) = args2.AdditionalObjects() {

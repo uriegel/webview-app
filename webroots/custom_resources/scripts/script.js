@@ -54,11 +54,9 @@ btn3.onclick = () => {
 }
 
 dragzone.onmousedown = () => WebView.startDragFiles([
-        "TestApp.dll",
-        "FSharpTools.dll"
-    ]
-    .map(n => `${currentDirectory}${n}`)
-)
+    "D:\\Videos\\7Samurai.mp4",
+    "D:\\Videos\\AbenteuerInRio.mp4"
+])
 
 dropzone.ondragover = e => {
     e.preventDefault()

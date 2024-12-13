@@ -69,7 +69,7 @@ fn platform_specifics(windows: bool)->String {
     if windows {
 r##"        
     const showDevTools = () => window.chrome.webview.postMessage("devtools")
-    const startDragFiles = files => callback.StartDragFiles(JSON.stringify({ files }))
+    const startDragFiles = files => window.chrome.webview.postMessage('startDragFiles,' + JSON.stringify(files))
     let additionalObjectsBackRes = null
     function filesDropped(dataTransfer) {{
         return new Promise(res => {{
