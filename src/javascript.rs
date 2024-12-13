@@ -99,6 +99,10 @@ r##"
 "##
     } else {
 r##"                
+    function additionalObjectsBack() {{
+    }}
+    function startDragFilesBack() {{
+    }}
     const showDevTools = () => fetch('req://showDevTools')
     const startDragFiles = files => fetch('req://startDragFiles', {
         method: 'POST',
