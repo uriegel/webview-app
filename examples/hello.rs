@@ -12,6 +12,7 @@ fn on_activate(app: &Application)->WebView {
         .title("Rust Web View 🦞")
         .initial_bounds(300, 500)
         .save_bounds()
+        .background_color(255, 255, 255, 0)
         .debug_url("https://crates.io/crates/webview_app")
         .query_string("?param1=123&param2=456")
         .url("https://crates.io/crates")

@@ -1,6 +1,8 @@
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
+use gtk::gdk::RGBA;
+//use gtk::gdk::{self, ContentProvider, DragAction};
 use gtk::gio::MemoryInputStream;
 use gtk::glib::{self, clone, spawn_future_local, timeout_future_with_priority, Bytes, MainContext, Priority};
 use gtk::Builder;
@@ -31,6 +33,7 @@ pub struct WebkitViewParams<'a> {
     pub devtools: bool,
     pub query_string: Option<&'a str>,
     pub default_contextmenu: bool,
+    pub background_color: Option<(u8, u8, u8, u8)>,
     pub webroot: Option<Arc<Mutex<Dir<'static>>>>,
 }
 
@@ -47,6 +50,10 @@ impl WebkitView {
         if !params.default_contextmenu {
             webview.connect_context_menu(|_,_,_|true);
         }
+        params.background_color.inspect(|c| {
+            let c = RGBA::new((c.0 as f32)/255.0, (c.1 as f32)/255.0, (c.2 as f32)/255.0, (c.3 as f32)/255.0);
+            webview.set_background_color(&c);
+        });
 
         glib::spawn_future_local(clone!(
             #[weak] webview, async move {
@@ -128,6 +135,32 @@ impl WebkitView {
                         if let Some(insp) = webview.inspector() { insp.show(); }
                         WebkitView::send_response(req, 200, "Ok", html::ok());
                     },
+                    // "req://startDragFiles" => {
+
+                    //     let files = vec!["file:///home/uwe/Bilder/Bildschirmfotos/helloworld.png".to_string()];
+                    //     let uris_value = Value::from(&files);
+                    //     let content_provider = ContentProvider::for_value(&uris_value);
+
+                    //     // Get the default display
+                    //     let display = gdk::Display::default().unwrap();
+                    
+                    //     // Get the default seat (e.g., mouse and keyboard)
+                    //     let seat = display.default_seat().unwrap();
+                    
+                    //     // Start the drag operation
+                    //     if let Some(device) = seat.pointer() {
+                    //         // Specify the hotspot position for the drag cursor (e.g., 0, 0 for top-left corner)
+                    //         let hot_x = 0.0;
+                    //         let hot_y = 0.0;
+                    
+
+                    //         // Start the drag operation
+                    //         let surface = window.surface().unwrap();
+
+                    //         let drg = gdk::Drag::begin(&surface, &device, &content_provider, DragAction::COPY, hot_x, hot_y);
+                    //         println!("Drag: {:?}", drg);
+                    //     }                    
+                    // },
                     _ => WebkitView::send_response(req, 404, "Not found", html::not_found())
                 }
             });

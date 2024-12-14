@@ -23,6 +23,7 @@ pub struct Params<'a> {
     pub builder_path: Option<&'a str>,
     pub devtools: bool,
     pub default_contextmenu: bool,
+    pub background_color: Option<(u8, u8, u8, u8)>,
     pub webroot: Option<Arc<Mutex<Dir<'static>>>>,
 }
 

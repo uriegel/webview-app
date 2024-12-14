@@ -70,6 +70,7 @@ impl WebView {
             without_native_titlebar: false,
             devtools: false,
             default_contextmenu : true,
+            background_color: None,
             webroot: None,
         }
     }
@@ -142,6 +143,7 @@ pub struct WebViewBuilder<'a> {
     without_native_titlebar: bool,
     devtools: bool,
     default_contextmenu: bool,
+    background_color: Option<(u8, u8, u8, u8)>,
     webroot: Option<Dir<'static>>,
 }
 
@@ -172,6 +174,7 @@ impl <'a> WebViewBuilder<'a> {
             without_native_titlebar: self.without_native_titlebar,
             devtools: self.devtools,
             default_contextmenu: self.default_contextmenu,
+            background_color: self.background_color,
             webroot,
             #[cfg(target_os = "linux")]
             builder_path: self.builder_path,
@@ -205,6 +208,13 @@ impl <'a> WebViewBuilder<'a> {
     /// After restarting the app the webview is displayed at these settings again.
     pub fn save_bounds(mut self)->WebViewBuilder<'a> {
         self.save_bounds = true;
+        self
+    }
+
+    /// With the help of this method you can set the initial background color of the webview. For preventing flickering, when
+    /// a certain background color is set in HTML, adapt this value here.
+    pub fn background_color(mut self, red: u8, green: u8, blue: u8, alpha: u8)->WebViewBuilder<'a> {
+        self.background_color = Some((red, green, blue, alpha));
         self
     }
 

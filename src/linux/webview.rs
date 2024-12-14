@@ -34,6 +34,7 @@ impl WebView {
             query_string: params.query_string,
             default_contextmenu: params.default_contextmenu,
             devtools: params.devtools,
+            background_color: params.background_color,
             webroot: params.webroot,
         };
 

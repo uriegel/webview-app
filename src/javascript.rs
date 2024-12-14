@@ -101,14 +101,20 @@ r##"
 r##"                
     function additionalObjectsBack() {{
     }}
+    let startDragFilesBackRes = null
+    const startDragFiles = files => {{
+        //return new Promise(res => {{
+            //fetch('req://startDragFiles')
+            //startDragFilesBackRes = res
+        //}})
+    }}
     function startDragFilesBack() {{
+        if (startDragFilesBackRes) {{
+            startDragFilesBackRes()
+            startDragFilesBackRes = null
+        }}
     }}
     const showDevTools = () => fetch('req://showDevTools')
-    const startDragFiles = files => fetch('req://startDragFiles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files })
-    })
     async function filesDropped(dataTransfer) {{}}
 "##
     }.to_string()
