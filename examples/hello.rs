@@ -13,7 +13,7 @@ fn on_activate(app: &Application)->WebView {
         .initial_bounds(300, 500)
         .save_bounds()
         .background_color(255, 255, 255, 0)
-        .debug_url("https://crates.io/crates/webview_app")
+        .debug_url("https://crat999es.io/crates/webview_app")
         .query_string("?param1=123&param2=456")
         .url("https://crates.io/crates")
         .devtools(true)

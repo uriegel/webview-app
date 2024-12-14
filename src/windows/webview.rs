@@ -57,7 +57,8 @@ pub struct WebView {
     config_dir: String,
     can_close: Rc<RefCell<Box<dyn Fn()->bool + 'static>>>,
     on_request: Rc<RefCell<Box<dyn Fn(&Request, String, String, String) -> bool + 'static>>>,
-    is_maximized: Rc<RefCell<bool>>
+    is_maximized: Rc<RefCell<bool>>,
+    pub _background_color: Option<(u8, u8, u8, u8)>,
 }
 
 
@@ -77,7 +78,7 @@ impl WebView {
             else
                 { params.bounds};
         let title = params.title.unwrap_or_else(||"Webview App");
-        let frame = FrameWindow::new(title, bounds, params.without_native_titlebar);
+        let frame = FrameWindow::new(title, bounds, params.without_native_titlebar, params.background_color);
         let parent = *frame.window;
 
         let environment = {
@@ -189,7 +190,9 @@ impl WebView {
             config_dir: local_path.to_string_lossy().to_string(),
             can_close: Rc::new(RefCell::new(Box::new(||true))),
             on_request: Rc::new(RefCell::new(Box::new(|_,_,_,_|false))),
-            is_maximized: Rc::new(RefCell::new(false))
+            is_maximized: Rc::new(RefCell::new(false)),
+            _background_color: params.background_color
+
         };
 
         webview

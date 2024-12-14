@@ -23,13 +23,14 @@ pub struct FrameWindow {
 }
 
 impl FrameWindow {
-    pub fn new(title: &str, bounds: Bounds, without_titlebar: bool) -> Self {
+    pub fn new(title: &str, bounds: Bounds, without_titlebar: bool, _color: Option<(u8, u8, u8, u8)>) -> Self {
         let hinstance = unsafe { GetModuleHandleW(None) }.unwrap();
         let hwnd = {
             let window_class = WNDCLASSW {
                 lpfnWndProc: Some(window_proc),
                 lpszClassName: w!("$$WebView_APP$$"),
                 style: CS_HREDRAW | CS_VREDRAW,
+                //hbrBackground: unsafe {CreateSolidBrush(COLORREF(color.0 as u32|((color.1 as u32) <<8)|((color.2 as u32) <<16))) },
                 hIcon: unsafe { LoadIconW(hinstance, PCWSTR(32512 as u16 as *const u16)).unwrap_or(HICON(ptr::null_mut())) },
                 ..Default::default()
             };
