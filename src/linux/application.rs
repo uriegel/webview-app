@@ -32,6 +32,6 @@ impl Application {
     pub fn run(&self)->u32 {
         self.app
             .run()
-            .value() as  u32
+            .into()
     }
 }

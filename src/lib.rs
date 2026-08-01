@@ -5,7 +5,7 @@
 //! web view, on Linux it is WebKitGTK.
 //! 
 //! A simple example to create and run a simple web view app displaying crates homepage:
-//! ``` 
+//! ```
 //! use webview_app::{application::Application, webview::WebView};
 //! 
 //! fn on_activate(app: &Application)->WebView {
@@ -13,7 +13,7 @@
 //!         .title("Rust Web View 🦞")
 //!         .url("https://crates.io/crates")
 //!         .default_contextmenu_disabled()
-//!         .build();
+//!         .build()
 //! }
 //! 
 //! fn main() {
@@ -46,5 +46,3 @@ mod html;
 // TODO Doc with examples and panics and global descriptions, module descriptions and links to tutorial
 // TODO Keywords like http webview, gtk, webview2 webkit, electron like
 // TODO Dependency Gtk4, Webkit, Adwaita for doc
-
-
