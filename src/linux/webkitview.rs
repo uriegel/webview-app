@@ -31,6 +31,7 @@ pub struct WebkitViewParams<'a> {
     pub url: &'a str,
     pub debug_url: Option<&'a str>,
     pub devtools: bool,
+    pub console_logging: bool,
     pub query_string: Option<&'a str>,
     pub default_contextmenu: bool,
     pub background_color: Option<(u8, u8, u8, u8)>,
@@ -43,9 +44,17 @@ impl WebkitView {
 
         let webview: WebView = builder.object("webview").expect("There must be a child with id 'webview' in the window.ui");
         webview.set_visible(false);
-        if params.devtools {
-            let settings = webkit6::prelude::WebViewExt::settings(&webview);
-            settings.unwrap().set_enable_developer_extras(true);
+        if params.devtools || params.console_logging {
+            let mut settings = webkit6::prelude::WebViewExt::settings(&webview);
+            if params.console_logging {
+                settings
+                    .as_mut()
+                    .unwrap()
+                    .set_enable_write_console_messages_to_stdout(true);
+            }
+            if params.devtools {
+                settings.unwrap().set_enable_developer_extras(true);
+            }
         }
         if !params.default_contextmenu {
             webview.connect_context_menu(|_,_,_|true);
@@ -219,4 +228,3 @@ impl WebkitView {
         handle.handle.event_sender.send_blocking(script.to_string()).unwrap();
     }
 }
-

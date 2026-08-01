@@ -4,7 +4,7 @@
 use include_dir::include_dir;
 use webview_app::{application::Application, webview::WebView};
 
-fn on_activate(app: &Application)->WebView {
+fn on_activate(app: &Application) -> WebView {
     let webview = WebView::builder(app)
         .title("Website form custom resources 🦞")
         .save_bounds()
@@ -14,13 +14,11 @@ fn on_activate(app: &Application)->WebView {
         .default_contextmenu_disabled()
         .build();
 
-     webview
+    webview
 }
 
 fn main() {
     Application::new("de.uriegel.hello")
-    .on_activate(on_activate)
-    .run();
+        .on_activate(on_activate)
+        .run();
 }
-
-

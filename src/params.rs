@@ -22,8 +22,8 @@ pub struct Params<'a> {
     #[cfg(target_os = "linux")]    
     pub builder_path: Option<&'a str>,
     pub devtools: bool,
+    pub console_logging: bool,
     pub default_contextmenu: bool,
     pub background_color: Option<(u8, u8, u8, u8)>,
     pub webroot: Option<Arc<Mutex<Dir<'static>>>>,
 }
-
