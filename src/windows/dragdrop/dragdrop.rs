@@ -7,8 +7,8 @@ use crate::windows::string_to_pcwstr;
 
 use super::{dataobject::IDataObject, dropsource::IDropSource};
 
-type OleInitialize = unsafe extern "stdcall" fn(*const core::ffi::c_void) -> i32;
-type DoDragDrop = unsafe extern "stdcall" fn(*mut IDataObject, *mut IDropSource, i32, *mut i32) -> i32;
+type OleInitialize = unsafe extern "system" fn(*const core::ffi::c_void) -> i32;
+type DoDragDrop = unsafe extern "system" fn(*mut IDataObject, *mut IDropSource, i32, *mut i32) -> i32;
 
 pub fn start(files: Vec<String>) {
     unsafe {

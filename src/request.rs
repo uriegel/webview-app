@@ -99,7 +99,7 @@ pub fn request_blocking<F: FnOnce() -> String + Send + 'static>(
             let lparam: LPARAM = LPARAM(0);   
             let hwnd = hwnd as *mut c_void;
             let hwnd = HWND(hwnd);
-            let res = unsafe { PostMessageW(hwnd, APP_SENDRESPONSE, wparam, lparam) };
+            let res = unsafe { PostMessageW(Some(hwnd), APP_SENDRESPONSE, wparam, lparam) };
             let _r = res.inspect_err(|err|eprintln!("Error executing script blocking: {:?}", err));
         });
 } 

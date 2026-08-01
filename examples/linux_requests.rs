@@ -1,6 +1,11 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 // Allows console to show up in debug build but not release build.
 
+#[cfg(not(target_os = "linux"))]
+fn main() {}
+
+#[cfg(target_os = "linux")]
+mod linux_example {
 use gtk::glib;
 use serde::{Deserialize, Serialize};
 use include_dir::include_dir;
@@ -42,7 +47,7 @@ fn on_activate(app: &Application)->WebView {
     webview
 }
 
-fn main() {
+pub fn run() {
     Application::new("de.uriegel.hello")
     .on_activate(on_activate)
     .run();
@@ -70,4 +75,11 @@ fn cmd2(request: &Request, id: String) {
         glib::timeout_future_seconds(5).await;
         request::get_output(&res)
     })
+}
+
+}
+
+#[cfg(target_os = "linux")]
+fn main() {
+    linux_example::run();
 }

@@ -1,4 +1,4 @@
-use std::{cell::RefCell, ffi::c_void, ptr, rc::Rc, sync::{Arc, Mutex}};
+use std::{cell::RefCell, ffi::c_void, ptr, rc::Rc, sync::{Mutex, OnceLock}};
 
 use windows::Win32::{
     Foundation::{
@@ -31,7 +31,7 @@ impl FrameWindow {
                 lpszClassName: w!("$$WebView_APP$$"),
                 style: CS_HREDRAW | CS_VREDRAW,
                 //hbrBackground: unsafe {CreateSolidBrush(COLORREF(color.0 as u32|((color.1 as u32) <<8)|((color.2 as u32) <<16))) },
-                hIcon: unsafe { LoadIconW(hinstance, PCWSTR(32512 as u16 as *const u16)).unwrap_or(HICON(ptr::null_mut())) },
+                hIcon: unsafe { LoadIconW(Some(hinstance.into()), PCWSTR(32512 as u16 as *const u16)).unwrap_or(HICON(ptr::null_mut())) },
                 ..Default::default()
             };
 
@@ -49,7 +49,7 @@ impl FrameWindow {
                     bounds.height.unwrap_or(CW_USEDEFAULT),
                     None,
                     None,
-                    hinstance,
+                    Some(hinstance.into()),
                     if without_titlebar { Some(1 as u8 as *const c_void) } else { None },
                 )
             }
@@ -176,13 +176,17 @@ fn get_window_size(hwnd: HWND) -> SIZE {
 }
 
 fn set_hwnd(hwnd: HWND) {
-    unsafe { MAIN_HWND = Some(Arc::new(Mutex::new(hwnd))) };    
+    let main_hwnd = MAIN_HWND.get_or_init(|| Mutex::new(hwnd.0 as isize));
+    *main_hwnd.lock().unwrap() = hwnd.0 as isize;
 }
 
-pub fn get_hwnd()->&'static Arc<Mutex<HWND>> {
-    unsafe {
-        MAIN_HWND.as_ref().unwrap()        
-    }
+pub fn get_hwnd() -> HWND {
+    let hwnd = *MAIN_HWND
+        .get()
+        .expect("main window has not been created")
+        .lock()
+        .unwrap();
+    HWND(hwnd as *mut c_void)
 }
 
-static mut MAIN_HWND: Option<Arc<Mutex<HWND>>> = None;
+static MAIN_HWND: OnceLock<Mutex<isize>> = OnceLock::new();
