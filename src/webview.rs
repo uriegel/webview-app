@@ -72,6 +72,7 @@ impl WebView {
             with_builder: None,
             without_native_titlebar: false,
             devtools: false,
+            console_logging: false,
             default_contextmenu: true,
             background_color: None,
             webroot: None,
@@ -145,6 +146,7 @@ pub struct WebViewBuilder<'a> {
     builder_path: Option<&'a str>,
     without_native_titlebar: bool,
     devtools: bool,
+    console_logging: bool,
     default_contextmenu: bool,
     background_color: Option<(u8, u8, u8, u8)>,
     webroot: Option<Dir<'static>>,
@@ -176,6 +178,7 @@ impl<'a> WebViewBuilder<'a> {
             #[cfg(target_os = "windows")]
             without_native_titlebar: self.without_native_titlebar,
             devtools: self.devtools,
+            console_logging: self.console_logging,
             default_contextmenu: self.default_contextmenu,
             background_color: self.background_color,
             webroot,
@@ -338,7 +341,7 @@ impl<'a> WebViewBuilder<'a> {
         self
     }
 
-    /// Enable (not to show) the developer tools.
+    /// Enable (but do not show) the developer tools.
     ///
     /// Used to enable the developer tools. Otherwise it is not possible to open these tools.
     /// The developer tools can be shown by default context menu or by calling the javascript method WebView.showDevtools()
@@ -347,6 +350,12 @@ impl<'a> WebViewBuilder<'a> {
         if cfg!(not(debug_assertions)) {
             self.devtools = !only_when_debugging;
         }
+        self
+    }
+
+    /// Enable or disable writing web console messages to stdout.
+    pub fn console_logging(mut self, enabled: bool) -> WebViewBuilder<'a> {
+        self.console_logging = enabled;
         self
     }
 

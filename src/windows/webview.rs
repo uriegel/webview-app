@@ -1,11 +1,12 @@
 use std::{cell::RefCell, ffi::c_void, mem, path::Path, ptr, rc::Rc, sync::mpsc};
 
 use webview2_com::{
-    AddScriptToExecuteOnDocumentCreatedCompletedHandler, CoTaskMemPWSTR, CoreWebView2CustomSchemeRegistration, CoreWebView2EnvironmentOptions, 
+    AddScriptToExecuteOnDocumentCreatedCompletedHandler, CoTaskMemPWSTR, CoreWebView2CustomSchemeRegistration, CoreWebView2EnvironmentOptions,
+    DevToolsProtocolEventReceivedEventHandler,
     CreateCoreWebView2ControllerCompletedHandler, CreateCoreWebView2EnvironmentCompletedHandler, ExecuteScriptCompletedHandler, 
     Microsoft::Web::WebView2::Win32::{
         CreateCoreWebView2EnvironmentWithOptions, ICoreWebView2, ICoreWebView2Controller, ICoreWebView2CustomSchemeRegistration, ICoreWebView2Environment,
-        ICoreWebView2EnvironmentOptions, ICoreWebView2File, ICoreWebView2Settings6, ICoreWebView2WebMessageReceivedEventArgs2, ICoreWebView2WebResourceResponse, 
+        ICoreWebView2DevToolsProtocolEventReceiver, ICoreWebView2EnvironmentOptions, ICoreWebView2File, ICoreWebView2Settings6, ICoreWebView2WebMessageReceivedEventArgs2, ICoreWebView2WebResourceResponse,
         COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC, COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL
     }, NavigationCompletedEventHandler, WebMessageReceivedEventHandler, WebResourceRequestedEventHandler, WindowCloseRequestedEventHandler
 };
@@ -58,6 +59,7 @@ pub struct WebView {
     on_request: Rc<RefCell<Box<dyn Fn(&Request, String, String, String) -> bool + 'static>>>,
     is_maximized: Rc<RefCell<bool>>,
     pub _background_color: Option<(u8, u8, u8, u8)>,
+    _console_event_receiver: Option<(Rc<ICoreWebView2DevToolsProtocolEventReceiver>, i64)>,
 }
 
 
@@ -162,6 +164,10 @@ impl WebView {
             settings6.SetIsPasswordAutosaveEnabled(true).unwrap();
         }
 
+        let console_event_receiver = params
+            .console_logging
+            .then(|| enable_console_logging(&webview));
+
         *frame.size.borrow_mut() = size;
 
         let (tx, rx) = mpsc::channel();
@@ -190,7 +196,8 @@ impl WebView {
             can_close: Rc::new(RefCell::new(Box::new(||true))),
             on_request: Rc::new(RefCell::new(Box::new(|_,_,_,_|false))),
             is_maximized: Rc::new(RefCell::new(false)),
-            _background_color: params.background_color
+            _background_color: params.background_color,
+            _console_event_receiver: console_event_receiver,
 
         };
 
@@ -529,6 +536,48 @@ impl WebView {
             );
         }
         Ok(self)
+    }
+}
+
+fn enable_console_logging(
+    webview: &ICoreWebView2,
+) -> (Rc<ICoreWebView2DevToolsProtocolEventReceiver>, i64) {
+    unsafe {
+        let receiver = Rc::new(
+            webview
+                .GetDevToolsProtocolEventReceiver(w!("Runtime.consoleAPICalled"))
+                .expect("Could not subscribe to WebView2 console events"),
+        );
+        let mut token = 0;
+
+        receiver
+            .add_DevToolsProtocolEventReceived(
+                &DevToolsProtocolEventReceivedEventHandler::create(Box::new(|_, args| {
+                    if let Some(args) = args {
+                        let mut message = PWSTR(ptr::null_mut());
+                        args.ParameterObjectAsJson(&mut message)?;
+                        let message = CoTaskMemPWSTR::from(message);
+                        println!("[WebView2 console] {}", message.to_string());
+                    }
+                    Ok(())
+                })),
+                &mut token,
+            )
+            .expect("Could not register WebView2 console event handler");
+
+        let method = string_to_pcwstr("Runtime.enable");
+        let parameters = string_to_pcwstr("{}");
+        webview
+            .CallDevToolsProtocolMethod(
+                PCWSTR(method.as_ptr()),
+                PCWSTR(parameters.as_ptr()),
+                &webview2_com::CallDevToolsProtocolMethodCompletedHandler::create(Box::new(
+                    |error_code, _| error_code,
+                )),
+            )
+            .expect("Could not enable the WebView2 Runtime DevTools domain");
+
+        (receiver, token)
     }
 }
 
