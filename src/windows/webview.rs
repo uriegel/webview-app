@@ -14,13 +14,12 @@ use windows::Win32::{
     Foundation::{
         E_POINTER, HWND, LPARAM, RECT, SIZE, WPARAM
     }, Graphics::Gdi::UpdateWindow, System::{
-        Com::{CoTaskMemFree, IStream}, Threading, WinRT::EventRegistrationToken
-    }, UI::WindowsAndMessaging::{
+        Com::CoTaskMemFree, Threading
+    }, UI::{Shell::SHCreateMemStream, WindowsAndMessaging::{
             DispatchMessageW, GetClientRect, GetMessageW, PostMessageW, PostQuitMessage, PostThreadMessageW, SendMessageW, SetWindowPos, ShowWindow, TranslateMessage, 
             GWLP_USERDATA, HWND_TOP, MSG, SWP_FRAMECHANGED, SWP_NOMOVE, SWP_NOSIZE, SW_SHOW, SW_SHOWMAXIMIZED, SW_SHOWMINIMIZED, SW_SHOWNORMAL, WM_APP, WM_CLOSE 
-        }
+        }}
 };
-use windows_sys::Win32::UI::Shell::SHCreateMemStream;
 use windows_core::{w, Interface, PCWSTR, PWSTR};
 
 use crate::{bounds::Bounds, content_type, html, javascript::{self, RequestData}, params::Params, request::Request, windows::dragdrop::dragdrop};
@@ -200,19 +199,19 @@ impl WebView {
             .unwrap();
 
         unsafe {
-            let mut _token = EventRegistrationToken::default();
+            let mut _token = 0;
             let hwnd = webview.frame.get_hwnd();
             webview.webview.add_WindowCloseRequested(
                 &WindowCloseRequestedEventHandler::create(Box::new(move|_,_| {
                     let hwnd = hwnd as *mut c_void;
                     let hwnd = HWND(hwnd);
-                    SendMessageW(hwnd, WM_CLOSE, WPARAM(0), LPARAM(0));
+                    SendMessageW(hwnd, WM_CLOSE, Some(WPARAM(0)), Some(LPARAM(0)));
                     Ok(())
                 })),
                 &mut _token,
             ).unwrap();
 
-            let mut _token = EventRegistrationToken::default();
+            let mut _token = 0;
             let webview_clone = webview.clone();
             let hwnd = webview.frame.get_hwnd();
             webview.webview.add_WebMessageReceived(
@@ -278,7 +277,7 @@ impl WebView {
         if custom_resource_scheme || params.without_native_titlebar {
             unsafe {
                 webview.webview.AddWebResourceRequestedFilter(w!("req:*"), COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL).unwrap();
-                let mut _token = EventRegistrationToken::default();
+                let mut _token = 0;
 
                 webview.webview.add_WebResourceRequested(
                     &WebResourceRequestedEventHandler::create(Box::new(move |_, args| {
@@ -339,7 +338,7 @@ impl WebView {
                 tx.send(()).expect("send over mpsc channel");
                 Ok(())
             }));
-        let mut token = EventRegistrationToken::default();
+        let mut token = 0;
         unsafe {
             webview.add_NavigationCompleted(&handler, &mut token).unwrap();
             let result = webview2_com::wait_with_pump(rx);
@@ -350,20 +349,18 @@ impl WebView {
         unsafe {
             let _ = ShowWindow(*self.frame.window, SW_SHOW);
             let _ = UpdateWindow(*self.frame.window);
-            let _ = SetWindowPos(*self.frame.window, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
+            let _ = SetWindowPos(*self.frame.window, Some(HWND_TOP), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
             let _ = self.controller.0.MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC);
         }
 
         let mut msg = MSG::default();
-        let h_wnd = HWND::default();
-
         loop {
             while let Ok(f) = self.rx.try_recv() {
                 (f)(self.clone());
             }
 
             unsafe {
-                let result = GetMessageW(&mut msg, h_wnd, 0, 0).0;
+                let result = GetMessageW(&mut msg, None, 0, 0).0;
 
                 match result {
                     -1 => break, // Err(windows::core::Error::from_win32().into()),
@@ -399,8 +396,7 @@ impl WebView {
     }
 
     pub fn execute_javascript(script: &str) {
-        let hwnd = get_hwnd().lock().unwrap();
-        sendscript(*hwnd, script);                
+        sendscript(get_hwnd(), script);
     }
 
     fn init(&self, js: &str) -> Result<&Self> {
@@ -547,8 +543,7 @@ fn get_window_size(hwnd: HWND) -> SIZE {
 
 fn send_custom_response(environment: &ICoreWebView2Environment, content: &[u8], url: &str)-> ICoreWebView2WebResourceResponse {
     unsafe {
-        let stream = SHCreateMemStream(content.as_ptr(), content.len() as u32);
-        let stream = IStream::from_raw(stream);    
+        let stream = SHCreateMemStream(Some(content)).expect("create response stream");
 
         let content_type = format!("Content-Type: {}", content_type::get(url));
         let content_type = string_to_pcwstr(content_type.as_str());
@@ -565,6 +560,5 @@ fn sendscript(hwnd: HWND, script: &str) {
     let mut js = CoTaskMemPWSTR::from(script);
     let wparam: WPARAM = WPARAM(js.take().as_ptr() as usize);
     let lparam: LPARAM = LPARAM(0);   
-    unsafe { PostMessageW(hwnd, APP_SENDSCRIPT, wparam, lparam).unwrap() };
+    unsafe { PostMessageW(Some(hwnd), APP_SENDSCRIPT, wparam, lparam).unwrap() };
 }
-

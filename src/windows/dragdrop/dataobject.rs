@@ -58,7 +58,7 @@ struct IDataObjectVTable {
     enum_formatetc: unsafe extern "system" fn(this: *mut c_void, direction: i32, enum_formatetc: *mut *mut IEnumFormatEtc)->HRESULT,
     advise: unsafe extern "system" fn(this: *mut c_void, format_etc: *mut FormatEtc, advf: i32, advsink: *mut IAdviseSink, connection: *mut i32)->HRESULT,
     unadvise: unsafe extern "system" fn(this: *mut c_void, connection: i32)->HRESULT,
-    enum_advise: unsafe extern "system" fn(this: *mut c_void, ppenumAdvise: *mut *mut IEnumSTATDATA)->HRESULT
+    enum_advise: unsafe extern "system" fn(this: *mut c_void, ppenum_advise: *mut *mut IEnumSTATDATA)->HRESULT
 }
 
 static DATA_OBJECT_VTABLE: IDataObjectVTable = IDataObjectVTable {
